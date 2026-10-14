@@ -221,7 +221,7 @@ export default function DashboardPage() {
       {/* ======================================================== */}
       {/* 2. OWNER EXECUTIVE KPI METRICS */}
       {/* ======================================================== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div data-tour="dashboard-kpis" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {/* Pending Invoices (Urgent Action Card) */}
         <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-5 text-white shadow-md shadow-amber-100 col-span-1 sm:col-span-2 md:col-span-1">
           <div className="flex items-center justify-between">
@@ -312,7 +312,7 @@ export default function DashboardPage() {
       {/* ======================================================== */}
       {/* 3. OWNER SECTION: ACTIONABLE PENDING APPROVALS QUEUE */}
       {/* ======================================================== */}
-      <div id="pending-approvals" className="space-y-4">
+      <div id="pending-approvals" data-tour="pending-approvals" className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
@@ -450,7 +450,7 @@ export default function DashboardPage() {
       {/* ======================================================== */}
       {/* 6. CHARTS ROW (Visible to both, key for Owner & Employee) */}
       {/* ======================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div data-tour="dashboard-charts" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart 1: Purchases by Category */}
         <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div>

@@ -23,11 +23,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUpdates } from '../../context/UpdatesContext';
+import { useProductTour } from '../../context/ProductTourContext';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 
 export default function TopNav({ onToggleSidebar }) {
   const navigate = useNavigate();
   const { user, isOwner, logout, isAuthenticated } = useAuth();
+  const { openTour } = useProductTour();
   const {
     totalUpdatesCount,
     staffInvoicesCount,
@@ -104,16 +106,30 @@ export default function TopNav({ onToggleSidebar }) {
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-100/80 py-1.5 px-3 rounded-lg border border-slate-200/60">
+        <div data-tour="branch-info" className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-100/80 py-1.5 px-3 rounded-lg border border-slate-200/60">
           <Store className="w-3.5 h-3.5 text-indigo-600" />
           <span>Branch #01: City Supermarket Central</span>
         </div>
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Interactive Product Tour Button */}
+        {isAuthenticated && (
+          <button
+            type="button"
+            onClick={openTour}
+            data-tour="top-tour-btn"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/80 shadow-2xs transition active:scale-95"
+            title="Launch interactive walkthrough tour"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
+            <span className="hidden sm:inline">Product Tour</span>
+          </button>
+        )}
+
         {/* Real-Time Notifications Bell */}
         {isAuthenticated && (
-          <div ref={notifRef} className="relative">
+          <div ref={notifRef} data-tour="notifications-bell" className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className={`relative p-2 rounded-xl transition ${

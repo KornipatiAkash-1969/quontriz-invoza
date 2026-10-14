@@ -52,14 +52,15 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   // Role-Based Navigation: Staff has upload-only focus, Owner has full access
   const NAV_ITEMS = isOwner
     ? [
-        { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+        { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true, dataTour: 'nav-dashboard' },
         {
           to: '/invoices',
           label: 'Invoices',
           icon: FileText,
           badge: invoicesRouteBadge > 0 ? invoicesRouteBadge : null,
           badgeVariant: 'warning',
-          badgeTitle: `${staffInvoicesCount || invoicesRouteBadge} staff uploads awaiting owner payment & approval`
+          badgeTitle: `${staffInvoicesCount || invoicesRouteBadge} staff uploads awaiting owner payment & approval`,
+          dataTour: 'nav-invoices'
         },
         {
           to: '/requirements',
@@ -67,24 +68,26 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           icon: ClipboardList,
           badge: requirementsRouteBadge > 0 ? requirementsRouteBadge : null,
           badgeVariant: 'primary',
-          badgeTitle: `${requirementsRouteBadge} store requirements pending owner review`
+          badgeTitle: `${requirementsRouteBadge} store requirements pending owner review`,
+          dataTour: 'nav-requirements'
         },
-        { to: '/upload', label: 'Upload / Manual Entry', icon: UploadCloud },
-        { to: '/users', label: 'Team & Staff', icon: Users, badge: 'RBAC', badgeVariant: 'default' },
-        { to: '/vendors', label: 'Vendors', icon: Building2 },
-        { to: '/categories', label: 'Categories', icon: Tags },
-        { to: '/vendor-types', label: 'Vendor Types', icon: Layers },
-        { to: '/settings', label: 'Settings', icon: Settings },
+        { to: '/upload', label: 'Upload / Manual Entry', icon: UploadCloud, dataTour: 'nav-upload' },
+        { to: '/users', label: 'Team & Staff', icon: Users, badge: 'RBAC', badgeVariant: 'default', dataTour: 'nav-users' },
+        { to: '/vendors', label: 'Vendors', icon: Building2, dataTour: 'nav-vendors' },
+        { to: '/categories', label: 'Categories', icon: Tags, dataTour: 'nav-categories' },
+        { to: '/vendor-types', label: 'Vendor Types', icon: Layers, dataTour: 'nav-vendor-types' },
+        { to: '/settings', label: 'Settings', icon: Settings, dataTour: 'nav-settings' },
       ]
     : [
-        { to: '/upload', label: 'Upload Invoice PDF', icon: UploadCloud },
+        { to: '/upload', label: 'Upload Invoice PDF', icon: UploadCloud, dataTour: 'nav-upload' },
         {
           to: '/invoices',
           label: 'My Invoices',
           icon: FileText,
           badge: invoicesRouteBadge > 0 ? invoicesRouteBadge : null,
           badgeVariant: 'warning',
-          badgeTitle: `${invoicesRouteBadge} invoice updates from owner`
+          badgeTitle: `${invoicesRouteBadge} invoice updates from owner`,
+          dataTour: 'nav-invoices'
         },
         {
           to: '/requirements',
@@ -92,7 +95,8 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           icon: ClipboardList,
           badge: requirementsRouteBadge > 0 ? requirementsRouteBadge : null,
           badgeVariant: 'warning',
-          badgeTitle: `${requirementsRouteBadge} requirement updates from owner`
+          badgeTitle: `${requirementsRouteBadge} requirement updates from owner`,
+          dataTour: 'nav-requirements'
         },
       ];
 
@@ -113,7 +117,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         }`}
       >
         {/* Logo / Header */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-100 gap-3">
+        <div data-tour="brand-logo" className="h-16 flex items-center px-6 border-b border-slate-100 gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-100">
             <ScanText className="w-5 h-5" />
           </div>
@@ -144,6 +148,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
               <NavLink
                 key={item.to}
                 to={item.to}
+                data-tour={item.dataTour}
                 end={item.end || item.to === '/'}
                 onClick={() => setIsOpen(false)}
                 className={({ isActive }) =>
@@ -186,6 +191,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         {/* User Card */}
         <div
           ref={userCardRef}
+          data-tour="user-profile"
           className="relative p-3 border-t border-slate-100 bg-slate-50/80 m-3 rounded-2xl border space-y-2 overflow-visible"
         >
           {isAuthenticated ? (
@@ -209,6 +215,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 {/* Arrow Mark Button to toggle Product Tour */}
                 <button
                   type="button"
+                  data-tour="tour-button"
                   onClick={() => setShowTourBubble((prev) => !prev)}
                   className={`p-1.5 rounded-xl transition-all ${
                     showTourBubble

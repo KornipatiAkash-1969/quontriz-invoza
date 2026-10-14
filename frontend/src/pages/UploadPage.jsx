@@ -26,6 +26,7 @@ import { useAuth } from '../context/AuthContext';
 import { useUpdates } from '../context/UpdatesContext';
 import { formatFileSize, formatCurrency } from '../utils/formatters';
 import ProcessingStepIndicator from '../components/upload/ProcessingStepIndicator';
+import SampleInvoicesSelector from '../components/upload/SampleInvoicesSelector';
 
 export default function UploadPage() {
   const navigate = useNavigate();
@@ -212,6 +213,27 @@ export default function UploadPage() {
     }
   };
 
+  const handleSelectSample = async (sample) => {
+    try {
+      setIsProcessing(true);
+      setCurrentStep(1);
+      toastSuccess(`Loading sample invoice: ${sample.title}...`);
+      const res = await fetch(sample.fileUrl);
+      if (!res.ok) throw new Error('Could not fetch sample document');
+      const blob = await res.blob();
+      const ext = sample.fileUrl.endsWith('.png') ? 'png' : (sample.fileUrl.endsWith('.jpg') ? 'jpg' : 'pdf');
+      const sampleFileName = `${sample.key}.${ext}`;
+      const mime = ext === 'png' ? 'image/png' : (ext === 'jpg' ? 'image/jpeg' : 'application/pdf');
+      const file = new File([blob], sampleFileName, { type: mime });
+      setSelectedFile(file);
+      processFile(file);
+    } catch (err) {
+      console.error('Failed to load sample:', err);
+      toastError('Failed to load sample invoice: ' + err.message);
+      setIsProcessing(false);
+    }
+  };
+
   // --- Manual Entry Helpers ---
   const handleManualItemChange = (index, field, value) => {
     const updated = [...manualItems];
@@ -345,7 +367,7 @@ export default function UploadPage() {
       </div>
 
       {/* Tabs: Upload Document vs Manual Entry */}
-      <div className="flex flex-col sm:flex-row bg-slate-200/60 p-1 rounded-2xl max-w-md w-full gap-1 sm:gap-0">
+      <div data-tour="upload-tabs" className="flex flex-col sm:flex-row bg-slate-200/60 p-1 rounded-2xl max-w-md w-full gap-1 sm:gap-0">
         <button
           onClick={() => setActiveTab('upload')}
           className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition ${
@@ -392,7 +414,7 @@ export default function UploadPage() {
           ) : (
             <>
               {/* Upload Card */}
-              <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/90 shadow-sm">
+              <div data-tour="upload-dropzone" className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/90 shadow-sm">
                 <div
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
@@ -502,6 +524,14 @@ export default function UploadPage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Sample Test Invoices for instant 1-click OCR testing */}
+              <div data-tour="sample-invoices">
+                <SampleInvoicesSelector
+                  onSelectSample={handleSelectSample}
+                  disabled={isProcessing}
+                />
               </div>
             </>
           )}
