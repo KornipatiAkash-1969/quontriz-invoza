@@ -52,7 +52,7 @@ export default function UsersPage() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('staff');
   const [password, setPassword] = useState('staff123');
-  const [showModalPassword, setShowModalPassword] = useState(false);
+  const [showModalPassword, setShowModalPassword] = useState(true);
 
   // Staff Creation OTP State (Required when creating Staff)
   const [staffOtpSent, setStaffOtpSent] = useState(false);
@@ -160,6 +160,7 @@ export default function UsersPage() {
     setNewOwnerOtpCode('');
     setOwnerCountdown(0);
     setOtpHelperNotice(null);
+    setShowModalPassword(true);
     if (password === 'staff123' || password === 'owner123' || !password) {
       setPassword(newRole === 'owner' ? 'owner123' : 'staff123');
     }
@@ -170,7 +171,7 @@ export default function UsersPage() {
     setEmail('');
     setRole('staff');
     setPassword('staff123');
-    setShowModalPassword(false);
+    setShowModalPassword(true);
     setFormError(null);
     setStaffOtpSent(false);
     setStaffOtpCode('');
@@ -884,61 +885,57 @@ export default function UsersPage() {
               )}
             </div>
 
-            {/* Password (Strictly hidden from owner for Staff accounts) */}
+            {/* Default Password - Visible during creation, hidden after creation */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-semibold text-slate-700">
-                  Password <span className="text-rose-500">*</span>
+                  Initial Password <span className="text-rose-500">*</span>
                 </label>
-                {role === 'owner' ? (
-                  <span className="text-[10px] text-indigo-700 font-semibold bg-indigo-50 px-2 py-0.5 rounded-lg border border-indigo-200">
-                    Default: <span className="font-mono font-bold">owner123</span>
+                <span
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
+                    role === 'owner'
+                      ? 'text-indigo-700 bg-indigo-50 border-indigo-200'
+                      : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                  }`}
+                >
+                  <KeyRound className="w-3 h-3" />
+                  <span>
+                    Default: <strong className="font-mono">{role === 'owner' ? 'owner123' : 'staff123'}</strong>
                   </span>
-                ) : (
-                  <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 flex items-center gap-1">
-                    <Lock className="w-3 h-3 text-emerald-600" />
-                    <span>Hidden from Owner</span>
-                  </span>
-                )}
+                </span>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
-                  type={role === 'staff' ? 'password' : (showModalPassword ? 'text' : 'password')}
+                  type={showModalPassword ? 'text' : 'password'}
                   required
                   minLength={4}
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={role === 'staff' ? '••••••••' : ''}
-                  className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium"
+                  placeholder={role === 'owner' ? 'owner123' : 'staff123'}
+                  className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium font-mono"
                 />
-                {role === 'owner' && (
-                  <button
-                    type="button"
-                    onClick={() => setShowModalPassword(!showModalPassword)}
-                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-0.5 transition"
-                    title={showModalPassword ? 'Hide password' : 'Show password'}
-                    aria-label={showModalPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showModalPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowModalPassword(!showModalPassword)}
+                  className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 p-0.5 transition"
+                  title={showModalPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showModalPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showModalPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
-              {role === 'owner' ? (
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Default password is <strong className="text-indigo-600 font-mono">owner123</strong>. You can toggle the eye icon to view or edit it.
-                </p>
-              ) : (
-                <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
-                  <span>Staff password is securely masked and hidden from store owners for staff account privacy.</span>
-                </p>
-              )}
+              <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                <span>
+                  Default password is <strong className="text-slate-800 font-mono">{role === 'owner' ? 'owner123' : 'staff123'}</strong>. Visible while creating for team onboarding. After creation, passwords are encrypted and never visible.
+                </span>
+              </p>
             </div>
 
             {/* Role-Specific OTP Verification UI */}

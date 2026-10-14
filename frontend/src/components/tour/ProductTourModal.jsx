@@ -162,79 +162,55 @@ export default function ProductTourModal({ isOpen, onClose }) {
   ];
 
   // =========================================================================
-  // 2. STAFF TOUR STEPS: Floor Staff Workflow (Short & Sweet)
+  // 2. STAFF TOUR STEPS: The 3 Navigation Items + One-Click Testing Presets
   // =========================================================================
   const staffSteps = [
     {
-      id: 'upload-dropzone',
-      target: '[data-tour="upload-dropzone"]',
+      id: 'nav-upload',
+      target: '[data-tour="nav-upload"]',
       route: '/upload',
-      badge: '⚡ Fast Intake',
-      title: 'Invoice & Bill Dropzone',
+      badge: '⚡ Invoice Intake',
+      title: 'Upload Invoice PDF',
       icon: UploadCloud,
       iconBg: 'bg-indigo-600',
-      explanation: 'Drag and drop supplier bills, receipts, or photos here for instant AI data extraction.',
-      tip: 'Supports clear mobile photos as well as multi-page PDF documents.',
-      preferredPlacement: 'top'
+      explanation: 'Upload vendor bills and paper receipts for automatic OCR extraction or manual entry.',
+      tip: 'Drag and drop PDF files or mobile photos up to 15 MB.',
+      preferredPlacement: 'right'
     },
     {
       id: 'sample-invoices',
       target: '[data-tour="sample-invoices"]',
       route: '/upload',
-      badge: '🧪 Quick Test',
-      title: 'Sample Test Presets',
+      badge: '🧪 One-Click Presets',
+      title: 'Free One-Click Invoice Testing Presets',
       icon: FileSpreadsheet,
       iconBg: 'bg-amber-500',
-      explanation: 'Test OCR extraction in one click using pre-loaded supermarket sample bills.',
-      tip: 'Try Kirana chits, Mandi bilties, or POS receipts without finding files.',
+      explanation: 'Test AI OCR extraction in one click using pre-loaded supermarket sample receipts.',
+      tip: 'Try Kirana chits, Mandi bilties, or POS receipts without searching for files.',
       preferredPlacement: 'top'
     },
     {
       id: 'nav-invoices',
       target: '[data-tour="nav-invoices"]',
-      route: '/upload',
-      badge: '📋 Upload History',
+      route: '/invoices',
+      badge: '📋 My Uploads',
       title: 'My Invoices',
       icon: FileText,
       iconBg: 'bg-emerald-600',
-      explanation: 'Track the status of all your uploaded bills from pending review to owner approval.',
-      tip: 'Search past bills anytime delivery agents or suppliers ask for status.',
+      explanation: 'Track verification and payment statuses for every invoice you have uploaded.',
+      tip: 'Search past bills anytime delivery agents or suppliers ask for updates.',
       preferredPlacement: 'right'
     },
     {
       id: 'nav-requirements',
       target: '[data-tour="nav-requirements"]',
-      route: '/upload',
-      badge: '📦 Restock Alert',
+      route: '/requirements',
+      badge: '📦 Stock Requisitions',
       title: 'Required Items',
       icon: ClipboardList,
       iconBg: 'bg-purple-600',
-      explanation: 'Request urgent stock replenishments directly to the owner when shelves run low.',
+      explanation: 'Request urgent stock replenishments from the store owner when supermarket shelves run low.',
       tip: 'Receive an instant notification once the owner orders the supplies.',
-      preferredPlacement: 'right'
-    },
-    {
-      id: 'notifications-bell',
-      target: '[data-tour="notifications-bell"]',
-      route: '/upload',
-      badge: '🔔 Live Updates',
-      title: 'Staff Notifications',
-      icon: Bell,
-      iconBg: 'bg-indigo-500',
-      explanation: 'Get alerted the moment your bills are verified, approved, or paid by the owner.',
-      tip: 'Click any notification to open the updated invoice record directly.',
-      preferredPlacement: 'bottom'
-    },
-    {
-      id: 'user-profile',
-      target: '[data-tour="user-profile"]',
-      route: '/upload',
-      badge: '🔒 Privacy & Security',
-      title: 'Profile & Password',
-      icon: KeyRound,
-      iconBg: 'bg-slate-800',
-      explanation: 'Update your private password anytime. Store owners cannot view your password.',
-      tip: 'Click the arrow mark in this card whenever you want to replay this tour.',
       preferredPlacement: 'right'
     }
   ];
