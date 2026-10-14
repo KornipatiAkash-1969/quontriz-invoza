@@ -109,12 +109,12 @@ function IndexRoute() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <ToastProvider>
-      <AuthProvider>
-        <ProductTourProvider>
-          <UpdatesProvider>
-            <BrowserRouter>
-          <Routes>
+      <BrowserRouter>
+        <ToastProvider>
+          <AuthProvider>
+            <UpdatesProvider>
+              <ProductTourProvider>
+                <Routes>
             {/* Public Login Route */}
             <Route
               path="/login"
@@ -210,11 +210,11 @@ export default function App() {
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </BrowserRouter>
-          </UpdatesProvider>
-        </ProductTourProvider>
-      </AuthProvider>
-    </ToastProvider>
+              </ProductTourProvider>
+            </UpdatesProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </BrowserRouter>
     </ErrorBoundary>
   );
 }
