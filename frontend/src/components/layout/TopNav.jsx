@@ -23,13 +23,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUpdates } from '../../context/UpdatesContext';
-import { useProductTour } from '../../context/ProductTourContext';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 
 export default function TopNav({ onToggleSidebar }) {
   const navigate = useNavigate();
   const { user, isOwner, logout, isAuthenticated } = useAuth();
-  const { openTour } = useProductTour();
   const {
     totalUpdatesCount,
     staffInvoicesCount,
@@ -113,20 +111,6 @@ export default function TopNav({ onToggleSidebar }) {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Interactive Product Tour Button */}
-        {isAuthenticated && (
-          <button
-            type="button"
-            onClick={openTour}
-            data-tour="top-tour-btn"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200/80 shadow-2xs transition active:scale-95"
-            title="Launch interactive walkthrough tour"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />
-            <span className="hidden sm:inline">Product Tour</span>
-          </button>
-        )}
-
         {/* Real-Time Notifications Bell */}
         {isAuthenticated && (
           <div ref={notifRef} data-tour="notifications-bell" className="relative">
