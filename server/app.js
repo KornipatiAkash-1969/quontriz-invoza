@@ -137,10 +137,11 @@ app.use((err, req, res, next) => {
 });
 
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, () => {
+  const HOST = '0.0.0.0';
+  app.listen(PORT, HOST, () => {
     console.log(`===============================================`);
-    console.log(`🚀 OCR Invoice Server running on port ${PORT}`);
-    console.log(`👉 http://localhost:${PORT}/api/health`);
+    console.log(`🚀 OCR Invoice Server running on http://${HOST}:${PORT}`);
+    console.log(`👉 Health check: http://${HOST}:${PORT}/api/health`);
     console.log(`===============================================`);
   });
 }

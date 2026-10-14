@@ -1,22 +1,16 @@
 services:
   - type: web
     name: quontriz-invoza
-    env: node
+    runtime: node
     plan: free
-    buildCommand: npm run build
+    region: oregon
+    buildCommand: npm install && npm run build
     startCommand: npm start
-    # To attach a persistent disk (Starter plan), uncomment the lines below:
-    # disk:
-    #   name: invoza-disk
-    #   mountPath: /opt/render/project/src/server/database
-    #   sizeGB: 1
     envVars:
       - key: NODE_VERSION
         value: 22.12.0
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: JWT_SECRET
         generateValue: true
       - key: SMTP_HOST
