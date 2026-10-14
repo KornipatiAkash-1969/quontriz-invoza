@@ -8,6 +8,9 @@ import {
   FileText,
   Users,
   Building2,
+  Tags,
+  Layers,
+  Settings,
   KeyRound,
   ShieldCheck,
   CheckCircle2,
@@ -15,7 +18,6 @@ import {
   ArrowLeft,
   X,
   Sparkles,
-  Layers,
   Clock,
   Bell,
   ClipboardList,
@@ -38,235 +40,201 @@ export default function ProductTourModal({ isOpen, onClose }) {
   const tooltipRef = useRef(null);
   const retryTimerRef = useRef(null);
 
+  // Reset to step 0 whenever modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentStep(0);
+    }
+  }, [isOpen]);
+
   // =========================================================================
-  // 1. OWNER TOUR STEPS: Comprehensive walkthrough of owner-specific features
+  // 1. OWNER TOUR STEPS: The 9 Sidebar Navigation Items (Short & Sweet)
   // =========================================================================
   const ownerSteps = [
     {
-      id: 'brand-logo',
-      target: '[data-tour="brand-logo"]',
+      id: 'nav-dashboard',
+      target: '[data-tour="nav-dashboard"]',
       route: '/',
-      badge: '👑 Store Owner Hub',
-      title: 'Quontriz Invoza Supermarket System',
-      icon: ScanText,
+      badge: '📊 Spend & KPIs',
+      title: 'Dashboard Overview',
+      icon: LayoutDashboard,
       iconBg: 'bg-indigo-600',
-      explanation:
-        'Your centralized supermarket invoice intake and financial command center. From real-time OCR bill extraction and supplier payment authorization to staff management and tax compliance, all store operations are orchestrated here.',
-      tip: 'Current branch: City Supermarket Central (Owner mode enabled with unrestricted access).',
+      explanation: 'View real-time supermarket spend, pending bill counts, and automated GST tax breakdowns.',
+      tip: 'KPIs and monthly expense charts update automatically as invoices arrive.',
       preferredPlacement: 'right'
-    },
-    {
-      id: 'dashboard-kpis',
-      target: '[data-tour="dashboard-kpis"]',
-      route: '/',
-      badge: 'Executive Spend Analytics',
-      title: 'Total Invoices, Spend & Tax Breakdown',
-      icon: TrendingUp,
-      iconBg: 'bg-emerald-600',
-      explanation:
-        'Instant financial health metrics: Live count of pending vs paid bills, gross store spending, and automated calculation of CGST, SGST, and IGST to ensure audit-ready GST filing for your supermarket.',
-      tip: 'Values update instantaneously as staff upload bills and you authorize payments.',
-      preferredPlacement: 'bottom'
-    },
-    {
-      id: 'pending-approvals',
-      target: '[data-tour="pending-approvals"]',
-      route: '/',
-      badge: 'Cashflow & Verification',
-      title: 'Pending Staff Uploads & Payment Authorization',
-      icon: Clock,
-      iconBg: 'bg-amber-500',
-      explanation:
-        'Invoices digitized by store staff land here awaiting your owner review. Inspect extracted line items side-by-side with original receipts and record instant payments via UPI, Cash, Cheque, or NetBanking.',
-      tip: 'Staff cannot authorize supplier disbursements — only owners hold payment privileges.',
-      preferredPlacement: 'top'
-    },
-    {
-      id: 'dashboard-charts',
-      target: '[data-tour="dashboard-charts"]',
-      route: '/',
-      badge: 'Visual Intelligence',
-      title: 'Monthly Spend Trends & Category Distribution',
-      icon: Layers,
-      iconBg: 'bg-purple-600',
-      explanation:
-        'Interactive financial graphs visualizing month-over-month expenses, supplier purchasing volume, and department budget allocations (Grocery, Dairy, FMCG, Electronics, Hamali, etc.).',
-      tip: 'Hover over chart points and slices to inspect exact itemized expense sums.',
-      preferredPlacement: 'top'
     },
     {
       id: 'nav-invoices',
       target: '[data-tour="nav-invoices"]',
-      route: '/',
-      badge: 'Audit & Records',
-      title: 'Invoices & Audit Directory',
+      route: '/invoices',
+      badge: '🧾 Invoices & Audit',
+      title: 'Invoices Directory',
       icon: FileText,
       iconBg: 'bg-blue-600',
-      explanation:
-        'Master historical directory of every invoice uploaded. Filter by status (Pending, Approved, Paid), search by vendor, review OCR raw text side-by-side, and download audit-ready PDF archives.',
-      tip: 'Includes full audit trail tracking the exact staff member who uploaded each bill.',
+      explanation: 'Inspect, verify, and approve all supplier bills digitized by your store staff.',
+      tip: 'Record instant payments via UPI, Cash, Cheque, or NetBanking.',
       preferredPlacement: 'right'
     },
     {
       id: 'nav-requirements',
       target: '[data-tour="nav-requirements"]',
-      route: '/',
-      badge: 'Procurement Control',
-      title: 'Store Restock Requirements',
+      route: '/requirements',
+      badge: '📦 Stock Control',
+      title: 'Required Items',
       icon: ClipboardList,
       iconBg: 'bg-teal-600',
-      explanation:
-        'When shelves run low on groceries or items, floor staff submit restock requirements here. As owner, you can approve, reject, or mark supplies as ordered with one click.',
-      tip: 'Keep supermarket inventory healthy without relying on verbal messages or paper chits.',
+      explanation: 'Manage supermarket shelf restocking requests submitted by floor staff in real time.',
+      tip: 'Approve or mark items ordered with one click to keep inventory full.',
+      preferredPlacement: 'right'
+    },
+    {
+      id: 'nav-upload',
+      target: '[data-tour="nav-upload"]',
+      route: '/upload',
+      badge: '⚡ Bill Intake',
+      title: 'Upload / Manual Entry',
+      icon: UploadCloud,
+      iconBg: 'bg-violet-600',
+      explanation: 'Scan supplier invoices with AI OCR or manually enter itemized bills directly.',
+      tip: 'Test sample presets to see instant line-item and GST extraction.',
       preferredPlacement: 'right'
     },
     {
       id: 'nav-users',
       target: '[data-tour="nav-users"]',
-      route: '/',
-      badge: 'Team & RBAC Security',
-      title: 'Staff & Co-Owner Management (Dual OTP)',
+      route: '/users',
+      badge: '👥 Team & Security',
+      title: 'Team & Staff',
       icon: Users,
       iconBg: 'bg-rose-600',
-      explanation:
-        'Create and manage store staff accounts (upload-only) and co-owners. Staff passwords remain strictly confidential from owners. Deleting a co-owner requires mandatory dual-owner OTP verification sent to both registered emails.',
-      tip: 'New staff accounts default to staff123, and owner accounts default to owner123 on creation.',
+      explanation: 'Manage store staff accounts and co-owners with dual-owner OTP verification security.',
+      tip: 'Staff passwords remain confidential and are never visible to store owners.',
       preferredPlacement: 'right'
     },
     {
-      id: 'notifications-bell',
-      target: '[data-tour="notifications-bell"]',
-      route: '/',
-      badge: 'Real-Time Alerts',
-      title: 'Store Notification Center',
-      icon: Bell,
-      iconBg: 'bg-indigo-500',
-      explanation:
-        'Receive instant notifications the moment staff uploads an invoice or submits a stock shortage. Click any notification to jump directly into the bill verification screen.',
-      tip: 'Unread badge counts highlight actionable store events requiring your attention.',
-      preferredPlacement: 'bottom'
+      id: 'nav-vendors',
+      target: '[data-tour="nav-vendors"]',
+      route: '/vendors',
+      badge: '🏢 Supplier Hub',
+      title: 'Vendors Directory',
+      icon: Building2,
+      iconBg: 'bg-emerald-600',
+      explanation: 'Maintain your supplier directory with GSTIN numbers, contact details, and payment terms.',
+      tip: 'Automatically links to invoices when matching vendor names or GSTIN.',
+      preferredPlacement: 'right'
     },
     {
-      id: 'user-profile',
-      target: '[data-tour="user-profile"]',
-      route: '/',
-      badge: 'Credentials & Security',
-      title: 'Owner Profile & Tour Relauncher',
-      icon: KeyRound,
-      iconBg: 'bg-slate-800',
-      explanation:
-        'Update your password anytime with bcrypt encryption. Active sessions reset every midnight for maximum store security. You can also click the arrow button here anytime to relaunch this interactive walkthrough!',
-      tip: 'Use the arrow icon to trigger this tour whenever new store managers join.',
+      id: 'nav-categories',
+      target: '[data-tour="nav-categories"]',
+      route: '/categories',
+      badge: '🏷️ Expense Tagging',
+      title: 'Categories',
+      icon: Tags,
+      iconBg: 'bg-amber-500',
+      explanation: 'Classify store purchases into departments like Grocery, FMCG, Dairy, and Hamali.',
+      tip: 'Powers itemized spending distribution analytics on your dashboard.',
+      preferredPlacement: 'right'
+    },
+    {
+      id: 'nav-vendor-types',
+      target: '[data-tour="nav-vendor-types"]',
+      route: '/vendor-types',
+      badge: '📑 Supplier Tiers',
+      title: 'Vendor Types',
+      icon: Layers,
+      iconBg: 'bg-cyan-600',
+      explanation: 'Group suppliers into Wholesale, Distributor, Local Vendor, and Direct Manufacturer.',
+      tip: 'Helps track purchase volume across different distributor channels.',
+      preferredPlacement: 'right'
+    },
+    {
+      id: 'nav-settings',
+      target: '[data-tour="nav-settings"]',
+      route: '/settings',
+      badge: '⚙️ Store Config',
+      title: 'Store Settings',
+      icon: Settings,
+      iconBg: 'bg-slate-700',
+      explanation: 'Configure supermarket profile, tax calculation preferences, and default options.',
+      tip: 'Ensure your store profile matches your official GST registration.',
       preferredPlacement: 'right'
     }
   ];
 
   // =========================================================================
-  // 2. STAFF TOUR STEPS: Tailored strictly to floor staff workflow
+  // 2. STAFF TOUR STEPS: Floor Staff Workflow (Short & Sweet)
   // =========================================================================
   const staffSteps = [
-    {
-      id: 'brand-logo',
-      target: '[data-tour="brand-logo"]',
-      route: '/upload',
-      badge: '📋 Store Staff Portal',
-      title: 'Staff Invoice Intake Workstation',
-      icon: ScanText,
-      iconBg: 'bg-emerald-600',
-      explanation:
-        'Welcome to your dedicated invoice workstation! Designed for quick invoice scanning, paper receipt digitizing, and shelf shortage requests without financial or administrative complexity.',
-      tip: 'Your portal focuses on fast document entry and tracking daily uploads.',
-      preferredPlacement: 'right'
-    },
     {
       id: 'upload-dropzone',
       target: '[data-tour="upload-dropzone"]',
       route: '/upload',
-      badge: 'Fast Document Intake',
+      badge: '⚡ Fast Intake',
       title: 'Invoice & Bill Dropzone',
       icon: UploadCloud,
       iconBg: 'bg-indigo-600',
-      explanation:
-        'Drag and drop vendor bills, receipts, or cash memos here in PDF, PNG, or JPG formats (up to 15MB). You can also click "Browse File" to select documents directly from your device.',
-      tip: 'Supports photos taken from your mobile camera as well as scanned multi-page PDFs.',
-      preferredPlacement: 'bottom'
+      explanation: 'Drag and drop supplier bills, receipts, or photos here for instant AI data extraction.',
+      tip: 'Supports clear mobile photos as well as multi-page PDF documents.',
+      preferredPlacement: 'top'
     },
     {
       id: 'sample-invoices',
       target: '[data-tour="sample-invoices"]',
       route: '/upload',
-      badge: 'Instant Testing Presets',
-      title: 'Sample Test Invoice Presets',
+      badge: '🧪 Quick Test',
+      title: 'Sample Test Presets',
       icon: FileSpreadsheet,
       iconBg: 'bg-amber-500',
-      explanation:
-        'Test the OCR system immediately without searching for files! Click any preset — Kirana Store Chit, Chemist Prescription Bill, Mandi Wholesale Bilty, Thermal POS Receipt, or Digital Electronics Invoice — to test auto-extraction.',
-      tip: 'Click any test card to see how handwritten shorthand and messy bills are parsed in seconds.',
+      explanation: 'Test OCR extraction in one click using pre-loaded supermarket sample bills.',
+      tip: 'Try Kirana chits, Mandi bilties, or POS receipts without finding files.',
       preferredPlacement: 'top'
-    },
-    {
-      id: 'upload-tabs',
-      target: '[data-tour="upload-tabs"]',
-      route: '/upload',
-      badge: 'AI Extraction & Manual Entry',
-      title: 'Automated OCR & Manual Fallback',
-      icon: Sparkles,
-      iconBg: 'bg-blue-600',
-      explanation:
-        'The built-in AI automatically detects vendor names, dates, amounts, GSTIN, and individual line items. If a paper receipt is badly torn or faded, toggle to "Manual Invoice Entry" to type line items manually.',
-      tip: 'After extraction, you can verify item descriptions before submitting to the store owner.',
-      preferredPlacement: 'bottom'
     },
     {
       id: 'nav-invoices',
       target: '[data-tour="nav-invoices"]',
       route: '/upload',
-      badge: 'Upload Tracking',
-      title: 'My Invoices & Real-Time Status',
+      badge: '📋 Upload History',
+      title: 'My Invoices',
       icon: FileText,
       iconBg: 'bg-emerald-600',
-      explanation:
-        'Track every bill you have uploaded. Check real-time statuses to see which invoices are "Pending Owner Verification" versus "Approved & Paid" by the store owner.',
-      tip: 'Search past bills by invoice number or vendor name whenever delivery drivers ask.',
+      explanation: 'Track the status of all your uploaded bills from pending review to owner approval.',
+      tip: 'Search past bills anytime delivery agents or suppliers ask for status.',
       preferredPlacement: 'right'
     },
     {
       id: 'nav-requirements',
       target: '[data-tour="nav-requirements"]',
       route: '/upload',
-      badge: 'Shelf Stock Requisitions',
-      title: 'Request Out-of-Stock Items',
+      badge: '📦 Restock Alert',
+      title: 'Required Items',
       icon: ClipboardList,
       iconBg: 'bg-purple-600',
-      explanation:
-        'Notice supermarket shelves running low on milk, pulses, snacks, or cleaning supplies? Submit an urgent requirement request directly to the store owner for purchase.',
-      tip: 'You will receive an alert as soon as the owner marks the stock as purchased.',
+      explanation: 'Request urgent stock replenishments directly to the owner when shelves run low.',
+      tip: 'Receive an instant notification once the owner orders the supplies.',
       preferredPlacement: 'right'
     },
     {
       id: 'notifications-bell',
       target: '[data-tour="notifications-bell"]',
       route: '/upload',
-      badge: 'Real-Time Alerts',
-      title: 'Staff Notification Center',
+      badge: '🔔 Live Updates',
+      title: 'Staff Notifications',
       icon: Bell,
       iconBg: 'bg-indigo-500',
-      explanation:
-        'Get immediate notifications whenever the store owner verifies your uploaded bill, authorizes supplier payment, or responds to your supermarket shelf requests.',
-      tip: 'Click any notification to open the updated invoice record.',
+      explanation: 'Get alerted the moment your bills are verified, approved, or paid by the owner.',
+      tip: 'Click any notification to open the updated invoice record directly.',
       preferredPlacement: 'bottom'
     },
     {
       id: 'user-profile',
       target: '[data-tour="user-profile"]',
       route: '/upload',
-      badge: 'Staff Security',
-      title: 'Staff Profile & Password Security',
+      badge: '🔒 Privacy & Security',
+      title: 'Profile & Password',
       icon: KeyRound,
       iconBg: 'bg-slate-800',
-      explanation:
-        'Change your password securely anytime. Remember: store owners cannot see your password. You can also click the arrow button in this card anytime to replay this interactive walkthrough!',
-      tip: 'Default password was staff123 — change it to your private password for security.',
+      explanation: 'Update your private password anytime. Store owners cannot view your password.',
+      tip: 'Click the arrow mark in this card whenever you want to replay this tour.',
       preferredPlacement: 'right'
     }
   ];
@@ -277,7 +245,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
   const isLast = currentStep === steps.length - 1;
 
   // =========================================================================
-  // 3. TARGET POSITIONING & SMART VIEWPORT CLAMPING
+  // 3. TARGET POSITIONING & SMART VIEWPORT CLAMPING (NO OVERFLOW)
   // =========================================================================
   const updateTargetPosition = useCallback(() => {
     if (!step || !isOpen) return;
@@ -288,8 +256,8 @@ export default function ProductTourModal({ isOpen, onClose }) {
       setTargetRect(null);
       // Fallback: Centered card
       setCardPosition({
-        top: Math.max(80, window.innerHeight / 2 - 160),
-        left: Math.max(16, window.innerWidth / 2 - 192),
+        top: Math.max(80, (window.innerHeight - 210) / 2),
+        left: Math.max(16, (window.innerWidth - 350) / 2),
         placement: 'center'
       });
       return;
@@ -297,8 +265,19 @@ export default function ProductTourModal({ isOpen, onClose }) {
 
     setIsTargetFound(true);
 
-    // Scroll element into view smoothly if out of viewport
-    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    const initialRect = el.getBoundingClientRect();
+    const isLarge = initialRect.height > 250 || initialRect.height > window.innerHeight * 0.42;
+
+    // Check if element is already comfortably in viewport before scrolling
+    const isInView = initialRect.top >= 48 && initialRect.bottom <= window.innerHeight - 16;
+    if (!isInView) {
+      if (isLarge) {
+        // For oversized targets, align to start so top is visible
+        el.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+      } else {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
+    }
 
     const rect = el.getBoundingClientRect();
     const padding = 8;
@@ -311,57 +290,88 @@ export default function ProductTourModal({ isOpen, onClose }) {
       right: rect.right
     });
 
-    // Tooltip card dimensions (standard width 380px, est height 300px)
-    const cardW = Math.min(384, window.innerWidth - 32);
-    const cardH = 290;
-    const pref = step.preferredPlacement || 'bottom';
+    // Real measured dimensions with fallback (compact footprint: 350px width, ~200px height)
+    const cardW = Math.min(350, window.innerWidth - 32);
+    const cardH = tooltipRef.current?.offsetHeight || 205;
+    const pref = step.preferredPlacement || 'right';
 
     let top = 0;
     let left = 0;
     let actualPlacement = pref;
 
-    if (pref === 'right') {
+    if (isLarge) {
+      // OVERSIZED ELEMENT STRATEGY (Prevents card overflowing below viewport):
+      // Priority 1: Place to the right if there is ample margin
+      if (window.innerWidth - rect.right >= cardW + 24) {
+        actualPlacement = 'right';
+        top = Math.max(20, rect.top + 16);
+        left = rect.right + padding + 14;
+      }
+      // Priority 2: Place above the element if headroom exists
+      else if (rect.top >= cardH + 24) {
+        actualPlacement = 'top';
+        top = rect.top - padding - cardH - 12;
+        left = Math.max(16, rect.left + (rect.width - cardW) / 2);
+      }
+      // Priority 3: Place to the left if space exists
+      else if (rect.left >= cardW + 24) {
+        actualPlacement = 'left';
+        top = Math.max(20, rect.top + 16);
+        left = rect.left - padding - cardW - 14;
+      }
+      // Priority 4: Dock inside visible viewport bottom (pinned with safe margins)
+      else {
+        actualPlacement = 'center';
+        top = Math.max(20, window.innerHeight - cardH - 24);
+        left = Math.max(16, (window.innerWidth - cardW) / 2);
+      }
+    } else if (pref === 'right') {
       top = rect.top + rect.height / 2 - cardH / 2;
-      left = rect.right + padding + 16;
+      left = rect.right + padding + 14;
       if (left + cardW > window.innerWidth - 16) {
-        // Flip to bottom or left
-        if (rect.bottom + cardH + 16 < window.innerHeight) {
-          actualPlacement = 'bottom';
-          top = rect.bottom + padding + 14;
-          left = rect.left + rect.width / 2 - cardW / 2;
-        } else {
+        if (rect.left - padding - cardW - 14 >= 16) {
           actualPlacement = 'left';
-          left = rect.left - padding - cardW - 16;
+          left = rect.left - padding - cardW - 14;
+        } else {
+          actualPlacement = 'bottom';
+          top = rect.bottom + padding + 12;
+          left = rect.left + rect.width / 2 - cardW / 2;
         }
       }
     } else if (pref === 'top') {
-      top = rect.top - padding - cardH - 14;
+      top = rect.top - padding - cardH - 12;
       left = rect.left + rect.width / 2 - cardW / 2;
       if (top < 16) {
         actualPlacement = 'bottom';
-        top = rect.bottom + padding + 14;
+        top = rect.bottom + padding + 12;
       }
     } else if (pref === 'left') {
       top = rect.top + rect.height / 2 - cardH / 2;
-      left = rect.left - padding - cardW - 16;
+      left = rect.left - padding - cardW - 14;
       if (left < 16) {
         actualPlacement = 'bottom';
-        top = rect.bottom + padding + 14;
+        top = rect.bottom + padding + 12;
         left = rect.left + rect.width / 2 - cardW / 2;
       }
     } else {
       // Bottom
-      top = rect.bottom + padding + 14;
+      top = rect.bottom + padding + 12;
       left = rect.left + rect.width / 2 - cardW / 2;
-      if (top + cardH > window.innerHeight - 16) {
+      if (top + cardH > window.innerHeight - 20) {
         actualPlacement = 'top';
-        top = rect.top - padding - cardH - 14;
+        top = rect.top - padding - cardH - 12;
       }
     }
 
-    // Clamp inside viewport
-    const clampedLeft = Math.max(16, Math.min(left, window.innerWidth - cardW - 16));
-    const clampedTop = Math.max(16, Math.min(top, window.innerHeight - cardH - 16));
+    // STRICT VIEWPORT CLAMPING:
+    // Guarantees the card and its Next button NEVER exceed visible screen bounds!
+    const minTop = 16;
+    const maxTop = Math.max(minTop, window.innerHeight - cardH - 20);
+    const clampedTop = Math.max(minTop, Math.min(top, maxTop));
+
+    const minLeft = 16;
+    const maxLeft = Math.max(minLeft, window.innerWidth - cardW - 16);
+    const clampedLeft = Math.max(minLeft, Math.min(left, maxLeft));
 
     setCardPosition({
       top: clampedTop,
@@ -378,7 +388,6 @@ export default function ProductTourModal({ isOpen, onClose }) {
       navigate(step.route);
     }
 
-    // Retry checking DOM element as route renders
     let attempts = 0;
     const checkDom = () => {
       attempts += 1;
@@ -392,7 +401,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
       }
     };
 
-    const timer = setTimeout(checkDom, 100);
+    const timer = setTimeout(checkDom, 80);
 
     return () => {
       clearTimeout(timer);
@@ -400,7 +409,16 @@ export default function ProductTourModal({ isOpen, onClose }) {
     };
   }, [currentStep, isOpen, step, location.pathname, navigate, updateTargetPosition]);
 
-  // Listen to window scroll & resize to adjust spotlight
+  // Re-measure after component layout to ensure clamp accuracy
+  useEffect(() => {
+    if (!isOpen) return;
+    const raf = requestAnimationFrame(() => {
+      updateTargetPosition();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [currentStep, isOpen, updateTargetPosition]);
+
+  // Listen to window scroll & resize to adjust spotlight and card position
   useEffect(() => {
     if (!isOpen) return;
 
@@ -468,7 +486,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
     <div className="fixed inset-0 z-[9990] overflow-hidden select-none">
       {/* 1. Dark Backdrop Overlay */}
       <div
-        className="fixed inset-0 bg-slate-950/65 backdrop-blur-[2px] transition-opacity duration-300 pointer-events-auto"
+        className="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] transition-opacity duration-300 pointer-events-auto"
         onClick={handleClose}
       />
 
@@ -482,42 +500,43 @@ export default function ProductTourModal({ isOpen, onClose }) {
             width: `${targetRect.width + padding * 2}px`,
             height: `${targetRect.height + padding * 2}px`,
             borderRadius: '16px',
-            boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.72), 0 0 30px rgba(99, 102, 241, 0.55)',
+            boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.72), 0 0 25px rgba(99, 102, 241, 0.5)',
             border: '2px solid #6366f1'
           }}
         >
           {/* Pulsing Animated Step Beacon Badge */}
           <div className="absolute -top-3 -right-3 flex items-center justify-center">
-            <span className="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-indigo-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-6 w-6 bg-indigo-600 text-white font-extrabold text-[11px] items-center justify-center shadow-lg border border-white">
+            <span className="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-indigo-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-5.5 w-5.5 bg-indigo-600 text-white font-extrabold text-[10px] items-center justify-center shadow-lg border border-white">
               {currentStep + 1}
             </span>
           </div>
         </div>
       )}
 
-      {/* 3. Floating Tooltip Explanation Card */}
+      {/* 3. Floating Tooltip Explanation Card (Strictly Viewport-Clamped, Short & Sweet) */}
       <div
         ref={tooltipRef}
-        className="fixed z-[9999] w-96 max-w-[calc(100vw-32px)] transition-all duration-200 ease-out"
+        className="fixed z-[9999] w-[350px] max-w-[calc(100vw-32px)] transition-all duration-200 ease-out pointer-events-auto"
         style={{
           top: `${cardPosition.top}px`,
-          left: `${cardPosition.left}px`
+          left: `${cardPosition.left}px`,
+          maxHeight: 'calc(100vh - 32px)'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
           {/* Header Bar */}
-          <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between">
+          <div className="px-4 py-2.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
-              <div className={`w-7 h-7 rounded-xl ${step.iconBg} text-white flex items-center justify-center shadow-xs`}>
+              <div className={`w-6 h-6 rounded-lg ${step.iconBg} text-white flex items-center justify-center shadow-2xs`}>
                 <StepIcon className="w-3.5 h-3.5" />
               </div>
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 block leading-tight">
                   {step.badge}
                 </span>
-                <span className="text-[11px] text-slate-400 font-medium">
+                <span className="text-[10px] text-slate-400 font-medium">
                   Item {currentStep + 1} of {steps.length}
                 </span>
               </div>
@@ -532,7 +551,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
                     type="button"
                     onClick={() => setCurrentStep(idx)}
                     className={`h-1.5 rounded-full transition-all ${
-                      idx === currentStep ? 'w-4 bg-indigo-600' : 'w-1.5 bg-slate-200 hover:bg-slate-300'
+                      idx === currentStep ? 'w-3.5 bg-indigo-600' : 'w-1.5 bg-slate-200 hover:bg-slate-300'
                     }`}
                     title={`Go to item ${idx + 1}`}
                   />
@@ -545,23 +564,23 @@ export default function ProductTourModal({ isOpen, onClose }) {
                 className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition ml-1"
                 title="Exit Tour (Esc)"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="w-full bg-slate-100 h-1">
+          {/* Progress Line */}
+          <div className="w-full bg-slate-100 h-0.5 flex-shrink-0">
             <div
-              className="h-1 bg-gradient-to-r from-indigo-600 to-indigo-500 transition-all duration-300"
+              className="h-0.5 bg-gradient-to-r from-indigo-600 to-indigo-500 transition-all duration-300"
               style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
             />
           </div>
 
-          {/* Card Body */}
-          <div className="p-5 space-y-3.5">
+          {/* Card Body (Short and Sweet) */}
+          <div className="p-4 space-y-2.5 overflow-y-auto">
             <div>
-              <h3 className="text-base font-extrabold text-slate-900 tracking-tight leading-snug">
+              <h3 className="text-sm font-extrabold text-slate-900 tracking-tight leading-snug">
                 {step.title}
               </h3>
               <p className="text-xs text-slate-600 mt-1 leading-relaxed font-normal">
@@ -571,17 +590,17 @@ export default function ProductTourModal({ isOpen, onClose }) {
 
             {/* Pro Tip Box */}
             {step.tip && (
-              <div className="p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100/80 flex items-start gap-2.5">
-                <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <p className="text-[11px] text-indigo-900 font-medium leading-relaxed">
+              <div className="p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-100/80 flex items-start gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                <p className="text-[11px] text-indigo-900 font-medium leading-snug">
                   {step.tip}
                 </p>
               </div>
             )}
           </div>
 
-          {/* Footer Controls */}
-          <div className="px-5 py-3.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
+          {/* Footer Controls (Always Visible, Pinned) */}
+          <div className="px-4 py-2.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between flex-shrink-0">
             <button
               type="button"
               onClick={handleClose}
@@ -595,9 +614,9 @@ export default function ProductTourModal({ isOpen, onClose }) {
                 <button
                   type="button"
                   onClick={handlePrev}
-                  className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-100 transition active:scale-95"
+                  className="flex items-center gap-1 px-2.5 py-1.5 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-100 transition active:scale-95"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <ArrowLeft className="w-3 h-3" />
                   <span>Back</span>
                 </button>
               )}
@@ -605,14 +624,14 @@ export default function ProductTourModal({ isOpen, onClose }) {
               <button
                 type="button"
                 onClick={handleNext}
-                className={`flex items-center gap-1.5 px-4 py-1.5 text-white font-bold text-xs rounded-xl shadow-xs transition active:scale-95 ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 text-white font-bold text-xs rounded-xl shadow-xs transition active:scale-95 ${
                   isLast
                     ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
                     : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
                 }`}
               >
                 <span>{isLast ? 'Finish Tour' : 'Next Item'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-3 h-3" />
               </button>
             </div>
           </div>
