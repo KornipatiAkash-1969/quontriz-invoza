@@ -1079,35 +1079,6 @@ export default function UsersPage() {
               </div>
             )}
 
-            {/* Notice if SMTP is not configured in .env */}
-            {otpHelperNotice && (
-              <div className="p-3 bg-amber-50 border border-amber-200/90 rounded-2xl text-amber-900 text-xs space-y-1.5 animate-in fade-in">
-                <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-                  <span>Real Email Delivery Notice</span>
-                </div>
-                <p className="text-[11px] text-amber-800 leading-snug">
-                  To receive OTP directly in your Gmail inbox, add <strong>SMTP_USER</strong> and <strong>SMTP_PASS</strong> (Google App Password) to <code>server/.env</code>.
-                </p>
-                <div className="pt-0.5 flex flex-wrap items-center gap-2 text-[11px]">
-                  {otpHelperNotice.type === 'staff' ? (
-                    <span className="font-mono bg-white px-2.5 py-1 rounded-lg border border-amber-300 font-extrabold text-amber-950">
-                      Generated Code: {otpHelperNotice.code}
-                    </span>
-                  ) : (
-                    <>
-                      <span className="font-mono bg-white px-2 py-0.5 rounded border border-amber-300 font-extrabold text-amber-950">
-                        Owner OTP: {otpHelperNotice.currentOwnerOtp}
-                      </span>
-                      <span className="font-mono bg-white px-2 py-0.5 rounded border border-amber-300 font-extrabold text-amber-950">
-                        New Owner OTP: {otpHelperNotice.newOwnerOtp}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
             {/* Footer Buttons */}
             <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
               <button
@@ -1404,26 +1375,6 @@ export default function UsersPage() {
                   )}
                 </button>
               </div>
-
-              {/* Dev Helper Notice if SMTP not configured */}
-              {deleteOtpHelperNotice && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs space-y-1.5">
-                  <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                    <AlertTriangle className="w-4 h-4 text-amber-600" />
-                    <span>Dev Environment OTP Codes (SMTP Unconfigured):</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 font-mono text-[11px]">
-                    <div className="bg-white p-2 rounded-lg border border-amber-200">
-                      <p className="text-slate-500 text-[10px]">Your OTP ({deleteOtpHelperNotice.currentOwnerEmail}):</p>
-                      <p className="text-indigo-600 font-extrabold text-sm">{deleteOtpHelperNotice.currentOwnerOtp}</p>
-                    </div>
-                    <div className="bg-white p-2 rounded-lg border border-amber-200">
-                      <p className="text-slate-500 text-[10px]">Target Owner OTP ({deleteOtpHelperNotice.targetOwnerEmail}):</p>
-                      <p className="text-rose-600 font-extrabold text-sm">{deleteOtpHelperNotice.targetOwnerOtp}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* OTP Inputs */}
               {deleteOwnerOtpsSent && (

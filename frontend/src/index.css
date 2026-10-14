@@ -4,8 +4,8 @@
 
 @layer base {
   html {
-    font-size: 90% !important;
-    -webkit-text-size-adjust: 90%;
+    font-size: 85% !important;
+    -webkit-text-size-adjust: 85%;
   }
 
   body {
