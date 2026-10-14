@@ -3,7 +3,7 @@ services:
     name: quontriz-invoza
     env: node
     plan: free
-    buildCommand: npm run install:all && npm run build
+    buildCommand: npm run build
     startCommand: npm start
     # To attach a persistent disk (Starter plan), uncomment the lines below:
     # disk:
@@ -11,6 +11,8 @@ services:
     #   mountPath: /opt/render/project/src/server/database
     #   sizeGB: 1
     envVars:
+      - key: NODE_VERSION
+        value: 22.12.0
       - key: NODE_ENV
         value: production
       - key: PORT

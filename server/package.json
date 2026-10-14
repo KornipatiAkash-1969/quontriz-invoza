@@ -16,8 +16,10 @@
   ],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "dependencies": {
-    "@prisma/client": "^7.10.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -29,7 +31,6 @@
     "nodemailer": "^10.1.1",
     "pdf-lib": "^1.17.1",
     "pdf-parse": "^2.4.5",
-    "prisma": "^8.0.0-rc.22",
     "tesseract.js": "^7.0.0",
     "uuid": "^11.1.0",
     "zod": "^4.6.5"

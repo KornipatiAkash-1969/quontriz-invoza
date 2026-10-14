@@ -1,6 +1,9 @@
 {
   "name": "quontriz-invoza",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "scripts": {
     "start": "node server/app.js",
     "build": "npm --prefix frontend run build",

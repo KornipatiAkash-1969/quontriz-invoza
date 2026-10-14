@@ -21,7 +21,7 @@ const MESSY_SAMPLES = [
     desc: 'Lined paper scribble with shorthand "@ 42/- = 210/-", Vernacular discount (Chhoot), Jama & Baki.',
     badge: 'Ruled Notepad Chit',
     badgeColor: 'bg-amber-100 text-amber-800 border border-amber-200',
-    fileUrl: 'http://localhost:5000/uploads/samples/sample-handwritten-grocery-chit.pdf',
+    fileUrl: '/uploads/samples/sample-handwritten-grocery-chit.pdf',
     icon: PenLine
   },
   {
@@ -31,7 +31,7 @@ const MESSY_SAMPLES = [
     desc: 'Doctor prescription chit with dosage (500mg, 650), strips, syrup bottle, and 12% GST calculation.',
     badge: 'Chemist Rx Note',
     badgeColor: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
-    fileUrl: 'http://localhost:5000/uploads/samples/sample-handwritten-chemist-rx.pdf',
+    fileUrl: '/uploads/samples/sample-handwritten-chemist-rx.pdf',
     icon: Pill
   },
   {
@@ -41,7 +41,7 @@ const MESSY_SAMPLES = [
     desc: 'Quantity-first informal format (10 pcs LED Bulbs 9W @ 70 = 700), labor charges (Hamali), Advance & Balance.',
     badge: 'Quantity-First Chit',
     badgeColor: 'bg-blue-100 text-blue-800 border border-blue-200',
-    fileUrl: 'http://localhost:5000/uploads/samples/sample-handwritten-hardware-chit.pdf',
+    fileUrl: '/uploads/samples/sample-handwritten-hardware-chit.pdf',
     icon: Wrench
   },
   {
@@ -51,7 +51,7 @@ const MESSY_SAMPLES = [
     desc: 'Bilty note with Hindi vernaculars: Bhada (Freight), Hamali (Labor), Peshgi (Adv), Baaki, and Kul Yog.',
     badge: 'Mandi Bilty',
     badgeColor: 'bg-orange-100 text-orange-800 border border-orange-200',
-    fileUrl: 'http://localhost:5000/uploads/samples/sample-handwritten-mandi-bilty.pdf',
+    fileUrl: '/uploads/samples/sample-handwritten-mandi-bilty.pdf',
     icon: Wheat
   },
   {
@@ -61,7 +61,7 @@ const MESSY_SAMPLES = [
     desc: 'Raster thermal paper cash memo with itemized barcodes, multi-items, taxes, and change math.',
     badge: 'PNG Image Receipt',
     badgeColor: 'bg-purple-100 text-purple-800 border border-purple-200',
-    fileUrl: 'http://localhost:5000/uploads/samples/sample-handwritten-thermal-receipt.png',
+    fileUrl: '/uploads/samples/sample-handwritten-thermal-receipt.png',
     icon: Receipt
   },
   {
@@ -71,7 +71,7 @@ const MESSY_SAMPLES = [
     desc: 'Scanned image bill with complex table rows, batch numbers, item-level GST%, and totals.',
     badge: 'JPG Image Bill',
     badgeColor: 'bg-rose-100 text-rose-800 border border-rose-200',
-    fileUrl: 'http://localhost:5000/uploads/samples/sample-handwritten-pharma-bill.jpg',
+    fileUrl: '/uploads/samples/sample-handwritten-pharma-bill.jpg',
     icon: FileText
   }
 ];
@@ -84,7 +84,7 @@ const STANDARD_SAMPLES = [
     desc: 'Direct text extraction with Samsung TV, HDMI cable, PO & GSTIN',
     badge: 'Digital Text PDF',
     badgeColor: 'bg-blue-100 text-blue-700 border border-blue-200',
-    fileUrl: 'http://localhost:5000/uploads/samples/sample-digital-electronics-invoice.pdf',
+    fileUrl: '/uploads/samples/sample-digital-electronics-invoice.pdf',
     icon: FileCheck
   },
   {
@@ -94,7 +94,7 @@ const STANDARD_SAMPLES = [
     desc: 'Multi-category items: Coca Cola, Lays Chips, Amul Milk, Atta, Bread, etc.',
     badge: 'Multi-Category Test',
     badgeColor: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
-    fileUrl: 'http://localhost:5000/uploads/samples/sample-grocery-supermart-invoice.pdf',
+    fileUrl: '/uploads/samples/sample-grocery-supermart-invoice.pdf',
     icon: Sparkles
   },
   {
@@ -104,7 +104,7 @@ const STANDARD_SAMPLES = [
     desc: 'Pure raster page with zero selectable text, processed via Tesseract OCR',
     badge: 'Tesseract OCR Test',
     badgeColor: 'bg-amber-100 text-amber-700 border border-amber-200',
-    fileUrl: 'http://localhost:5000/uploads/samples/sample-scanned-invoice.pdf',
+    fileUrl: '/uploads/samples/sample-scanned-invoice.pdf',
     icon: Scan
   }
 ];
