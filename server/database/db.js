@@ -1,4 +1,3 @@
-const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 const fs = require('fs');
 
@@ -10,7 +9,30 @@ if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
-const db = new DatabaseSync(DB_PATH);
+let db = null;
+let driverType = '';
+
+// Universal SQLite driver initialization:
+// 1. First try 'better-sqlite3' (Universal across Node 18, 20, 22, 24 on Render, Linux, Windows)
+// 2. Fallback to built-in 'node:sqlite' if running on Node >= 22.5.0
+try {
+  const Database = require('better-sqlite3');
+  db = new Database(DB_PATH);
+  driverType = 'better-sqlite3';
+  console.log('[DB] ✅ Connected to SQLite via better-sqlite3 at:', DB_PATH);
+} catch (betterErr) {
+  try {
+    const { DatabaseSync } = require('node:sqlite');
+    db = new DatabaseSync(DB_PATH);
+    driverType = 'node:sqlite';
+    console.log('[DB] ✅ Connected to SQLite via node:sqlite at:', DB_PATH);
+  } catch (nodeSqliteErr) {
+    console.error('[DB Fatal] Neither better-sqlite3 nor node:sqlite could be loaded.');
+    console.error('better-sqlite3 error:', betterErr.message);
+    console.error('node:sqlite error:', nodeSqliteErr.message);
+    throw new Error('SQLite driver initialization failed.');
+  }
+}
 
 // Enable foreign keys and WAL mode for better concurrency and integrity
 db.exec('PRAGMA foreign_keys = ON;');
@@ -19,6 +41,10 @@ db.exec('PRAGMA journal_mode = WAL;');
 const dbHelper = {
   getRawDb() {
     return db;
+  },
+
+  getDriverType() {
+    return driverType;
   },
 
   query(sql, params = []) {
@@ -61,6 +87,9 @@ const dbHelper = {
   },
 
   transaction(fn) {
+    if (typeof db.transaction === 'function') {
+      return db.transaction(fn)();
+    }
     db.exec('BEGIN TRANSACTION;');
     try {
       const result = fn();
