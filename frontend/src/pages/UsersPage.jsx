@@ -52,7 +52,7 @@ export default function UsersPage() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('staff');
   const [password, setPassword] = useState('staff123');
-  const [showModalPassword, setShowModalPassword] = useState(true);
+  const [showModalPassword, setShowModalPassword] = useState(false);
 
   // Staff Creation OTP State (Required when creating Staff)
   const [staffOtpSent, setStaffOtpSent] = useState(false);
@@ -107,7 +107,7 @@ export default function UsersPage() {
   const [showSelfChangePassword, setShowSelfChangePassword] = useState(false);
   const [resetPasswordTarget, setResetPasswordTarget] = useState(null);
   const [newResetPassword, setNewResetPassword] = useState('staff123');
-  const [showResetEye, setShowResetEye] = useState(true);
+  const [showResetEye, setShowResetEye] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
 
   const handleAdminResetPassword = async (e) => {
@@ -160,7 +160,7 @@ export default function UsersPage() {
     setNewOwnerOtpCode('');
     setOwnerCountdown(0);
     setOtpHelperNotice(null);
-    setShowModalPassword(true);
+    setShowModalPassword(false);
     if (password === 'staff123' || password === 'owner123' || !password) {
       setPassword(newRole === 'owner' ? 'owner123' : 'staff123');
     }
@@ -171,7 +171,7 @@ export default function UsersPage() {
     setEmail('');
     setRole('staff');
     setPassword('staff123');
-    setShowModalPassword(true);
+    setShowModalPassword(false);
     setFormError(null);
     setStaffOtpSent(false);
     setStaffOtpCode('');
@@ -697,7 +697,7 @@ export default function UsersPage() {
                                 onClick={() => {
                                   setResetPasswordTarget(u);
                                   setNewResetPassword(u.role === 'owner' ? 'owner123' : 'staff123');
-                                  setShowResetEye(true);
+                                  setShowResetEye(false);
                                 }}
                                 className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                                 title={`Reset Password for ${u.name}`}
@@ -885,7 +885,7 @@ export default function UsersPage() {
               )}
             </div>
 
-            {/* Default Password - Visible during creation, hidden after creation */}
+            {/* Default Password - Hidden by default, click eye to show */}
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-xs font-semibold text-slate-700">
@@ -900,7 +900,10 @@ export default function UsersPage() {
                 >
                   <KeyRound className="w-3 h-3" />
                   <span>
-                    Default: <strong className="font-mono">{role === 'owner' ? 'owner123' : 'staff123'}</strong>
+                    Default:{' '}
+                    <strong className="font-mono">
+                      {showModalPassword ? (role === 'owner' ? 'owner123' : 'staff123') : '••••••••'}
+                    </strong>
                   </span>
                 </span>
               </div>
@@ -913,7 +916,7 @@ export default function UsersPage() {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={role === 'owner' ? 'owner123' : 'staff123'}
+                  placeholder="••••••••"
                   className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium font-mono"
                 />
                 <button
@@ -933,7 +936,7 @@ export default function UsersPage() {
               <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
                 <span>
-                  Default password is <strong className="text-slate-800 font-mono">{role === 'owner' ? 'owner123' : 'staff123'}</strong>. Visible while creating for team onboarding. After creation, passwords are encrypted and never visible.
+                  Default password is hidden. Click the eye icon to view or edit it.
                 </span>
               </p>
             </div>
@@ -1216,7 +1219,10 @@ export default function UsersPage() {
                 >
                   <KeyRound className="w-3 h-3" />
                   <span>
-                    Default: <strong className="font-mono">{resetPasswordTarget.role === 'owner' ? 'owner123' : 'staff123'}</strong>
+                    Default:{' '}
+                    <strong className="font-mono">
+                      {showResetEye ? (resetPasswordTarget.role === 'owner' ? 'owner123' : 'staff123') : '••••••••'}
+                    </strong>
                   </span>
                 </span>
               </div>
@@ -1228,7 +1234,7 @@ export default function UsersPage() {
                   minLength={4}
                   value={newResetPassword}
                   onChange={(e) => setNewResetPassword(e.target.value)}
-                  placeholder={resetPasswordTarget.role === 'owner' ? 'owner123' : 'staff123'}
+                  placeholder="••••••••"
                   className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium font-mono"
                 />
                 <button
@@ -1244,7 +1250,7 @@ export default function UsersPage() {
               <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
                 <span>
-                  Toggle the eye symbol to view the new temporary password before saving. After reset, passwords are encrypted and never visible.
+                  Default password is hidden. Click the eye icon to view or edit it.
                 </span>
               </p>
             </div>
