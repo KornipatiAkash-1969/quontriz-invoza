@@ -26,7 +26,6 @@ import { useAuth } from '../context/AuthContext';
 import { useUpdates } from '../context/UpdatesContext';
 import { formatFileSize, formatCurrency } from '../utils/formatters';
 import ProcessingStepIndicator from '../components/upload/ProcessingStepIndicator';
-import SampleInvoicesSelector from '../components/upload/SampleInvoicesSelector';
 
 export default function UploadPage() {
   const navigate = useNavigate();
@@ -524,14 +523,6 @@ export default function UploadPage() {
                     </div>
                   </div>
                 )}
-              </div>
-
-              {/* Sample Test Invoices for instant 1-click OCR testing */}
-              <div data-tour="sample-invoices">
-                <SampleInvoicesSelector
-                  onSelectSample={handleSelectSample}
-                  disabled={isProcessing}
-                />
               </div>
             </>
           )}

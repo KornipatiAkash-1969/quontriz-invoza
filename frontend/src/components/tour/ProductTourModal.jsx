@@ -162,7 +162,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
   ];
 
   // =========================================================================
-  // 2. STAFF TOUR STEPS: The 3 Navigation Items + One-Click Testing Presets
+  // 2. STAFF TOUR STEPS: The 3 Navigation Items (Short & Sweet)
   // =========================================================================
   const staffSteps = [
     {
@@ -176,18 +176,6 @@ export default function ProductTourModal({ isOpen, onClose }) {
       explanation: 'Upload vendor bills and paper receipts for automatic OCR extraction or manual entry.',
       tip: 'Drag and drop PDF files or mobile photos up to 15 MB.',
       preferredPlacement: 'right'
-    },
-    {
-      id: 'sample-invoices',
-      target: '[data-tour="sample-invoices"]',
-      route: '/upload',
-      badge: '🧪 One-Click Presets',
-      title: 'Free One-Click Invoice Testing Presets',
-      icon: FileSpreadsheet,
-      iconBg: 'bg-amber-500',
-      explanation: 'Test AI OCR extraction in one click using pre-loaded supermarket sample receipts.',
-      tip: 'Try Kirana chits, Mandi bilties, or POS receipts without searching for files.',
-      preferredPlacement: 'top'
     },
     {
       id: 'nav-invoices',
