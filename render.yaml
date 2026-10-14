@@ -2,13 +2,14 @@ services:
   - type: web
     name: quontriz-invoza
     env: node
-    plan: starter
+    plan: free
     buildCommand: npm run install:all && npm run build
     startCommand: npm start
-    disk:
-      name: invoza-disk
-      mountPath: /app/server/database
-      sizeGB: 1
+    # To attach a persistent disk (Starter plan), uncomment the lines below:
+    # disk:
+    #   name: invoza-disk
+    #   mountPath: /opt/render/project/src/server/database
+    #   sizeGB: 1
     envVars:
       - key: NODE_ENV
         value: production
