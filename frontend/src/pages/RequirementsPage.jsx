@@ -23,7 +23,7 @@ import {
   Check
 } from 'lucide-react';
 import { requirementApi, vendorApi, categoryApi } from '../services/api';
-import { Spinner } from '../components/ui';
+import { Spinner, TableSkeleton } from '../components/ui';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useUpdates } from '../context/UpdatesContext';
@@ -478,10 +478,7 @@ export default function RequirementsPage() {
       {/* Requirements Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center gap-2">
-            <Spinner size="lg" />
-            <p className="text-xs text-slate-500 font-medium">Loading store requirements...</p>
-          </div>
+          <TableSkeleton rows={7} cols={6} />
         ) : requirements.length === 0 ? (
           <div className="py-16 text-center space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">

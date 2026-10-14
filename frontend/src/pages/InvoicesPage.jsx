@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { invoiceApi, vendorApi, categoryApi } from '../services/api';
 import { formatCurrency, formatDate, formatDateTime } from '../utils/formatters';
-import { Spinner, Pagination } from '../components/ui';
+import { Spinner, Pagination, TableSkeleton } from '../components/ui';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import PaymentApprovalModal from '../components/review/PaymentApprovalModal';
 import { useToast } from '../context/ToastContext';
@@ -367,10 +367,7 @@ export default function InvoicesPage() {
       {/* Invoices List Table */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-2">
-            <Spinner />
-            <p className="text-xs text-slate-500">Loading invoices...</p>
-          </div>
+          <TableSkeleton rows={8} cols={6} />
         ) : displayedInvoices.length === 0 ? (
           <div className="py-16 text-center text-slate-500 text-xs space-y-2">
             <FileText className="w-8 h-8 mx-auto text-slate-300" />

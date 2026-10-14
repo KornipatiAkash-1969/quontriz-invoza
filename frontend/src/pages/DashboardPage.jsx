@@ -31,7 +31,7 @@ import {
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import { dashboardApi } from '../services/api';
 import { formatCurrency, formatDate, formatDateTime } from '../utils/formatters';
-import { Spinner } from '../components/ui';
+import { Spinner, CardSkeleton } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useUpdates } from '../context/UpdatesContext';
 import PaymentApprovalModal from '../components/review/PaymentApprovalModal';
@@ -91,9 +91,32 @@ export default function DashboardPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Spinner size="lg" />
-        <p className="text-sm font-medium text-slate-500">Loading business analytics...</p>
+      <div className="space-y-6 animate-in fade-in duration-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+          <div className="space-y-2">
+            <div className="h-6 w-48 bg-slate-200 rounded-lg animate-pulse" />
+            <div className="h-4 w-72 bg-slate-100 rounded-md animate-pulse" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-9 w-24 bg-slate-200 rounded-xl animate-pulse" />
+            <div className="h-9 w-28 bg-slate-200 rounded-xl animate-pulse" />
+          </div>
+        </div>
+
+        {/* Shimmering KPI Metric Cards */}
+        <CardSkeleton count={5} />
+
+        {/* Shimmering Charts & Queue Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
+            <div className="h-5 w-36 bg-slate-200 rounded-md animate-pulse" />
+            <div className="h-48 bg-slate-100 rounded-2xl animate-pulse" />
+          </div>
+          <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-2xs space-y-4">
+            <div className="h-5 w-48 bg-slate-200 rounded-md animate-pulse" />
+            <div className="h-48 bg-slate-100 rounded-2xl animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }

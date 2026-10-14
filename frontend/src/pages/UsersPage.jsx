@@ -21,7 +21,7 @@ import {
 import { userApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { Spinner, Modal } from '../components/ui';
+import { Spinner, Modal, TableSkeleton } from '../components/ui';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import ChangePasswordModal from '../components/auth/ChangePasswordModal';
 import { formatDate, formatDateTime } from '../utils/formatters';
@@ -580,10 +580,7 @@ export default function UsersPage() {
         </div>
 
         {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-2">
-            <Spinner />
-            <p className="text-xs text-slate-500">Loading team members...</p>
-          </div>
+          <TableSkeleton rows={5} cols={6} />
         ) : users.length === 0 ? (
           <div className="py-16 text-center text-slate-500 text-xs">
             <Users className="w-8 h-8 mx-auto text-slate-300 mb-2" />

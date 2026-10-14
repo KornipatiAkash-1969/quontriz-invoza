@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { vendorApi } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import { Spinner } from '../components/ui';
+import { Spinner, PageLoader } from '../components/ui';
 import { useToast } from '../context/ToastContext';
 
 export default function VendorDetailPage() {
@@ -44,10 +44,7 @@ export default function VendorDetailPage() {
 
   if (loading) {
     return (
-      <div className="py-24 flex flex-col items-center justify-center gap-2">
-        <Spinner size="lg" />
-        <p className="text-xs text-slate-500 font-medium">Loading vendor details...</p>
-      </div>
+      <PageLoader message="Loading vendor details..." subtitle="Retrieving supplier account and purchase history" />
     );
   }
 

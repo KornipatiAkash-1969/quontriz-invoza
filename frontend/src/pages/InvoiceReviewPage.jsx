@@ -39,6 +39,7 @@ import { formatCurrency } from '../utils/formatters';
 import RawOcrViewerModal from '../components/review/RawOcrViewerModal';
 import DuplicateWarningModal from '../components/review/DuplicateWarningModal';
 import VendorCreateModal from '../components/review/VendorCreateModal';
+import { Spinner, PageLoader } from '../components/ui';
 
 export default function InvoiceReviewPage() {
   const location = useLocation();
@@ -704,7 +705,7 @@ export default function InvoiceReviewPage() {
             disabled={isSubmitting}
             className="flex items-center gap-2 px-5 py-2 text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition active:scale-[0.98] disabled:opacity-50"
           >
-            <Save className="w-4 h-4" />
+            {isSubmitting ? <Spinner size="xs" variant="white" /> : <Save className="w-4 h-4" />}
             <span>{isSubmitting ? 'Saving...' : 'Confirm & Save'}</span>
           </button>
         </div>
@@ -1582,7 +1583,7 @@ export default function InvoiceReviewPage() {
                 disabled={isSubmitting}
                 className="flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition active:scale-[0.98] disabled:opacity-50"
               >
-                <Save className="w-4 h-4" />
+                {isSubmitting ? <Spinner size="xs" variant="white" /> : <Save className="w-4 h-4" />}
                 <span>{isSubmitting ? 'Saving Invoice...' : 'Confirm & Save Invoice'}</span>
               </button>
             </div>

@@ -5,7 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProductTourProvider } from './context/ProductTourContext';
 import { UpdatesProvider } from './context/UpdatesContext';
 import Layout from './components/layout/Layout';
-import { Spinner, ErrorBoundary } from './components/ui';
+import { Spinner, ErrorBoundary, PageLoader } from './components/ui';
 
 // Pages
 import DashboardPage from './pages/DashboardPage';
@@ -33,10 +33,7 @@ function ProtectedRoute({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs font-semibold text-slate-500">Verifying session...</p>
-        </div>
+        <PageLoader message="Verifying session..." subtitle="Securing your store workspace" />
       </div>
     );
   }
@@ -58,10 +55,7 @@ function PublicRoute({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs font-semibold text-slate-500">Loading...</p>
-        </div>
+        <PageLoader message="Initializing Quontriz Invoza..." subtitle="Checking authentication status" />
       </div>
     );
   }
@@ -83,7 +77,7 @@ function OwnerRoute({ children }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Spinner size="lg" />
+        <PageLoader message="Verifying Owner permissions..." subtitle="Checking role-based access rights" />
       </div>
     );
   }
@@ -104,7 +98,7 @@ function IndexRoute() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Spinner size="lg" />
+        <PageLoader message="Loading dashboard..." subtitle="Preparing store financial overview" />
       </div>
     );
   }

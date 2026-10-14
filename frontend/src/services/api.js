@@ -8,19 +8,48 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to attach JWT token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+let activeRequestsCount = 0;
+
+function notifyLoadingStart(config) {
+  if (config?.headers?.['X-Silent-Request']) return;
+  activeRequestsCount++;
+  if (activeRequestsCount === 1 && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('api:loading', { detail: { loading: true } }));
   }
-  return config;
-});
+}
+
+function notifyLoadingEnd(config) {
+  if (config?.headers?.['X-Silent-Request']) return;
+  activeRequestsCount = Math.max(0, activeRequestsCount - 1);
+  if (activeRequestsCount === 0 && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('api:loading', { detail: { loading: false } }));
+  }
+}
+
+// Request interceptor to attach JWT token and dispatch loading state
+api.interceptors.request.use(
+  (config) => {
+    notifyLoadingStart(config);
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    notifyLoadingEnd(error.config);
+    return Promise.reject(error);
+  }
+);
 
 // Response interceptor for consistent error handling and 401 auto-logout
 api.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    notifyLoadingEnd(response.config);
+    return response.data;
+  },
   (error) => {
+    notifyLoadingEnd(error?.config);
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -128,7 +157,7 @@ export const dashboardApi = {
 };
 
 export const notificationApi = {
-  getUpdates: () => api.get('/notifications/updates'),
+  getUpdates: () => api.get('/notifications/updates', { headers: { 'X-Silent-Request': 'true' } }),
   getAll: (params) => api.get('/notifications', { params }),
   markAsRead: (id) => api.post(`/notifications/${id}/read`),
   markAllAsRead: () => api.post('/notifications/mark-all-read'),

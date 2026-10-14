@@ -16,7 +16,7 @@ import {
   FileText
 } from 'lucide-react';
 import { vendorTypeApi } from '../services/api';
-import { Spinner } from '../components/ui';
+import { Spinner, CardSkeleton } from '../components/ui';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
 import { formatCurrency } from '../utils/formatters';
@@ -131,10 +131,7 @@ export default function VendorTypesPage() {
 
       {/* Grid of Vendor Types */}
       {loading ? (
-        <div className="py-16 flex flex-col items-center justify-center gap-2">
-          <Spinner />
-          <p className="text-xs text-slate-500">Loading vendor types...</p>
-        </div>
+        <CardSkeleton count={4} />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {types.map((vt) => {

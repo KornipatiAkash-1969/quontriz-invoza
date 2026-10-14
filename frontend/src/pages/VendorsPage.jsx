@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { vendorApi, vendorTypeApi } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
-import { Spinner } from '../components/ui';
+import { Spinner, TableSkeleton } from '../components/ui';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
@@ -230,10 +230,7 @@ export default function VendorsPage() {
       {/* Vendors Table */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-2">
-            <Spinner />
-            <p className="text-xs text-slate-500">Loading vendors...</p>
-          </div>
+          <TableSkeleton rows={6} cols={5} />
         ) : vendors.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-xs">
             No vendors found. Add your first vendor or upload an invoice to detect automatically.

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { categoryApi } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
-import { Spinner } from '../components/ui';
+import { Spinner, TableSkeleton } from '../components/ui';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';
@@ -118,10 +118,7 @@ export default function CategoriesPage() {
       {/* Categories Cards / Table */}
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-2">
-            <Spinner />
-            <p className="text-xs text-slate-500">Loading categories...</p>
-          </div>
+          <TableSkeleton rows={5} cols={4} />
         ) : categories.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-xs">
             No categories defined.

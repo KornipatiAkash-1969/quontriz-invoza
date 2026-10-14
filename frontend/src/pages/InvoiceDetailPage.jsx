@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { invoiceApi } from '../services/api';
 import { formatCurrency, formatDate, formatDateTime } from '../utils/formatters';
-import { Spinner } from '../components/ui';
+import { Spinner, PageLoader } from '../components/ui';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import RawOcrViewerModal from '../components/review/RawOcrViewerModal';
 import PaymentApprovalModal from '../components/review/PaymentApprovalModal';
@@ -127,10 +127,7 @@ export default function InvoiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="py-24 flex flex-col items-center justify-center gap-2">
-        <Spinner size="lg" />
-        <p className="text-xs text-slate-500 font-medium">Loading invoice #{id}...</p>
-      </div>
+      <PageLoader message={`Loading invoice #${id}...`} subtitle="Retrieving document details and line items" />
     );
   }
 
@@ -198,7 +195,7 @@ export default function InvoiceDetailPage() {
             className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 shadow-2xs transition disabled:opacity-50"
             title="Download clean invoice document as PDF file"
           >
-            <Download className="w-3.5 h-3.5 text-indigo-600" />
+            {downloadingPdf ? <Spinner size="xs" /> : <Download className="w-3.5 h-3.5 text-indigo-600" />}
             <span>{downloadingPdf ? 'Downloading PDF...' : 'Download PDF'}</span>
           </button>
 
