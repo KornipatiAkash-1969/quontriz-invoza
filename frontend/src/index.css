@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 antialiased font-sans text-xs sm:text-sm selection:bg-indigo-500 selection:text-white;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  h1 {
+    @apply text-lg sm:text-xl font-bold text-slate-900 tracking-tight;
+  }
+
+  h2 {
+    @apply text-base sm:text-lg font-bold text-slate-900 tracking-tight;
+  }
+
+  h3 {
+    @apply text-sm sm:text-base font-semibold text-slate-900;
+  }
+
+  p {
+    @apply text-xs sm:text-[13px] leading-relaxed;
+  }
+
+  input, select, textarea {
+    @apply text-xs sm:text-[13px];
+  }
+
+  table {
+    @apply text-xs;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* =========================================================================
+   PRINT STYLES: Strict Invoice Isolation (Download / Save as PDF / Print)
+   ========================================================================= */
+@media print {
+  @page {
+    size: auto;
+    margin: 12mm 15mm;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely hide all navigation, headers, sidebars, buttons, dialogs, banners, and toolbars */
+  aside,
+  header,
+  nav,
+  .no-print,
+  .no-print *,
+  #product-tour-modal,
+  [role="dialog"] {
+    display: none !important;
+  }
+
+  /* Reset main layout flex offsets and margins */
+  .min-h-screen {
+    min-height: 0 !important;
+    background: transparent !important;
+    display: block !important;
+  }
+
+  .lg\:pl-64,
+  div[class*="lg:pl-64"] {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Printable invoice document card: expand to 100% width, remove border/shadows for crisp sheet */
+  #printable-invoice {
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+  }
+
+  /* Prevent awkward page break cuts across table rows */
+  table {
+    width: 100% !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* Preserve sharp background contrast and border colors on printout */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

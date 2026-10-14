@@ -1,0 +1,29 @@
+{
+  "name": "quontriz-invoza",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node server/app.js",
+    "build": "npm --prefix frontend run build",
+    "postinstall": "npm --prefix server install && npm --prefix frontend install",
+    "dev": "concurrently -k -n \"SERVER,FRONTEND\" -c \"blue.bold,green.bold\" \"npm --prefix server run start\" \"npm --prefix frontend run dev\"",
+    "dev:server": "npm --prefix server run start",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:client": "npm --prefix frontend run dev",
+    "install:all": "npm install && npm --prefix server install && npm --prefix frontend install"
+  },
+  "keywords": [
+    "ocr",
+    "invoice",
+    "tesseract",
+    "classification",
+    "supermarket",
+    "react",
+    "express",
+    "sqlite"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

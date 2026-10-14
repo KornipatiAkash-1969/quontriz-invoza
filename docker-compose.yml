@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quontriz-invoza
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - JWT_SECRET=invoza-production-super-secret-jwt-key-2026
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=465
+      - SMTP_SECURE=true
+      - SMTP_USER=akash.kornipati1969@gmail.com
+      - SMTP_PASS=oogztajfdfphxzwq
+      - SMTP_FROM="Quontriz Invoza" <akash.kornipati1969@gmail.com>
+    volumes:
+      - invoza-data:/app/server/database
+      - invoza-uploads:/app/server/uploads
+
+volumes:
+  invoza-data:
+  invoza-uploads:

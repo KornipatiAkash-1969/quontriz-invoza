@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: quontriz-invoza
+    env: node
+    plan: starter
+    buildCommand: npm run install:all && npm run build
+    startCommand: npm start
+    disk:
+      name: invoza-disk
+      mountPath: /app/server/database
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 465
+      - key: SMTP_SECURE
+        value: "true"
+      - key: SMTP_USER
+        value: akash.kornipati1969@gmail.com
+      - key: SMTP_PASS
+        value: oogztajfdfphxzwq
+      - key: SMTP_FROM
+        value: '"Quontriz Invoza" <akash.kornipati1969@gmail.com>'

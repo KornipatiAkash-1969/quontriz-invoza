@@ -1,0 +1,42 @@
+{
+  "learned_headers": [
+    "s.no",
+    "item name",
+    "description",
+    "particulars",
+    "sku",
+    "hsn",
+    "qty",
+    "quantity",
+    "unit",
+    "unit price",
+    "rate",
+    "price",
+    "disc",
+    "discount",
+    "taxable amount",
+    "taxable",
+    "cgst",
+    "sgst",
+    "igst",
+    "total",
+    "line total"
+  ],
+  "learned_unit_synonyms": {
+    "bottles": "bottle",
+    "packets": "packet",
+    "cartons": "carton",
+    "bags": "bag",
+    "boxes": "box",
+    "tins": "tin"
+  },
+  "category_associations": {
+    "samsung 55 inch led tv": "Electronics",
+    "hdmi high speed cable 2m": "Electronics",
+    "amul taaza fresh toned milk 500ml": "Dairy",
+    "amul salted butter 500g": "Dairy",
+    "britannia good day cashew cookies 200g": "Snacks",
+    "lays classic salted potato chips 50g": "Snacks"
+  },
+  "last_updated": "2026-10-11T16:11:34.644Z"
+}

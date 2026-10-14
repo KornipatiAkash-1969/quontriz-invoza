@@ -1,0 +1,27 @@
+# Node dependencies
+node_modules/
+frontend/node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production builds
+frontend/dist/
+client/dist/
+
+# Uploaded invoice files (preserve sample templates)
+server/uploads/*
+!server/uploads/samples/
+!server/uploads/.gitkeep
+
+# Environment variables
+.env
+server/.env
+
+# Database journal & temp files
+server/database/*.db-wal
+server/database/*.db-shm
+
+# System and logs
+*.log
+.DS_Store
+Thumbs.db
