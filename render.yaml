@@ -11,8 +11,10 @@ services:
         value: 22.12.0
       - key: NODE_ENV
         value: production
+      - key: MYSQL_URL
+        sync: false
       - key: JWT_SECRET
-        generateValue: true
+        value: quontriz_invoza_jwt_secret_key_2026_secure
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
