@@ -28,9 +28,17 @@ router.get('/', async (req, res) => {
             : 'Unconfigured (Local Fallback Ready)'
         },
         database: {
-          engine: db.isMysql ? 'MySQL 8.0+ (Connection Pool)' : 'SQLite 3 (Node.js Native)',
-          dialect: db.isMysql ? 'MySQL' : 'SQLite',
-          journalMode: db.isMysql ? 'InnoDB ACID Transactions' : 'WAL (Write-Ahead Logging)',
+          engine: db.isPostgres()
+            ? 'PostgreSQL 16+ (Render Managed)'
+            : db.isMysql()
+            ? 'MySQL 8.0+ (Connection Pool)'
+            : 'SQLite 3 (Node.js Native)',
+          dialect: db.getDriverType().toUpperCase(),
+          journalMode: db.isPostgres()
+            ? 'ACID Multiversion Concurrency Control (MVCC)'
+            : db.isMysql()
+            ? 'InnoDB ACID Transactions'
+            : 'WAL (Write-Ahead Logging)',
           status: 'Connected'
         }
       }

@@ -1,7 +1,13 @@
 const db = require('./db');
+const initPostgres = require('./initPostgres');
 const initMysql = require('./initMysql');
 
 async function initDb() {
+  if (db.isPostgres()) {
+    console.log('[initDb] Detected PostgreSQL environment. Initializing PostgreSQL schema & seeds...');
+    return await initPostgres();
+  }
+
   if (db.isMysql()) {
     console.log('[initDb] Detected MySQL environment. Initializing MySQL schema & seeds...');
     return await initMysql();

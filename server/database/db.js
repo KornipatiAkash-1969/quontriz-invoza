@@ -1,8 +1,18 @@
 const path = require('path');
 const fs = require('fs');
 
-// Detect if MySQL is configured (via Railway, cloud MySQL, or custom env vars)
-const isMysqlConfigured = Boolean(
+// Detect if PostgreSQL is configured (Render native, Supabase, Neon, or custom env vars)
+const isPostgresConfigured = Boolean(
+  (process.env.DATABASE_URL && (process.env.DATABASE_URL.startsWith('postgres://') || process.env.DATABASE_URL.startsWith('postgresql://'))) ||
+  process.env.POSTGRES_URL ||
+  process.env.PG_URL ||
+  process.env.PGHOST ||
+  process.env.DB_TYPE === 'postgres' ||
+  process.env.DB_TYPE === 'postgresql'
+);
+
+// Detect if MySQL is configured (Railway, cloud MySQL, or custom env vars)
+const isMysqlConfigured = !isPostgresConfigured && Boolean(
   process.env.MYSQL_URL ||
   (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('mysql')) ||
   process.env.MYSQLHOST ||
@@ -12,8 +22,12 @@ const isMysqlConfigured = Boolean(
 
 let sqliteDb = null;
 let mysqlClient = null;
+let postgresClient = null;
 
-if (isMysqlConfigured) {
+if (isPostgresConfigured) {
+  postgresClient = require('./postgresClient');
+  postgresClient.init();
+} else if (isMysqlConfigured) {
   mysqlClient = require('./mysqlClient');
   mysqlClient.init();
 } else {
@@ -43,19 +57,30 @@ if (isMysqlConfigured) {
 }
 
 const dbHelper = {
+  isPostgres() {
+    return isPostgresConfigured;
+  },
+
   isMysql() {
     return isMysqlConfigured;
   },
 
   getDriverType() {
-    return isMysqlConfigured ? 'mysql' : 'sqlite';
+    if (isPostgresConfigured) return 'postgres';
+    if (isMysqlConfigured) return 'mysql';
+    return 'sqlite';
   },
 
   getRawDb() {
-    return isMysqlConfigured ? mysqlClient.getPool() : sqliteDb;
+    if (isPostgresConfigured) return postgresClient.getPool();
+    if (isMysqlConfigured) return mysqlClient.getPool();
+    return sqliteDb;
   },
 
   async query(sql, params = []) {
+    if (isPostgresConfigured) {
+      return await postgresClient.query(sql, params);
+    }
     if (isMysqlConfigured) {
       return await mysqlClient.query(sql, params);
     }
@@ -64,6 +89,9 @@ const dbHelper = {
   },
 
   async get(sql, params = []) {
+    if (isPostgresConfigured) {
+      return await postgresClient.get(sql, params);
+    }
     if (isMysqlConfigured) {
       return await mysqlClient.get(sql, params);
     }
@@ -72,6 +100,9 @@ const dbHelper = {
   },
 
   async run(sql, params = []) {
+    if (isPostgresConfigured) {
+      return await postgresClient.run(sql, params);
+    }
     if (isMysqlConfigured) {
       return await mysqlClient.run(sql, params);
     }
@@ -86,6 +117,9 @@ const dbHelper = {
   },
 
   async exec(sql) {
+    if (isPostgresConfigured) {
+      return await postgresClient.exec(sql);
+    }
     if (isMysqlConfigured) {
       return await mysqlClient.exec(sql);
     }
@@ -93,6 +127,9 @@ const dbHelper = {
   },
 
   async transaction(fn) {
+    if (isPostgresConfigured) {
+      return await postgresClient.transaction(fn);
+    }
     if (isMysqlConfigured) {
       return await mysqlClient.transaction(fn);
     }

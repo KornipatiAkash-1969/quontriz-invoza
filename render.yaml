@@ -1,3 +1,10 @@
+databases:
+  - name: quontriz-invoza-db
+    databaseName: quontriz_invoza
+    user: quontriz_user
+    plan: free
+    region: oregon
+
 services:
   - type: web
     name: quontriz-invoza
@@ -11,8 +18,10 @@ services:
         value: 22.12.0
       - key: NODE_ENV
         value: production
-      - key: MYSQL_URL
-        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: quontriz-invoza-db
+          property: connectionString
       - key: JWT_SECRET
         value: quontriz_invoza_jwt_secret_key_2026_secure
       - key: SMTP_HOST

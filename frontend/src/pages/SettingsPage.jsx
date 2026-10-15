@@ -44,7 +44,7 @@ export default function SettingsPage() {
   const [testingOpenAi, setTestingOpenAi] = useState(false);
   const [openAiTestResult, setOpenAiTestResult] = useState(null);
   const [dbInfo, setDbInfo] = useState({
-    engine: 'MySQL 8.0+ / SQLite 3',
+    engine: 'PostgreSQL / MySQL / SQLite',
     journalMode: 'ACID Transactions / WAL'
   });
 
