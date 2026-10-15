@@ -96,8 +96,7 @@ Dashboard & History Updated
 - **Express.js 4**
 - **Multer** (Secure PDF uploads with MIME & 15MB size limits)
 - **Tesseract.js v5** (Pure WebAssembly OCR worker — runs with zero OS binary dependencies)
-- **pdf-parse** & **pdf-lib** (Digital extraction and page rasterization)
-- **node:sqlite** / SQLite 3 (Foreign keys enabled, WAL journaling mode)
+- **PostgreSQL 16+** (via pure JavaScript `pg` driver with connection pooling and SSL)
 
 ---
 
@@ -178,7 +177,7 @@ ocr-invoice-system/
 
 ## 🪟 Windows Setup Instructions
 
-This application is built with pure JavaScript and WebAssembly dependencies (`node:sqlite` and `tesseract.js` WASM), meaning:
+This application is built with pure JavaScript and WebAssembly dependencies (`pg` node-postgres and `tesseract.js` WASM), meaning:
 - **No Python or Visual Studio Build Tools required**.
 - **No Ghostscript or Poppler `.exe` installations needed**.
 
