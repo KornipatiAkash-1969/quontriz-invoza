@@ -91,6 +91,30 @@ async function initPostgres() {
     }
   }
 
+  // Purge all data and keep only primary Developer account
+  const purgeAllMigration = await postgresClient.get(
+    "SELECT id FROM schema_migrations WHERE id = 'purge_all_keep_developer_v1'"
+  );
+  if (!purgeAllMigration) {
+    try {
+      await postgresClient.run('DELETE FROM invoice_items');
+      await postgresClient.run('DELETE FROM invoices');
+      await postgresClient.run('DELETE FROM store_requirements');
+      await postgresClient.run('DELETE FROM notifications');
+      await postgresClient.run('DELETE FROM otps');
+      try { await postgresClient.run('DELETE FROM buyers'); } catch (e) {}
+      try { await postgresClient.run('DELETE FROM ai_training_samples'); } catch (e) {}
+      try { await postgresClient.run('DELETE FROM ai_learned_vendor_templates'); } catch (e) {}
+      try { await postgresClient.run('DELETE FROM ai_training_runs'); } catch (e) {}
+      try { await postgresClient.run('DELETE FROM ai_extraction_logs'); } catch (e) {}
+      await postgresClient.run("DELETE FROM users WHERE LOWER(email) NOT IN ('developer@supermarket.com', 'developer@gmail.com')");
+      await postgresClient.run("INSERT INTO schema_migrations (id) VALUES ('purge_all_keep_developer_v1')");
+      console.log('[PostgreSQL] 🧹 Cleaned all data and kept only primary Developer account.');
+    } catch (cleanErr) {
+      console.warn('[PostgreSQL Clean Notice]', cleanErr.message);
+    }
+  }
+
   // 3. Seed Default Categories if empty
   const catCountRow = await postgresClient.get('SELECT COUNT(*) as count FROM categories');
   if (catCountRow && Number(catCountRow.count) === 0) {
