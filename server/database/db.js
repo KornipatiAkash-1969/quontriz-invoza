@@ -12,25 +12,25 @@ if (!fs.existsSync(dbDir)) {
 let db = null;
 let driverType = '';
 
-// Universal SQLite driver initialization:
-// 1. First try 'better-sqlite3' (Universal across Node 18, 20, 22, 24 on Render, Linux, Windows)
-// 2. Fallback to built-in 'node:sqlite' if running on Node >= 22.5.0
+// SQLite driver initialization:
+// 1. First try native built-in 'node:sqlite' (Built into Node >= 22.5.0, zero external C++ binary crashes)
+// 2. Fallback to 'better-sqlite3' if available
 try {
-  const Database = require('better-sqlite3');
-  db = new Database(DB_PATH);
-  driverType = 'better-sqlite3';
-  console.log('[DB] ✅ Connected to SQLite via better-sqlite3 at:', DB_PATH);
-} catch (betterErr) {
+  const { DatabaseSync } = require('node:sqlite');
+  db = new DatabaseSync(DB_PATH);
+  driverType = 'node:sqlite';
+  console.log('[DB] ✅ Connected to SQLite via native node:sqlite at:', DB_PATH);
+} catch (nodeSqliteErr) {
   try {
-    const { DatabaseSync } = require('node:sqlite');
-    db = new DatabaseSync(DB_PATH);
-    driverType = 'node:sqlite';
-    console.log('[DB] ✅ Connected to SQLite via node:sqlite at:', DB_PATH);
-  } catch (nodeSqliteErr) {
-    console.error('[DB Fatal] Neither better-sqlite3 nor node:sqlite could be loaded.');
-    console.error('better-sqlite3 error:', betterErr.message);
+    const Database = require('better-sqlite3');
+    db = new Database(DB_PATH);
+    driverType = 'better-sqlite3';
+    console.log('[DB] ✅ Connected to SQLite via better-sqlite3 at:', DB_PATH);
+  } catch (betterErr) {
+    console.error('[DB Fatal] Neither node:sqlite nor better-sqlite3 could be loaded.');
     console.error('node:sqlite error:', nodeSqliteErr.message);
-    throw new Error('SQLite driver initialization failed.');
+    console.error('better-sqlite3 error:', betterErr.message);
+    throw new Error('SQLite driver initialization failed. Ensure Node >= 22.5.0 is active.');
   }
 }
 
