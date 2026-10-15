@@ -5,14 +5,13 @@ const postgresClient = require('./postgresClient');
 
 async function initPostgres() {
   console.log('[PostgreSQL] 🚀 Initializing PostgreSQL database schema and seed data...');
-  const pool = postgresClient.getPool();
 
   // 1. Read and execute schema_pg.sql
   const schemaPath = path.join(__dirname, 'schema_pg.sql');
   const schemaSql = fs.readFileSync(schemaPath, 'utf8');
 
   try {
-    await pool.query(schemaSql);
+    await postgresClient.exec(schemaSql);
     console.log('[PostgreSQL] ✅ Schema DDL executed successfully.');
   } catch (err) {
     console.error('[PostgreSQL Schema Error]', err.message);
@@ -49,7 +48,7 @@ async function initPostgres() {
   }
 
   // One-time database migration: Permanently remove legacy auto-seeded non-developer accounts
-  await pool.query(`
+  await postgresClient.exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (
       id VARCHAR(255) PRIMARY KEY,
       applied_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
