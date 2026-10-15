@@ -28,17 +28,9 @@ router.get('/', async (req, res) => {
             : 'Unconfigured (Local Fallback Ready)'
         },
         database: {
-          engine: db.isPostgres()
-            ? 'PostgreSQL 16+ (Render Managed)'
-            : db.isMysql()
-            ? 'MySQL 8.0+ (Connection Pool)'
-            : 'SQLite 3 (Node.js Native)',
-          dialect: db.getDriverType().toUpperCase(),
-          journalMode: db.isPostgres()
-            ? 'ACID Multiversion Concurrency Control (MVCC)'
-            : db.isMysql()
-            ? 'InnoDB ACID Transactions'
-            : 'WAL (Write-Ahead Logging)',
+          engine: 'PostgreSQL 16+ (Render Managed / Pure-JS pg)',
+          dialect: 'POSTGRESQL',
+          journalMode: 'ACID Multiversion Concurrency Control (MVCC)',
           status: 'Connected'
         }
       }

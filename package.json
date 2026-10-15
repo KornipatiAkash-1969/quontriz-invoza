@@ -22,7 +22,7 @@
     "supermarket",
     "react",
     "express",
-    "sqlite"
+    "postgresql"
   ],
   "author": "",
   "license": "ISC",

@@ -16,6 +16,15 @@ async function initPostgres() {
     console.log('[PostgreSQL] ✅ Schema DDL executed successfully.');
   } catch (err) {
     console.error('[PostgreSQL Schema Error]', err.message);
+    if (err.code === 'ECONNREFUSED' || (err.message && err.message.includes('ECONNREFUSED'))) {
+      console.error('\n' + '='.repeat(70));
+      console.error('❌ [PostgreSQL Connection Notice]');
+      console.error('Could not connect to PostgreSQL database.');
+      console.error('👉 If connecting to Render: Copy your External Database URL from Render');
+      console.error('   Dashboard (quontriz-invoza-db) and set DATABASE_URL=<URL> in server/.env');
+      console.error('👉 If running locally: Ensure PostgreSQL service is started on port 5432');
+      console.error('='.repeat(70) + '\n');
+    }
     throw err;
   }
 

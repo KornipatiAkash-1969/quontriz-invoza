@@ -65,16 +65,16 @@ export default function SettingsPage() {
             setDbInfo(res.data.database);
           } else {
             setDbInfo({
-              engine: 'SQLite 3 (Node.js Native)',
-              journalMode: 'WAL (Write-Ahead Logging)'
+              engine: 'PostgreSQL 16+ (Render / Cloud Managed)',
+              journalMode: 'ACID Multiversion Concurrency Control (MVCC)'
             });
           }
         }
       } catch (err) {
         console.warn('Failed to load initial settings:', err.message);
         setDbInfo({
-          engine: 'SQLite 3 (Node.js Native)',
-          journalMode: 'WAL (Write-Ahead Logging)'
+          engine: 'PostgreSQL 16+ (Render / Cloud Managed)',
+          journalMode: 'ACID Multiversion Concurrency Control (MVCC)'
         });
       }
     }
@@ -479,7 +479,7 @@ export default function SettingsPage() {
           <div className="space-y-3 text-xs">
             <div className="flex justify-between py-1 border-b border-slate-50">
               <span className="text-slate-500">Database Engine:</span>
-              <span className="font-semibold text-slate-800">{dbInfo.engine || 'SQLite 3 (Node.js Native)'}</span>
+              <span className="font-semibold text-slate-800">{dbInfo.engine || 'PostgreSQL 16+ (Render / Cloud Managed)'}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-50">
               <span className="text-slate-500">Active Learning Memory:</span>
@@ -487,7 +487,7 @@ export default function SettingsPage() {
             </div>
             <div className="flex justify-between py-1 border-b border-slate-50">
               <span className="text-slate-500">Transaction / Mode:</span>
-              <span className="font-semibold text-slate-800">{dbInfo.journalMode || 'WAL / ACID'}</span>
+              <span className="font-semibold text-slate-800">{dbInfo.journalMode || 'ACID Multiversion Concurrency Control (MVCC)'}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-slate-500">Financial Storage:</span>

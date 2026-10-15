@@ -11,7 +11,7 @@
     "ocr",
     "invoice",
     "tesseract",
-    "sqlite",
+    "postgresql",
     "node"
   ],
   "author": "",

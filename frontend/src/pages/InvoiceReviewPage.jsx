@@ -1565,7 +1565,7 @@ export default function InvoiceReviewPage() {
           {/* Bottom Confirmation Bar */}
           <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center justify-between gap-4">
             <div className="text-xs text-slate-500">
-              <span className="font-semibold text-slate-800">{items.length} line items ready.</span> Saved transactionally into PostgreSQL/SQLite schema.
+              <span className="font-semibold text-slate-800">{items.length} line items ready.</span> Saved transactionally into PostgreSQL schema.
             </div>
 
             <div className="flex items-center gap-3">

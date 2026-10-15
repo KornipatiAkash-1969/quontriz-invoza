@@ -5,7 +5,7 @@ const notificationService = require('./NotificationService');
 /**
  * Service 11: InvoicePersistenceService
  * Transactional database persistence for invoices, vendors, buyers, and dynamic line items.
- * Ensures PostgreSQL/SQLite ACID compliance with decimal quantities, original/normalized units,
+ * Ensures PostgreSQL ACID compliance with decimal quantities, original/normalized units,
  * and pricing bases.
  */
 class InvoicePersistenceService {
