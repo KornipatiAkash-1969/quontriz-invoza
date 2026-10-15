@@ -13,7 +13,7 @@ class CategoryController {
         GROUP BY c.id
         ORDER BY total_purchase_amount DESC, c.category_name ASC
       `;
-      const categories = db.query(sql);
+      const categories = await db.query(sql);
       return res.json({ success: true, data: categories });
     } catch (error) {
       console.error('[CategoryController] getCategories error:', error);
@@ -29,13 +29,13 @@ class CategoryController {
       }
 
       const trimmed = category_name.trim();
-      const existing = db.get('SELECT id FROM categories WHERE LOWER(category_name) = LOWER(?)', [trimmed]);
+      const existing = await db.get('SELECT id FROM categories WHERE LOWER(category_name) = LOWER(?)', [trimmed]);
       if (existing) {
         return res.status(400).json({ success: false, error: 'Category already exists.' });
       }
 
-      const result = db.run('INSERT INTO categories (category_name) VALUES (?)', [trimmed]);
-      const created = db.get('SELECT * FROM categories WHERE id = ?', [result.lastInsertRowid]);
+      const result = await db.run('INSERT INTO categories (category_name) VALUES (?)', [trimmed]);
+      const created = await db.get('SELECT * FROM categories WHERE id = ?', [result.lastInsertRowid || result.insertId]);
 
       return res.status(201).json({ success: true, message: 'Category created successfully.', data: created });
     } catch (error) {
@@ -54,19 +54,19 @@ class CategoryController {
       }
 
       const trimmed = category_name.trim();
-      const existing = db.get('SELECT id FROM categories WHERE id = ?', [id]);
+      const existing = await db.get('SELECT id FROM categories WHERE id = ?', [id]);
       if (!existing) {
         return res.status(404).json({ success: false, error: 'Category not found.' });
       }
 
       // Check duplicate name
-      const duplicate = db.get('SELECT id FROM categories WHERE LOWER(category_name) = LOWER(?) AND id != ?', [trimmed, id]);
+      const duplicate = await db.get('SELECT id FROM categories WHERE LOWER(category_name) = LOWER(?) AND id != ?', [trimmed, id]);
       if (duplicate) {
         return res.status(400).json({ success: false, error: 'Another category with this name already exists.' });
       }
 
-      db.run('UPDATE categories SET category_name = ? WHERE id = ?', [trimmed, id]);
-      const updated = db.get('SELECT * FROM categories WHERE id = ?', [id]);
+      await db.run('UPDATE categories SET category_name = ? WHERE id = ?', [trimmed, id]);
+      const updated = await db.get('SELECT * FROM categories WHERE id = ?', [id]);
 
       return res.json({ success: true, message: 'Category updated successfully.', data: updated });
     } catch (error) {
@@ -78,20 +78,20 @@ class CategoryController {
   async deleteCategory(req, res) {
     try {
       const { id } = req.params;
-      const existing = db.get('SELECT id FROM categories WHERE id = ?', [id]);
+      const existing = await db.get('SELECT id FROM categories WHERE id = ?', [id]);
       if (!existing) {
         return res.status(404).json({ success: false, error: 'Category not found.' });
       }
 
       // Re-assign items to 'Other' if exists or set to NULL
-      const otherCat = db.get("SELECT id FROM categories WHERE category_name = 'Other' AND id != ?", [id]);
+      const otherCat = await db.get("SELECT id FROM categories WHERE category_name = 'Other' AND id != ?", [id]);
       if (otherCat) {
-        db.run('UPDATE invoice_items SET category_id = ? WHERE category_id = ?', [otherCat.id, id]);
+        await db.run('UPDATE invoice_items SET category_id = ? WHERE category_id = ?', [otherCat.id, id]);
       } else {
-        db.run('UPDATE invoice_items SET category_id = NULL WHERE category_id = ?', [id]);
+        await db.run('UPDATE invoice_items SET category_id = NULL WHERE category_id = ?', [id]);
       }
 
-      db.run('DELETE FROM categories WHERE id = ?', [id]);
+      await db.run('DELETE FROM categories WHERE id = ?', [id]);
       return res.json({ success: true, message: 'Category deleted successfully.' });
     } catch (error) {
       console.error('[CategoryController] deleteCategory error:', error);

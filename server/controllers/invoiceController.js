@@ -223,7 +223,7 @@ class InvoiceController {
       const creatorUserId = req.user?.id || body.userId || body.created_by_user_id || body.creatorId || null;
       let effectiveUserId = creatorUserId;
       if (!effectiveUserId && (req.user?.role === 'staff' || body.userRole === 'staff')) {
-        const defaultStaff = db.get("SELECT id FROM users WHERE role = 'staff' LIMIT 1");
+        const defaultStaff = await db.get("SELECT id FROM users WHERE role = 'staff' LIMIT 1");
         if (defaultStaff) effectiveUserId = defaultStaff.id;
       }
 
@@ -390,7 +390,7 @@ class InvoiceController {
         LEFT JOIN vendors v ON i.vendor_id = v.id
         ${whereSql}
       `;
-      const countResult = db.get(countSql, params);
+      const countResult = await db.get(countSql, params);
       const totalCount = countResult ? countResult.totalCount : 0;
 
       // Safe sorting column - default by newest first (created_at DESC, id DESC)
@@ -430,7 +430,7 @@ class InvoiceController {
       `;
 
       const listParams = [...params, Number(limit), offset];
-      const invoices = db.query(listSql, listParams);
+      const invoices = await db.query(listSql, listParams);
 
       return res.json({
         success: true,
@@ -460,18 +460,18 @@ class InvoiceController {
         try {
           const istNow = getIstIsoString();
           if (req.user.role === 'owner') {
-            db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, id]);
-            db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND (target_role = ? OR target_role = ?)', [istNow, 'invoice', id, 'owner', 'all']);
+            await db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, id]);
+            await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND (target_role = ? OR target_role = ?)', [istNow, 'invoice', id, 'owner', 'all']);
           } else {
-            db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, id]);
-            db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND (target_role = ? OR target_role = ?)', [istNow, 'invoice', id, 'staff', 'all']);
+            await db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, id]);
+            await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND (target_role = ? OR target_role = ?)', [istNow, 'invoice', id, 'staff', 'all']);
           }
         } catch (e) {
           console.warn('[InvoiceController] Failed to mark viewed:', e.message);
         }
       }
 
-      const invoiceData = this.fetchInvoiceWithDetails(id);
+      const invoiceData = await this.fetchInvoiceWithDetails(id);
 
       if (!invoiceData) {
         return res.status(404).json({ success: false, error: 'Invoice not found.' });
@@ -490,7 +490,7 @@ class InvoiceController {
   async downloadInvoicePdf(req, res) {
     try {
       const { id } = req.params;
-      const invoiceData = this.fetchInvoiceWithDetails(id);
+      const invoiceData = await this.fetchInvoiceWithDetails(id);
 
       if (!invoiceData) {
         return res.status(404).json({ success: false, error: 'Invoice not found.' });
@@ -519,7 +519,7 @@ class InvoiceController {
   async getInvoiceItems(req, res) {
     try {
       const { id } = req.params;
-      const items = db.query(`
+      const items = await db.query(`
         SELECT ii.*, c.category_name
         FROM invoice_items ii
         LEFT JOIN categories c ON ii.category_id = c.id
@@ -561,7 +561,7 @@ class InvoiceController {
         items = []
       } = req.body;
 
-      const existing = db.get('SELECT * FROM invoices WHERE id = ?', [id]);
+      const existing = await db.get('SELECT * FROM invoices WHERE id = ?', [id]);
       if (!existing) {
         return res.status(404).json({ success: false, error: 'Invoice not found.' });
       }
@@ -589,8 +589,8 @@ class InvoiceController {
       const isPaidStatus = currentStatus === 'Paid';
       const balanceVal = isPaidStatus ? 0 : (outstanding_balance !== undefined ? Number(outstanding_balance) : Math.max(0, parseFloat((totalVal - advanceVal - paidVal).toFixed(2))));
 
-      db.transaction(() => {
-        db.run(`
+      await db.transaction(async () => {
+        await db.run(`
           UPDATE invoices SET
             vendor_id = ?,
             invoice_number = ?,
@@ -638,10 +638,10 @@ class InvoiceController {
         ]);
 
         if (items && items.length > 0) {
-          db.run('DELETE FROM invoice_items WHERE invoice_id = ?', [id]);
+          await db.run('DELETE FROM invoice_items WHERE invoice_id = ?', [id]);
           for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            db.run(`
+            await db.run(`
               INSERT INTO invoice_items (
                 invoice_id, line_number, item_name, item_description, sku, hsn_code, category_id,
                 quantity, unit, unit_original, unit_normalized, unit_price,
@@ -683,11 +683,11 @@ class InvoiceController {
         }
       });
 
-      const updated = this.fetchInvoiceWithDetails(id);
+      const updated = await this.fetchInvoiceWithDetails(id);
 
       // Create persistent notification for the reciprocal party
       try {
-        notificationService.createNotification({
+        await notificationService.createNotification({
           target_role: isOwner ? 'staff' : 'owner',
           type: 'invoice_updated',
           title: isOwner ? 'Invoice Updated by Owner' : 'Invoice Updated by Staff',
@@ -715,7 +715,7 @@ class InvoiceController {
   async deleteInvoice(req, res) {
     try {
       const { id } = req.params;
-      const invoice = db.get('SELECT * FROM invoices WHERE id = ?', [id]);
+      const invoice = await db.get('SELECT * FROM invoices WHERE id = ?', [id]);
       if (!invoice) {
         return res.status(404).json({ success: false, error: 'Invoice not found.' });
       }
@@ -724,10 +724,10 @@ class InvoiceController {
         try { fs.unlinkSync(invoice.pdf_path); } catch (_) {}
       }
 
-      db.transaction(() => {
-        db.run('DELETE FROM invoice_items WHERE invoice_id = ?', [id]);
-        db.run('DELETE FROM invoices WHERE id = ?', [id]);
-        db.run('DELETE FROM notifications WHERE related_id = ? AND related_type = ?', [id, 'invoice']);
+      await db.transaction(async () => {
+        await db.run('DELETE FROM invoice_items WHERE invoice_id = ?', [id]);
+        await db.run('DELETE FROM invoices WHERE id = ?', [id]);
+        await db.run('DELETE FROM notifications WHERE related_id = ? AND related_type = ?', [id, 'invoice']);
       });
 
       return res.json({ success: true, message: 'Invoice deleted successfully.' });
@@ -745,7 +745,7 @@ class InvoiceController {
       const { id } = req.params;
       const { paymentMethod = 'Bank Transfer', paymentReference = '', paymentNotes = '' } = req.body;
 
-      const invoice = db.get('SELECT * FROM invoices WHERE id = ?', [id]);
+      const invoice = await db.get('SELECT * FROM invoices WHERE id = ?', [id]);
       if (!invoice) {
         return res.status(404).json({ success: false, error: 'Invoice not found.' });
       }
@@ -757,7 +757,7 @@ class InvoiceController {
       const totalAmount = Number(invoice.total) || 0;
       const finalPaidSettlement = Math.max(0, parseFloat((totalAmount - advancePaid).toFixed(2)));
 
-      db.run(`
+      await db.run(`
         UPDATE invoices SET
           status = 'Paid',
           paid = ?,
@@ -787,10 +787,10 @@ class InvoiceController {
         id
       ]);
 
-      const updated = this.fetchInvoiceWithDetails(id);
+      const updated = await this.fetchInvoiceWithDetails(id);
 
       try {
-        notificationService.createNotification({
+        await notificationService.createNotification({
           target_role: 'staff',
           type: 'invoice_paid',
           title: 'Invoice Payment Approved',
@@ -824,13 +824,13 @@ class InvoiceController {
       const { id } = req.params;
       const { reason = 'Rejected by owner' } = req.body;
 
-      const invoice = db.get('SELECT * FROM invoices WHERE id = ?', [id]);
+      const invoice = await db.get('SELECT * FROM invoices WHERE id = ?', [id]);
       if (!invoice) {
         return res.status(404).json({ success: false, error: 'Invoice not found.' });
       }
 
       const istNow = getIstIsoString();
-      db.run(`
+      await db.run(`
         UPDATE invoices SET
           status = 'Rejected',
           approved_by_user_id = ?,
@@ -849,10 +849,10 @@ class InvoiceController {
         id
       ]);
 
-      const updated = this.fetchInvoiceWithDetails(id);
+      const updated = await this.fetchInvoiceWithDetails(id);
 
       try {
-        notificationService.createNotification({
+        await notificationService.createNotification({
           target_role: 'staff',
           type: 'invoice_rejected',
           title: 'Invoice Rejected by Owner',
@@ -880,8 +880,8 @@ class InvoiceController {
   /**
    * Helper to fetch full invoice with joined vendor, buyer, and items
    */
-  fetchInvoiceWithDetails(id) {
-    const invoice = db.get(`
+  async fetchInvoiceWithDetails(id) {
+    const invoice = await db.get(`
       SELECT 
         i.*,
         v.vendor_name,
@@ -907,7 +907,7 @@ class InvoiceController {
 
     if (!invoice) return null;
 
-    const items = db.query(`
+    const items = await db.query(`
       SELECT ii.*, c.category_name
       FROM invoice_items ii
       LEFT JOIN categories c ON ii.category_id = c.id

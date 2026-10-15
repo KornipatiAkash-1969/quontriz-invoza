@@ -58,7 +58,7 @@ class AiTrainingService {
   /**
    * 1. Record ground-truth training sample from confirmed/approved invoice
    */
-  recordTrainingSample({
+  async recordTrainingSample({
     invoiceId,
     vendorId,
     vendorName,
@@ -74,16 +74,16 @@ class AiTrainingService {
       // Extract invoice details from DB if not provided
       let finalTruth = groundTruth;
       if (!finalTruth) {
-        const inv = db.get('SELECT * FROM invoices WHERE id = ?', [invoiceId]);
+        const inv = await db.get('SELECT * FROM invoices WHERE id = ?', [invoiceId]);
         if (!inv) return null;
-        const items = db.query('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY line_number ASC', [invoiceId]);
+        const items = await db.query('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY line_number ASC', [invoiceId]);
         finalTruth = {
           invoice: inv,
           items: items
         };
         if (!ocrText) ocrText = inv.ocr_text || '';
         if (!vendorName) {
-          const v = db.get('SELECT vendor_name FROM vendors WHERE id = ?', [inv.vendor_id]);
+          const v = await db.get('SELECT vendor_name FROM vendors WHERE id = ?', [inv.vendor_id]);
           vendorName = v ? v.vendor_name : 'Unknown Vendor';
         }
       }
@@ -99,9 +99,9 @@ class AiTrainingService {
       }
 
       // Check if sample already recorded for this invoice
-      const existing = db.get('SELECT id FROM ai_training_samples WHERE invoice_id = ?', [invoiceId]);
+      const existing = await db.get('SELECT id FROM ai_training_samples WHERE invoice_id = ?', [invoiceId]);
       if (existing) {
-        db.run(`
+        await db.run(`
           UPDATE ai_training_samples SET
             vendor_name = ?,
             ocr_text = ?,
@@ -123,7 +123,7 @@ class AiTrainingService {
         return { id: existing.id, updated: true };
       }
 
-      const res = db.run(`
+      const res = await db.run(`
         INSERT INTO ai_training_samples (
           invoice_id, vendor_id, vendor_name, document_type, ocr_text,
           ai_prediction_json, ground_truth_json, user_corrections_json,
@@ -195,7 +195,7 @@ class AiTrainingService {
     console.log('[AiTrainingService] Starting AI Model training & learning pipeline...');
 
     // A. Ingest all approved invoices as training samples if not already ingested
-    const approvedInvoices = db.query(`
+    const approvedInvoices = await db.query(`
       SELECT i.*, v.vendor_name 
       FROM invoices i 
       LEFT JOIN vendors v ON i.vendor_id = v.id 
@@ -203,10 +203,10 @@ class AiTrainingService {
     `);
 
     for (const inv of approvedInvoices) {
-      const existing = db.get('SELECT id FROM ai_training_samples WHERE invoice_id = ?', [inv.id]);
+      const existing = await db.get('SELECT id FROM ai_training_samples WHERE invoice_id = ?', [inv.id]);
       if (!existing) {
-        const items = db.query('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY line_number ASC', [inv.id]);
-        this.recordTrainingSample({
+        const items = await db.query('SELECT * FROM invoice_items WHERE invoice_id = ? ORDER BY line_number ASC', [inv.id]);
+        await this.recordTrainingSample({
           invoiceId: inv.id,
           vendorId: inv.vendor_id,
           vendorName: inv.vendor_name || 'Verified Supplier',
@@ -217,7 +217,7 @@ class AiTrainingService {
     }
 
     // B. Group training samples by Vendor
-    const samples = db.query('SELECT * FROM ai_training_samples WHERE is_validated = 1');
+    const samples = await db.query('SELECT * FROM ai_training_samples WHERE is_validated = 1');
     const vendorMap = {};
 
     samples.forEach(s => {
@@ -237,11 +237,11 @@ class AiTrainingService {
       const unitVocab = {};
       const sampleItemRows = [];
 
-      vSamples.forEach(s => {
+      for (const s of vSamples) {
         let truth = null;
         try { truth = JSON.parse(s.ground_truth_json); } catch (_) {}
         if (truth && Array.isArray(truth.items)) {
-          truth.items.forEach(it => {
+          for (const it of truth.items) {
             if (it.sku) columnOrder.includes('sku') || columnOrder.splice(2, 0, 'sku');
             if (it.hsn_code) columnOrder.includes('hsn_code') || columnOrder.splice(3, 0, 'hsn_code');
             if (it.discount_amount > 0) columnOrder.includes('discount_amount') || columnOrder.push('discount_amount');
@@ -254,7 +254,7 @@ class AiTrainingService {
 
             // Learn Product -> Category mappings
             if (it.item_name && it.category_id) {
-              const cat = db.get('SELECT category_name FROM categories WHERE id = ?', [it.category_id]);
+              const cat = await db.get('SELECT category_name FROM categories WHERE id = ?', [it.category_id]);
               if (cat) {
                 learnedPatterns.category_associations[it.item_name.toLowerCase()] = cat.category_name;
               }
@@ -270,9 +270,9 @@ class AiTrainingService {
                 line_total: it.line_total
               });
             }
-          });
+          }
         }
-      });
+      }
 
       // Few-Shot Prompt Representation
       const fewShotPrompt = {
@@ -283,9 +283,9 @@ class AiTrainingService {
       };
 
       // Save into ai_learned_vendor_templates
-      const existingTpl = db.get('SELECT id FROM ai_learned_vendor_templates WHERE vendor_name = ?', [vendorName]);
+      const existingTpl = await db.get('SELECT id FROM ai_learned_vendor_templates WHERE vendor_name = ?', [vendorName]);
       if (existingTpl) {
-        db.run(`
+        await db.run(`
           UPDATE ai_learned_vendor_templates SET
             sample_count = ?,
             table_format = ?,
@@ -304,7 +304,7 @@ class AiTrainingService {
           existingTpl.id
         ]);
       } else {
-        db.run(`
+        await db.run(`
           INSERT INTO ai_learned_vendor_templates (
             vendor_name, vendor_id, sample_count, table_format,
             column_order_json, unit_vocabulary_json, few_shot_prompt_json,
@@ -333,7 +333,7 @@ class AiTrainingService {
     // F. Record Training Run
     const trainingLog = `Ingested ${samples.length} ground-truth invoice samples across ${learnedTemplatesCount} supplier templates. Calibrated dynamic measurement heuristics and category mappings. Overall extraction precision improved to ${stats.accuracyScore}%.`;
     
-    db.run(`
+    await db.run(`
       INSERT INTO ai_training_runs (
         model_type, training_samples_count, accuracy_before, accuracy_after,
         learned_patterns_count, status, logs
@@ -404,10 +404,10 @@ class AiTrainingService {
   /**
    * 3. Retrieve learned Few-Shot In-Context Guidance for a Vendor
    */
-  getVendorFewShotPrompt(candidateVendorName) {
+  async getVendorFewShotPrompt(candidateVendorName) {
     if (!candidateVendorName) return null;
     try {
-      const template = db.get(`
+      const template = await db.get(`
         SELECT * FROM ai_learned_vendor_templates 
         WHERE LOWER(vendor_name) = LOWER(?) OR LOWER(vendor_name) LIKE '%' || LOWER(?) || '%'
         LIMIT 1
@@ -425,8 +425,8 @@ class AiTrainingService {
   /**
    * 4. Generate Fine-Tuning Datasets (OpenAI or Google Gemini format)
    */
-  generateFineTuningDataset(format = 'openai') {
-    const samples = db.query('SELECT * FROM ai_training_samples WHERE is_validated = 1');
+  async generateFineTuningDataset(format = 'openai') {
+    const samples = await db.query('SELECT * FROM ai_training_samples WHERE is_validated = 1');
     const lines = [];
 
     const SYSTEM_PROMPT = "You are an expert AI Document OCR Invoice Parser. Extract structured JSON containing supplier, buyer, invoice header, and all line items with quantity, dynamic units, and taxes.";
@@ -487,18 +487,20 @@ class AiTrainingService {
   /**
    * 5. Get Overall Training Stats and Status for UI Dashboard
    */
-  getTrainingStats() {
-    const sampleCount = db.get('SELECT COUNT(*) as count FROM ai_training_samples').count;
-    const vendorTemplateCount = db.get('SELECT COUNT(*) as count FROM ai_learned_vendor_templates').count;
-    const lastRun = db.get('SELECT * FROM ai_training_runs ORDER BY id DESC LIMIT 1');
+  async getTrainingStats() {
+    const sampleRow = await db.get('SELECT COUNT(*) as count FROM ai_training_samples');
+    const sampleCount = sampleRow?.count || 0;
+    const vendorTemplateRow = await db.get('SELECT COUNT(*) as count FROM ai_learned_vendor_templates');
+    const vendorTemplateCount = vendorTemplateRow?.count || 0;
+    const lastRun = await db.get('SELECT * FROM ai_training_runs ORDER BY id DESC LIMIT 1');
     const learnedPatterns = this.getLearnedPatterns();
 
     const categoryMappingsCount = Object.keys(learnedPatterns.category_associations || {}).length;
     const learnedSynonymsCount = Object.keys(learnedPatterns.learned_unit_synonyms || {}).length;
 
-    const samples = db.query('SELECT * FROM ai_training_samples ORDER BY id DESC LIMIT 10');
-    const templates = db.query('SELECT * FROM ai_learned_vendor_templates ORDER BY sample_count DESC LIMIT 10');
-    const runs = db.query('SELECT * FROM ai_training_runs ORDER BY id DESC LIMIT 5');
+    const samples = await db.query('SELECT * FROM ai_training_samples ORDER BY id DESC LIMIT 10');
+    const templates = await db.query('SELECT * FROM ai_learned_vendor_templates ORDER BY sample_count DESC LIMIT 10');
+    const runs = await db.query('SELECT * FROM ai_training_runs ORDER BY id DESC LIMIT 5');
 
     const accuracyScore = lastRun ? parseFloat((lastRun.accuracy_after * 100).toFixed(1)) : 98.4;
 

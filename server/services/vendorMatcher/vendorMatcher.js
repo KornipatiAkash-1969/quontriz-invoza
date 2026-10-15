@@ -56,8 +56,8 @@ class VendorMatcher {
    * @param {string} [extractedAddress]
    * @returns {Object} Matching result
    */
-  match(extractedVendorName, extractedGstin = '', extractedAddress = '') {
-    const allVendors = db.query('SELECT * FROM vendors');
+  async match(extractedVendorName, extractedGstin = '', extractedAddress = '') {
+    const allVendors = (await db.query('SELECT * FROM vendors')) || [];
 
     // 1. Direct GSTIN Match (100% confidence)
     if (extractedGstin && extractedGstin.trim().length > 5) {

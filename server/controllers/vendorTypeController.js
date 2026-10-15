@@ -10,7 +10,7 @@ class VendorTypeController {
         FROM vendor_types vt
         ORDER BY vt.type_name ASC
       `;
-      const types = db.query(sql);
+      const types = await db.query(sql);
       return res.json({ success: true, data: types });
     } catch (error) {
       console.error('[VendorTypeController] getVendorTypes error:', error);
@@ -26,13 +26,13 @@ class VendorTypeController {
       }
 
       const trimmed = type_name.trim();
-      const existing = db.get('SELECT id FROM vendor_types WHERE LOWER(type_name) = LOWER(?)', [trimmed]);
+      const existing = await db.get('SELECT id FROM vendor_types WHERE LOWER(type_name) = LOWER(?)', [trimmed]);
       if (existing) {
         return res.status(400).json({ success: false, error: 'Vendor type already exists.' });
       }
 
-      const result = db.run('INSERT INTO vendor_types (type_name) VALUES (?)', [trimmed]);
-      const created = db.get('SELECT * FROM vendor_types WHERE id = ?', [result.lastInsertRowid]);
+      const result = await db.run('INSERT INTO vendor_types (type_name) VALUES (?)', [trimmed]);
+      const created = await db.get('SELECT * FROM vendor_types WHERE id = ?', [result.lastInsertRowid || result.insertId]);
 
       return res.status(201).json({ success: true, message: 'Vendor type created successfully.', data: created });
     } catch (error) {
@@ -46,10 +46,10 @@ class VendorTypeController {
       const { id } = req.params;
       let vendorType = null;
       if (!isNaN(Number(id))) {
-        vendorType = db.get('SELECT * FROM vendor_types WHERE id = ?', [Number(id)]);
+        vendorType = await db.get('SELECT * FROM vendor_types WHERE id = ?', [Number(id)]);
       }
       if (!vendorType) {
-        vendorType = db.get('SELECT * FROM vendor_types WHERE LOWER(type_name) = LOWER(?)', [decodeURIComponent(id).trim()]);
+        vendorType = await db.get('SELECT * FROM vendor_types WHERE LOWER(type_name) = LOWER(?)', [decodeURIComponent(id).trim()]);
       }
       const typeName = vendorType ? vendorType.type_name : decodeURIComponent(id).trim();
 
@@ -66,7 +66,7 @@ class VendorTypeController {
         GROUP BY v.id
         ORDER BY total_purchase_amount DESC, v.vendor_name ASC
       `;
-      const vendors = db.query(sql, [typeName]);
+      const vendors = await db.query(sql, [typeName]);
 
       return res.json({
         success: true,

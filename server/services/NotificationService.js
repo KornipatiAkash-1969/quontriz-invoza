@@ -7,7 +7,7 @@ class NotificationService {
    * @param {Object} data 
    * @returns {Object} inserted notification record
    */
-  createNotification(data) {
+  async createNotification(data) {
     try {
       const {
         user_id = null,
@@ -30,7 +30,7 @@ class NotificationService {
       const istNow = getIstIsoString();
 
       // Duplicate prevention: if identical unread notification created in the last 15 seconds, skip
-      const existing = db.get(`
+      const existing = await db.get(`
         SELECT id FROM notifications
         WHERE target_role = ? AND type = ? AND related_id = ? AND title = ? AND is_read = 0
           AND datetime(created_at) >= datetime('now', '-15 seconds')
@@ -41,7 +41,7 @@ class NotificationService {
         return existing;
       }
 
-      const result = db.run(`
+      const result = await db.run(`
         INSERT INTO notifications (
           user_id, target_role, type, title, message, link,
           related_id, related_type, is_read, read_at,
@@ -61,7 +61,7 @@ class NotificationService {
         istNow
       ]);
 
-      const inserted = db.get('SELECT * FROM notifications WHERE id = ?', [result.lastInsertRowid]);
+      const inserted = await db.get('SELECT * FROM notifications WHERE id = ?', [result.lastInsertRowid || result.insertId]);
       return inserted;
     } catch (err) {
       console.error('[NotificationService] Error creating notification:', err.message);
@@ -72,7 +72,7 @@ class NotificationService {
   /**
    * Get notifications for a user/role with filtering and unread count
    */
-  getNotifications(filter = {}) {
+  async getNotifications(filter = {}) {
     const {
       role = 'owner',
       userId = null,
@@ -112,23 +112,25 @@ class NotificationService {
     const whereClause = roleConditions.length > 0 ? `WHERE ${roleConditions.join(' AND ')}` : '';
 
     // Total matching
-    const totalCount = db.get(`SELECT COUNT(*) as count FROM notifications ${whereClause}`, params)?.count || 0;
+    const totalRow = await db.get(`SELECT COUNT(*) as count FROM notifications ${whereClause}`, params);
+    const totalCount = totalRow?.count || 0;
 
     // Unread count specifically for this role/user (excluding test & orphaned)
     const unreadParams = userId ? [userId, role, 'all'] : [role, 'all'];
     const unreadUserClause = userId ? '(user_id = ? OR target_role = ? OR target_role = ?)' : '(target_role = ? OR target_role = ?)';
-    const unreadCount = db.get(`
+    const unreadRow = await db.get(`
       SELECT COUNT(*) as count FROM notifications
       WHERE is_read = 0 
         AND ${unreadUserClause}
         AND type != 'test_duplicate_check'
         AND (related_type != 'invoice' OR related_id IS NULL OR related_id IN (SELECT id FROM invoices))
         AND (related_type != 'requirement' OR related_id IS NULL OR related_id IN (SELECT id FROM store_requirements))
-    `, unreadParams)?.count || 0;
+    `, unreadParams);
+    const unreadCount = unreadRow?.count || 0;
 
     // Fetch paginated rows
     const queryParams = [...params, limit, offset];
-    const notifications = db.query(`
+    const notifications = await db.query(`
       SELECT * FROM notifications
       ${whereClause}
       ORDER BY id DESC
@@ -145,7 +147,7 @@ class NotificationService {
   /**
    * Mark a single notification as read
    */
-  markAsRead(id, role = null, userId = null) {
+  async markAsRead(id, role = null, userId = null) {
     const istNow = getIstIsoString();
     let sql = 'UPDATE notifications SET is_read = 1, read_at = ? WHERE id = ?';
     const params = [istNow, id];
@@ -158,13 +160,13 @@ class NotificationService {
       params.push(userId, role, 'all');
     }
 
-    return db.run(sql, params);
+    return await db.run(sql, params);
   }
 
   /**
    * Mark all unread notifications as read for a role/user
    */
-  markAllAsRead(role = 'owner', userId = null) {
+  async markAllAsRead(role = 'owner', userId = null) {
     const istNow = getIstIsoString();
     let sql = 'UPDATE notifications SET is_read = 1, read_at = ? WHERE is_read = 0';
     const params = [istNow];
@@ -177,20 +179,20 @@ class NotificationService {
       params.push(role, 'all');
     }
 
-    return db.run(sql, params);
+    return await db.run(sql, params);
   }
 
   /**
    * Delete a notification
    */
-  deleteNotification(id) {
-    return db.run('DELETE FROM notifications WHERE id = ?', [id]);
+  async deleteNotification(id) {
+    return await db.run('DELETE FROM notifications WHERE id = ?', [id]);
   }
 
   /**
    * Clear / delete all notifications for a role/user
    */
-  clearAll(role = 'owner', userId = null) {
+  async clearAll(role = 'owner', userId = null) {
     let sql = 'DELETE FROM notifications';
     const params = [];
     if (userId) {
@@ -200,7 +202,7 @@ class NotificationService {
       sql += ' WHERE (target_role = ? OR target_role = ?)';
       params.push(role, 'all');
     }
-    return db.run(sql, params);
+    return await db.run(sql, params);
   }
 }
 

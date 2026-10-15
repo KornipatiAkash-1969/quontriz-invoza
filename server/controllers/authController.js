@@ -11,7 +11,7 @@ class AuthController {
         return res.status(400).json({ success: false, error: 'Email and password are required.' });
       }
 
-      const user = db.get('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [email.trim()]);
+      const user = await db.get('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [email.trim()]);
       if (!user) {
         return res.status(401).json({ success: false, error: 'Invalid email or password.' });
       }
@@ -55,7 +55,7 @@ class AuthController {
       const isTestBypass = req.headers['x-bypass-otp'] === 'true' || req.headers['x-test-suite'] === 'true' || skipOtp;
 
       if (otp) {
-        const vOtp = otpService.verifyOtp(user.email, otp, 'login', true);
+        const vOtp = await otpService.verifyOtp(user.email, otp, 'login', true);
         if (!vOtp.valid) {
           return res.status(400).json({
             success: false,
@@ -65,7 +65,7 @@ class AuthController {
         }
       } else if (!isTestBypass) {
         // If OTP not provided, generate 6-digit OTP and prompt user
-        const otpResult = otpService.generateOtp(user.email, 'login', { portalRole: targetPortal }, 10);
+        const otpResult = await otpService.generateOtp(user.email, 'login', { portalRole: targetPortal }, 10);
         return res.status(200).json({
           success: false,
           requiresOtp: true,
@@ -87,7 +87,7 @@ class AuthController {
 
       // Record login time and date
       const loginTimestamp = new Date().toISOString();
-      db.run('UPDATE users SET last_login_at = ? WHERE id = ?', [loginTimestamp, user.id]);
+      await db.run('UPDATE users SET last_login_at = ? WHERE id = ?', [loginTimestamp, user.id]);
 
       // Set JWT in HTTP cookie with exact 12:00 AM midnight expiration
       const isProduction = process.env.NODE_ENV === 'production' && req.secure;
@@ -144,7 +144,7 @@ class AuthController {
         return res.status(401).json({ success: false, error: 'Not logged in.' });
       }
 
-      const user = db.get('SELECT id, name, email, role, created_at, last_login_at FROM users WHERE id = ?', [req.user.id]);
+      const user = await db.get('SELECT id, name, email, role, created_at, last_login_at FROM users WHERE id = ?', [req.user.id]);
       if (!user) {
         return res.status(404).json({ success: false, error: 'User not found.' });
       }
@@ -166,7 +166,7 @@ class AuthController {
    */
   async getUsers(req, res) {
     try {
-      const users = db.query('SELECT id, name, email, role, created_at, last_login_at FROM users ORDER BY id ASC');
+      const users = await db.query('SELECT id, name, email, role, created_at, last_login_at FROM users ORDER BY id ASC');
       const normalizedUsers = users.map(u => ({
         ...u,
         role: u.role === 'employee' ? 'staff' : u.role
@@ -203,13 +203,13 @@ class AuthController {
       const trimmedEmail = email.trim().toLowerCase();
 
       // Check duplicate user name (case-insensitive)
-      const existingName = db.get(
+      const existingName = await db.get(
         'SELECT id, name, email FROM users WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))',
         [trimmedName]
       );
 
       // Check duplicate email (case-insensitive)
-      const existingEmail = db.get(
+      const existingEmail = await db.get(
         'SELECT id, name, email FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))',
         [trimmedEmail]
       );
@@ -264,7 +264,7 @@ class AuthController {
               code: 'STAFF_OTP_REQUIRED'
             });
           }
-          const vStaff = otpService.verifyOtp(trimmedEmail, staffOtp.trim(), 'create_staff', true);
+          const vStaff = await otpService.verifyOtp(trimmedEmail, staffOtp.trim(), 'create_staff', true);
           if (!vStaff.valid) {
             return res.status(400).json({
               success: false,
@@ -284,7 +284,7 @@ class AuthController {
           // 1. Current Owner Authorization OTP
           const currentOwnerEmail = req.user?.email;
           if (currentOwnerEmail) {
-            const vCurrent = otpService.verifyOtp(currentOwnerEmail, currentOwnerOtp.trim(), 'current_owner_auth', true);
+            const vCurrent = await otpService.verifyOtp(currentOwnerEmail, currentOwnerOtp.trim(), 'current_owner_auth', true);
             if (!vCurrent.valid) {
               return res.status(400).json({
                 success: false,
@@ -294,7 +294,7 @@ class AuthController {
             }
           }
           // 2. New Owner Verification OTP
-          const vNew = otpService.verifyOtp(trimmedEmail, newOwnerOtp.trim(), 'new_owner_verification', true);
+          const vNew = await otpService.verifyOtp(trimmedEmail, newOwnerOtp.trim(), 'new_owner_verification', true);
           if (!vNew.valid) {
             return res.status(400).json({
               success: false,
@@ -306,13 +306,13 @@ class AuthController {
       }
 
       const passwordHash = bcrypt.hashSync(password, 10);
-      const result = db.run(`
+      const result = await db.run(`
         INSERT INTO users (name, email, password_hash, role)
         VALUES (?, ?, ?, ?)
       `, [trimmedName, trimmedEmail, passwordHash, targetRole]);
 
       const newUser = {
-        id: result.lastInsertRowid,
+        id: result.lastInsertRowid || result.insertId,
         name: name.trim(),
         email: email.trim().toLowerCase(),
         role: targetRole,
@@ -351,7 +351,7 @@ class AuthController {
         return res.status(400).json({ success: false, error: 'You cannot delete your own active account.' });
       }
 
-      const user = db.get('SELECT id, name, email, role FROM users WHERE id = ?', [targetId]);
+      const user = await db.get('SELECT id, name, email, role FROM users WHERE id = ?', [targetId]);
       if (!user) {
         return res.status(404).json({ success: false, error: 'User not found.' });
       }
@@ -385,7 +385,7 @@ class AuthController {
           }
 
           // 1. Verify Current Owner Authorization OTP
-          const vCurrent = otpService.verifyOtp(currentOwnerEmail, currentOwnerOtp.trim(), 'current_owner_delete_auth', true);
+          const vCurrent = await otpService.verifyOtp(currentOwnerEmail, currentOwnerOtp.trim(), 'current_owner_delete_auth', true);
           if (!vCurrent.valid) {
             return res.status(400).json({
               success: false,
@@ -395,7 +395,7 @@ class AuthController {
           }
 
           // 2. Verify Target Owner Verification OTP
-          const vTarget = otpService.verifyOtp(user.email, targetOwnerOtp.trim(), 'target_owner_delete_auth', true);
+          const vTarget = await otpService.verifyOtp(user.email, targetOwnerOtp.trim(), 'target_owner_delete_auth', true);
           if (!vTarget.valid) {
             return res.status(400).json({
               success: false,
@@ -408,13 +408,13 @@ class AuthController {
 
       // Disassociate invoices created or approved by this user to avoid FOREIGN KEY constraint error
       try {
-        db.run('UPDATE invoices SET created_by_user_id = NULL WHERE created_by_user_id = ?', [targetId]);
-        db.run('UPDATE invoices SET approved_by_user_id = NULL WHERE approved_by_user_id = ?', [targetId]);
+        await db.run('UPDATE invoices SET created_by_user_id = NULL WHERE created_by_user_id = ?', [targetId]);
+        await db.run('UPDATE invoices SET approved_by_user_id = NULL WHERE approved_by_user_id = ?', [targetId]);
       } catch (fkErr) {
         console.warn('[AuthController] Notice while updating foreign keys before user deletion:', fkErr.message);
       }
 
-      db.run('DELETE FROM users WHERE id = ?', [targetId]);
+      await db.run('DELETE FROM users WHERE id = ?', [targetId]);
       console.log(`[AuthController] Owner ${req.user?.name} deleted user ${user.name} (${user.email}, ${user.role})`);
 
       return res.json({
@@ -448,7 +448,7 @@ class AuthController {
         return res.status(400).json({ success: false, error: 'New password and confirm password do not match.' });
       }
 
-      const user = db.get('SELECT id, name, email, password_hash, role FROM users WHERE id = ?', [userId]);
+      const user = await db.get('SELECT id, name, email, password_hash, role FROM users WHERE id = ?', [userId]);
       if (!user) {
         return res.status(404).json({ success: false, error: 'User account not found.' });
       }
@@ -473,7 +473,7 @@ class AuthController {
       }
 
       const newHash = bcrypt.hashSync(newPassword, 10);
-      db.run('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, userId]);
+      await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, userId]);
 
       console.log(`[AuthController] User ${user.name} (${user.email}, ${user.role}) successfully changed their password.`);
       return res.json({
@@ -501,13 +501,13 @@ class AuthController {
         return res.status(400).json({ success: false, error: 'New password must be at least 4 characters.' });
       }
 
-      const user = db.get('SELECT id, name, email, role FROM users WHERE id = ?', [targetId]);
+      const user = await db.get('SELECT id, name, email, role FROM users WHERE id = ?', [targetId]);
       if (!user) {
         return res.status(404).json({ success: false, error: 'User account not found.' });
       }
 
       const newHash = bcrypt.hashSync(newPassword, 10);
-      db.run('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, targetId]);
+      await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [newHash, targetId]);
 
       console.log(`[AuthController] Owner ${req.user?.name} reset password for user ${user.name} (${user.email})`);
       return res.json({
@@ -551,7 +551,7 @@ class AuthController {
       }
 
       const cleanEmail = email.trim().toLowerCase();
-      const user = db.get('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [cleanEmail]);
+      const user = await db.get('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [cleanEmail]);
       if (!user) {
         return res.status(404).json({
           success: false,
@@ -582,7 +582,7 @@ class AuthController {
         }
       }
 
-      const otpResult = otpService.generateOtp(cleanEmail, 'login', { portalRole: targetPortal }, 10);
+      const otpResult = await otpService.generateOtp(cleanEmail, 'login', { portalRole: targetPortal }, 10);
 
       return res.json({
         success: true,
@@ -614,12 +614,12 @@ class AuthController {
       }
 
       const cleanEmail = email.trim().toLowerCase();
-      const verification = otpService.verifyOtp(cleanEmail, otp, 'login', true);
+      const verification = await otpService.verifyOtp(cleanEmail, otp, 'login', true);
       if (!verification.valid) {
         return res.status(400).json({ success: false, error: verification.error });
       }
 
-      const user = db.get('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [cleanEmail]);
+      const user = await db.get('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [cleanEmail]);
       if (!user) {
         return res.status(404).json({ success: false, error: 'User account not found.' });
       }
@@ -650,7 +650,7 @@ class AuthController {
       const hoursLeft = (msLeft / (1000 * 60 * 60)).toFixed(1);
 
       const loginTimestamp = new Date().toISOString();
-      db.run('UPDATE users SET last_login_at = ? WHERE id = ?', [loginTimestamp, user.id]);
+      await db.run('UPDATE users SET last_login_at = ? WHERE id = ?', [loginTimestamp, user.id]);
 
       const isProduction = process.env.NODE_ENV === 'production' && req.secure;
       res.cookie('token', token, {
@@ -704,8 +704,8 @@ class AuthController {
       const cleanEmail = email.trim().toLowerCase();
 
       // Check duplicate name or email
-      const existingName = db.get('SELECT id FROM users WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))', [cleanName]);
-      const existingEmail = db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [cleanEmail]);
+      const existingName = await db.get('SELECT id FROM users WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))', [cleanName]);
+      const existingEmail = await db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [cleanEmail]);
 
       if (existingName && existingEmail) {
         return res.status(409).json({
@@ -729,7 +729,7 @@ class AuthController {
         });
       }
 
-      const otpResult = otpService.generateOtp(cleanEmail, 'register', { name: cleanName, role: targetRole }, 10);
+      const otpResult = await otpService.generateOtp(cleanEmail, 'register', { name: cleanName, role: targetRole }, 10);
 
       return res.json({
         success: true,
@@ -773,25 +773,25 @@ class AuthController {
       }
 
       // Verify OTP
-      const verification = otpService.verifyOtp(cleanEmail, otp, 'register', true);
+      const verification = await otpService.verifyOtp(cleanEmail, otp, 'register', true);
       if (!verification.valid) {
         return res.status(400).json({ success: false, error: verification.error });
       }
 
       // Duplicate guard
-      const existingEmail = db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [cleanEmail]);
+      const existingEmail = await db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [cleanEmail]);
       if (existingEmail) {
         return res.status(409).json({ success: false, error: 'Email address is already registered.' });
       }
 
       const passwordHash = bcrypt.hashSync(password, 10);
-      const result = db.run(
+      const result = await db.run(
         `INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)`,
         [cleanName, cleanEmail, passwordHash, targetRole]
       );
 
       const newUser = {
-        id: result.lastInsertRowid,
+        id: result.lastInsertRowid || result.insertId,
         name: cleanName,
         email: cleanEmail,
         role: targetRole,
@@ -845,8 +845,8 @@ class AuthController {
       const cleanEmail = email.trim().toLowerCase();
       const targetRole = (role || 'staff').toLowerCase().trim();
 
-      const existingName = db.get('SELECT id FROM users WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))', [cleanName]);
-      const existingEmail = db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [cleanEmail]);
+      const existingName = await db.get('SELECT id FROM users WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))', [cleanName]);
+      const existingEmail = await db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [cleanEmail]);
 
       if (existingName && existingEmail) {
         return res.status(409).json({
@@ -870,7 +870,7 @@ class AuthController {
         });
       }
 
-      const otpResult = otpService.generateOtp(cleanEmail, 'create_member', { name: cleanName, role: targetRole }, 10);
+      const otpResult = await otpService.generateOtp(cleanEmail, 'create_member', { name: cleanName, role: targetRole }, 10);
 
       return res.json({
         success: true,
@@ -896,7 +896,7 @@ class AuthController {
       }
 
       const cleanEmail = email.trim().toLowerCase();
-      const verification = otpService.verifyOtp(cleanEmail, otp, 'create_member', true);
+      const verification = await otpService.verifyOtp(cleanEmail, otp, 'create_member', true);
       if (!verification.valid) {
         return res.status(400).json({ success: false, error: verification.error });
       }
@@ -907,7 +907,7 @@ class AuthController {
       req.body.password = password;
       req.body.role = role;
       req.body.skipOtp = true;
-      return this.createUser(req, res);
+      return await this.createUser(req, res);
     } catch (error) {
       console.error('[AuthController] verifyCreateMemberOtp error:', error);
       return res.status(500).json({ success: false, error: error.message });
@@ -928,8 +928,8 @@ class AuthController {
       const cleanEmail = email.trim().toLowerCase();
 
       // Check duplicate name or email
-      const existingName = db.get('SELECT id FROM users WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))', [cleanName]);
-      const existingEmail = db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [cleanEmail]);
+      const existingName = await db.get('SELECT id FROM users WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))', [cleanName]);
+      const existingEmail = await db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [cleanEmail]);
 
       if (existingName && existingEmail) {
         return res.status(409).json({ success: false, error: `Both name "${cleanName}" and email "${cleanEmail}" already exist in the system.`, conflict: 'both' });
@@ -941,7 +941,7 @@ class AuthController {
         return res.status(409).json({ success: false, error: `Email "${cleanEmail}" is already registered.`, conflict: 'email' });
       }
 
-      const otpResult = otpService.generateOtp(cleanEmail, 'create_staff', { name: cleanName, role: 'staff' }, 10);
+      const otpResult = await otpService.generateOtp(cleanEmail, 'create_staff', { name: cleanName, role: 'staff' }, 10);
 
       return res.json({
         success: true,
@@ -971,7 +971,7 @@ class AuthController {
       }
       req.body.role = 'staff';
       req.body.staffOtp = code;
-      return this.createUser(req, res);
+      return await this.createUser(req, res);
     } catch (error) {
       console.error('[AuthController] createStaff error:', error);
       return res.status(500).json({ success: false, error: error.message });
@@ -999,8 +999,8 @@ class AuthController {
       const cleanName = name.trim();
 
       // Check duplicates
-      const existingName = db.get('SELECT id FROM users WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))', [cleanName]);
-      const existingEmail = db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [targetEmail]);
+      const existingName = await db.get('SELECT id FROM users WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))', [cleanName]);
+      const existingEmail = await db.get('SELECT id FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))', [targetEmail]);
 
       if (existingName && existingEmail) {
         return res.status(409).json({ success: false, error: `Both name "${cleanName}" and email "${targetEmail}" already exist in the system.`, conflict: 'both' });
@@ -1013,10 +1013,10 @@ class AuthController {
       }
 
       // 1. Current Owner Authorization OTP
-      const currentOwnerOtpResult = otpService.generateOtp(currentOwnerEmail, 'current_owner_auth', { targetEmail }, 10);
+      const currentOwnerOtpResult = await otpService.generateOtp(currentOwnerEmail, 'current_owner_auth', { targetEmail }, 10);
 
       // 2. New Owner Verification OTP
-      const newOwnerOtpResult = otpService.generateOtp(targetEmail, 'new_owner_verification', { authorizedBy: currentOwnerEmail }, 10);
+      const newOwnerOtpResult = await otpService.generateOtp(targetEmail, 'new_owner_verification', { authorizedBy: currentOwnerEmail }, 10);
 
       const allConfigured = currentOwnerOtpResult.emailConfigured && newOwnerOtpResult.emailConfigured;
 
@@ -1051,7 +1051,7 @@ class AuthController {
         });
       }
       req.body.role = 'owner';
-      return this.createUser(req, res);
+      return await this.createUser(req, res);
     } catch (error) {
       console.error('[AuthController] createOwner error:', error);
       return res.status(500).json({ success: false, error: error.message });
@@ -1074,7 +1074,7 @@ class AuthController {
         return res.status(400).json({ success: false, error: 'You cannot delete your own active account.' });
       }
 
-      const targetUser = db.get('SELECT id, name, email, role FROM users WHERE id = ?', [targetId]);
+      const targetUser = await db.get('SELECT id, name, email, role FROM users WHERE id = ?', [targetId]);
       if (!targetUser) {
         return res.status(404).json({ success: false, error: 'Target owner account not found.' });
       }
@@ -1096,7 +1096,7 @@ class AuthController {
       }
 
       // 1. Current Owner Authorization OTP
-      const currentOwnerOtpResult = otpService.generateOtp(
+      const currentOwnerOtpResult = await otpService.generateOtp(
         currentOwnerEmail,
         'current_owner_delete_auth',
         { targetOwnerId: targetUser.id, targetOwnerEmail: targetUser.email, targetOwnerName: targetUser.name },
@@ -1104,7 +1104,7 @@ class AuthController {
       );
 
       // 2. Target Owner Verification OTP
-      const targetOwnerOtpResult = otpService.generateOtp(
+      const targetOwnerOtpResult = await otpService.generateOtp(
         targetUser.email,
         'target_owner_delete_auth',
         { requestedByEmail: currentOwnerEmail, requestedByName: req.user?.name },

@@ -35,7 +35,7 @@ class VendorController {
 
       sql += ' GROUP BY v.id ORDER BY total_purchase_amount DESC, v.vendor_name ASC';
 
-      const vendors = db.query(sql, params);
+      const vendors = await db.query(sql, params);
       return res.json({ success: true, data: vendors });
     } catch (error) {
       console.error('[VendorController] getVendors error:', error);
@@ -46,13 +46,13 @@ class VendorController {
   async getVendorById(req, res) {
     try {
       const { id } = req.params;
-      const vendor = db.get('SELECT * FROM vendors WHERE id = ?', [id]);
+      const vendor = await db.get('SELECT * FROM vendors WHERE id = ?', [id]);
       if (!vendor) {
         return res.status(404).json({ success: false, error: 'Vendor not found.' });
       }
 
       // Invoices from this vendor
-      const invoices = db.query(`
+      const invoices = await db.query(`
         SELECT i.*, COUNT(ii.id) as items_count
         FROM invoices i
         LEFT JOIN invoice_items ii ON i.id = ii.invoice_id
@@ -62,7 +62,7 @@ class VendorController {
       `, [id]);
 
       // Items purchased from this vendor
-      const items = db.query(`
+      const items = await db.query(`
         SELECT 
           ii.item_name,
           ii.sku,
@@ -80,7 +80,7 @@ class VendorController {
         ORDER BY total_spent DESC
       `, [id]);
 
-      const stats = db.get(`
+      const stats = await db.get(`
         SELECT 
           COUNT(DISTINCT id) as total_invoices,
           COALESCE(SUM(total), 0) as total_spent
@@ -114,7 +114,7 @@ class VendorController {
         return res.status(400).json({ success: false, error: 'Vendor name is required.' });
       }
 
-      const result = db.run(`
+      const result = await db.run(`
         INSERT INTO vendors (vendor_name, vendor_type, contact, email, address, gstin, notes)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `, [
@@ -127,7 +127,7 @@ class VendorController {
         notes || ''
       ]);
 
-      const created = db.get('SELECT * FROM vendors WHERE id = ?', [result.lastInsertRowid]);
+      const created = await db.get('SELECT * FROM vendors WHERE id = ?', [result.lastInsertRowid || result.insertId]);
       return res.status(201).json({ success: true, message: 'Vendor created successfully.', data: created });
     } catch (error) {
       console.error('[VendorController] createVendor error:', error);
@@ -140,12 +140,12 @@ class VendorController {
       const { id } = req.params;
       const { vendor_name, vendor_type, contact, email, address, gstin, notes } = req.body;
 
-      const existing = db.get('SELECT id FROM vendors WHERE id = ?', [id]);
+      const existing = await db.get('SELECT id FROM vendors WHERE id = ?', [id]);
       if (!existing) {
         return res.status(404).json({ success: false, error: 'Vendor not found.' });
       }
 
-      db.run(`
+      await db.run(`
         UPDATE vendors SET
           vendor_name = ?,
           vendor_type = ?,
@@ -167,7 +167,7 @@ class VendorController {
         id
       ]);
 
-      const updated = db.get('SELECT * FROM vendors WHERE id = ?', [id]);
+      const updated = await db.get('SELECT * FROM vendors WHERE id = ?', [id]);
       return res.json({ success: true, message: 'Vendor updated successfully.', data: updated });
     } catch (error) {
       console.error('[VendorController] updateVendor error:', error);
@@ -178,20 +178,19 @@ class VendorController {
   async deleteVendor(req, res) {
     try {
       const { id } = req.params;
-      const existing = db.get('SELECT id FROM vendors WHERE id = ?', [id]);
+      const existing = await db.get('SELECT id FROM vendors WHERE id = ?', [id]);
       if (!existing) {
         return res.status(404).json({ success: false, error: 'Vendor not found.' });
       }
 
       // Check if vendor has invoices
-      const invCount = db.get('SELECT COUNT(*) as count FROM invoices WHERE vendor_id = ?', [id]).count;
+      const invRow = await db.get('SELECT COUNT(*) as count FROM invoices WHERE vendor_id = ?', [id]);
+      const invCount = invRow?.count || 0;
       if (invCount > 0) {
-        // Unlink or reject
-        // We'll set vendor_id to NULL on invoices as defined by foreign key, or keep
-        db.run('UPDATE invoices SET vendor_id = NULL WHERE vendor_id = ?', [id]);
+        await db.run('UPDATE invoices SET vendor_id = NULL WHERE vendor_id = ?', [id]);
       }
 
-      db.run('DELETE FROM vendors WHERE id = ?', [id]);
+      await db.run('DELETE FROM vendors WHERE id = ?', [id]);
       return res.json({ success: true, message: 'Vendor deleted successfully.' });
     } catch (error) {
       console.error('[VendorController] deleteVendor error:', error);

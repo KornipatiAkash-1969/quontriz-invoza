@@ -1,103 +1,112 @@
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'invoices.db');
+// Detect if MySQL is configured (via Railway, cloud MySQL, or custom env vars)
+const isMysqlConfigured = Boolean(
+  process.env.MYSQL_URL ||
+  (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('mysql')) ||
+  process.env.MYSQLHOST ||
+  process.env.DB_HOST ||
+  process.env.DB_TYPE === 'mysql'
+);
 
-// Ensure database directory exists
-const dbDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
-}
+let sqliteDb = null;
+let mysqlClient = null;
 
-let db = null;
-let driverType = '';
-
-// SQLite driver initialization:
-// 1. First try native built-in 'node:sqlite' (Built into Node >= 22.5.0, zero external C++ binary crashes)
-// 2. Fallback to 'better-sqlite3' if available
-try {
-  const { DatabaseSync } = require('node:sqlite');
-  db = new DatabaseSync(DB_PATH);
-  driverType = 'node:sqlite';
-  console.log('[DB] ✅ Connected to SQLite via native node:sqlite at:', DB_PATH);
-} catch (nodeSqliteErr) {
-  try {
-    const Database = require('better-sqlite3');
-    db = new Database(DB_PATH);
-    driverType = 'better-sqlite3';
-    console.log('[DB] ✅ Connected to SQLite via better-sqlite3 at:', DB_PATH);
-  } catch (betterErr) {
-    console.error('[DB Fatal] Neither node:sqlite nor better-sqlite3 could be loaded.');
-    console.error('node:sqlite error:', nodeSqliteErr.message);
-    console.error('better-sqlite3 error:', betterErr.message);
-    throw new Error('SQLite driver initialization failed. Ensure Node >= 22.5.0 is active.');
+if (isMysqlConfigured) {
+  mysqlClient = require('./mysqlClient');
+  mysqlClient.init();
+} else {
+  const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'invoices.db');
+  const dbDir = path.dirname(DB_PATH);
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
   }
-}
 
-// Enable foreign keys and WAL mode for better concurrency and integrity
-db.exec('PRAGMA foreign_keys = ON;');
-db.exec('PRAGMA journal_mode = WAL;');
+  try {
+    const { DatabaseSync } = require('node:sqlite');
+    sqliteDb = new DatabaseSync(DB_PATH);
+    console.log('[DB] ✅ Connected to SQLite via native node:sqlite at:', DB_PATH);
+  } catch (err) {
+    try {
+      const Database = require('better-sqlite3');
+      sqliteDb = new Database(DB_PATH);
+      console.log('[DB] ✅ Connected to SQLite via better-sqlite3 at:', DB_PATH);
+    } catch (bErr) {
+      console.error('[DB Fatal] Neither node:sqlite nor better-sqlite3 loaded:', err.message);
+      throw bErr;
+    }
+  }
+
+  sqliteDb.exec('PRAGMA foreign_keys = ON;');
+  sqliteDb.exec('PRAGMA journal_mode = WAL;');
+}
 
 const dbHelper = {
-  getRawDb() {
-    return db;
+  isMysql() {
+    return isMysqlConfigured;
   },
 
   getDriverType() {
-    return driverType;
+    return isMysqlConfigured ? 'mysql' : 'sqlite';
   },
 
-  query(sql, params = []) {
-    try {
-      const stmt = db.prepare(sql);
-      return stmt.all(...params);
-    } catch (error) {
-      console.error('Database query error:', error.message, 'SQL:', sql, 'Params:', params);
-      throw error;
-    }
+  getRawDb() {
+    return isMysqlConfigured ? mysqlClient.getPool() : sqliteDb;
   },
 
-  get(sql, params = []) {
-    try {
-      const stmt = db.prepare(sql);
-      return stmt.get(...params);
-    } catch (error) {
-      console.error('Database get error:', error.message, 'SQL:', sql, 'Params:', params);
-      throw error;
+  async query(sql, params = []) {
+    if (isMysqlConfigured) {
+      return await mysqlClient.query(sql, params);
     }
+    const stmt = sqliteDb.prepare(sql);
+    return stmt.all(...params);
   },
 
-  run(sql, params = []) {
-    try {
-      const stmt = db.prepare(sql);
-      return stmt.run(...params);
-    } catch (error) {
-      console.error('Database run error:', error.message, 'SQL:', sql, 'Params:', params);
-      throw error;
+  async get(sql, params = []) {
+    if (isMysqlConfigured) {
+      return await mysqlClient.get(sql, params);
     }
+    const stmt = sqliteDb.prepare(sql);
+    return stmt.get(...params) || null;
   },
 
-  exec(sql) {
-    try {
-      return db.exec(sql);
-    } catch (error) {
-      console.error('Database exec error:', error.message, 'SQL:', sql);
-      throw error;
+  async run(sql, params = []) {
+    if (isMysqlConfigured) {
+      return await mysqlClient.run(sql, params);
     }
+    const stmt = sqliteDb.prepare(sql);
+    const result = stmt.run(...params);
+    return {
+      lastInsertRowid: result.lastInsertRowid || 0,
+      insertId: result.lastInsertRowid || 0,
+      changes: result.changes || 0,
+      affectedRows: result.changes || 0
+    };
   },
 
-  transaction(fn) {
-    if (typeof db.transaction === 'function') {
-      return db.transaction(fn)();
+  async exec(sql) {
+    if (isMysqlConfigured) {
+      return await mysqlClient.exec(sql);
     }
-    db.exec('BEGIN TRANSACTION;');
+    return sqliteDb.exec(sql);
+  },
+
+  async transaction(fn) {
+    if (isMysqlConfigured) {
+      return await mysqlClient.transaction(fn);
+    }
+    if (typeof sqliteDb.transaction === 'function') {
+      return sqliteDb.transaction(fn)();
+    }
+    sqliteDb.exec('BEGIN TRANSACTION;');
     try {
-      const result = fn();
-      db.exec('COMMIT;');
-      return result;
-    } catch (error) {
-      db.exec('ROLLBACK;');
-      throw error;
+      const res = await fn(this);
+      sqliteDb.exec('COMMIT;');
+      return res;
+    } catch (err) {
+      sqliteDb.exec('ROLLBACK;');
+      throw err;
     }
   }
 };

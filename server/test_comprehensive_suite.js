@@ -55,7 +55,7 @@ async function runComprehensiveTests() {
 
     // Create a temporary staff member for notification cycle testing
     const tempStaffEmail = 'temp.staff.suite@gmail.com';
-    let tempStaffUser = db.get('SELECT id FROM users WHERE email = ?', [tempStaffEmail]);
+    let tempStaffUser = await db.get('SELECT id FROM users WHERE email = ?', [tempStaffEmail]);
     if (!tempStaffUser) {
       const createdStaff = await req('/auth/users', 'POST', {
         name: 'Suite Staff',
@@ -268,7 +268,7 @@ async function runComprehensiveTests() {
     assert(!!savedInvId, `Staff saved invoice #${savedInvId} (${invNumber})`);
 
     // Verify DB columns
-    const dbInvoice = db.get('SELECT * FROM invoices WHERE id = ?', [savedInvId]);
+    const dbInvoice = await db.get('SELECT * FROM invoices WHERE id = ?', [savedInvId]);
     assert(Number(dbInvoice.subtotal) === 10000, `Database subtotal is ₹10,000`);
     assert(Number(dbInvoice.discount) === 1000, `Database discount is ₹1,000`);
     assert(Number(dbInvoice.taxable_amount) === 9000, `Database taxable_amount is ₹9,000`);
@@ -350,8 +350,8 @@ async function runComprehensiveTests() {
     // Cleanup test records
     await req(`/requirements/${testReqId}`, 'DELETE', null, ownerToken);
     await req(`/invoices/${savedInvId}`, 'DELETE', null, ownerToken);
-    db.run("DELETE FROM notifications WHERE type = 'test_duplicate_check' OR title LIKE '%Duplicate Test%' OR related_id IN (?, ?, 99999)", [savedInvId, testReqId]);
-    db.run("DELETE FROM users WHERE email = 'temp.staff.suite@gmail.com'");
+    await db.run("DELETE FROM notifications WHERE type = 'test_duplicate_check' OR title LIKE '%Duplicate Test%' OR related_id IN (?, ?, 99999)", [savedInvId, testReqId]);
+    await db.run("DELETE FROM users WHERE email = 'temp.staff.suite@gmail.com'");
     console.log('  Cleaned up test invoice, requirement, test notifications, and temporary test staff.');
 
     console.log(`\n================================================================`);

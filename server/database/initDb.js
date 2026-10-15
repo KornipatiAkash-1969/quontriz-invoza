@@ -1,10 +1,16 @@
 const db = require('./db');
+const initMysql = require('./initMysql');
 
-function initDb() {
+async function initDb() {
+  if (db.isMysql()) {
+    console.log('[initDb] Detected MySQL environment. Initializing MySQL schema & seeds...');
+    return await initMysql();
+  }
+
   console.log('Initializing SQLite database schema...');
 
   // Create tables according to specifications
-  db.exec(`
+  await db.exec(`
     -- Users table for Role-Based Access Control
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -277,73 +283,73 @@ function initDb() {
 
   // Ensure migration of new columns if tables already existed
   try {
-    const invoiceCols = db.query("PRAGMA table_info(invoices)").map(c => c.name);
-    const itemCols = db.query("PRAGMA table_info(invoice_items)").map(c => c.name);
+    const invoiceCols = (await db.query("PRAGMA table_info(invoices)")).map(c => c.name);
+    const itemCols = (await db.query("PRAGMA table_info(invoice_items)")).map(c => c.name);
     
     // Invoices migrations
-    if (!invoiceCols.includes('buyer_id')) db.exec("ALTER TABLE invoices ADD COLUMN buyer_id INTEGER;");
-    if (!invoiceCols.includes('place_of_supply')) db.exec("ALTER TABLE invoices ADD COLUMN place_of_supply TEXT;");
-    if (!invoiceCols.includes('currency')) db.exec("ALTER TABLE invoices ADD COLUMN currency TEXT DEFAULT 'INR';");
-    if (!invoiceCols.includes('payment_terms')) db.exec("ALTER TABLE invoices ADD COLUMN payment_terms TEXT;");
-    if (!invoiceCols.includes('taxable_amount')) db.exec("ALTER TABLE invoices ADD COLUMN taxable_amount REAL DEFAULT 0;");
-    if (!invoiceCols.includes('cgst')) db.exec("ALTER TABLE invoices ADD COLUMN cgst REAL DEFAULT 0;");
-    if (!invoiceCols.includes('sgst')) db.exec("ALTER TABLE invoices ADD COLUMN sgst REAL DEFAULT 0;");
-    if (!invoiceCols.includes('igst')) db.exec("ALTER TABLE invoices ADD COLUMN igst REAL DEFAULT 0;");
-    if (!invoiceCols.includes('other_charges')) db.exec("ALTER TABLE invoices ADD COLUMN other_charges REAL DEFAULT 0;");
-    if (!invoiceCols.includes('round_off')) db.exec("ALTER TABLE invoices ADD COLUMN round_off REAL DEFAULT 0;");
-    if (!invoiceCols.includes('total_gst')) db.exec("ALTER TABLE invoices ADD COLUMN total_gst REAL DEFAULT 0;");
-    if (!invoiceCols.includes('amount_paid')) db.exec("ALTER TABLE invoices ADD COLUMN amount_paid REAL DEFAULT 0;");
-    if (!invoiceCols.includes('outstanding_balance')) db.exec("ALTER TABLE invoices ADD COLUMN outstanding_balance REAL DEFAULT 0;");
-    if (!invoiceCols.includes('total_amount_in_words')) db.exec("ALTER TABLE invoices ADD COLUMN total_amount_in_words TEXT;");
-    if (!invoiceCols.includes('created_by_user_id')) db.exec("ALTER TABLE invoices ADD COLUMN created_by_user_id INTEGER;");
-    if (!invoiceCols.includes('approved_by_user_id')) db.exec("ALTER TABLE invoices ADD COLUMN approved_by_user_id INTEGER;");
-    if (!invoiceCols.includes('payment_method')) db.exec("ALTER TABLE invoices ADD COLUMN payment_method TEXT;");
-    if (!invoiceCols.includes('payment_reference')) db.exec("ALTER TABLE invoices ADD COLUMN payment_reference TEXT;");
-    if (!invoiceCols.includes('freight_charges')) db.exec("ALTER TABLE invoices ADD COLUMN freight_charges REAL DEFAULT 0;");
-    if (!invoiceCols.includes('advance_paid')) db.exec("ALTER TABLE invoices ADD COLUMN advance_paid REAL DEFAULT 0;");
-    if (!invoiceCols.includes('paid')) db.exec("ALTER TABLE invoices ADD COLUMN paid REAL DEFAULT 0;");
-    if (!invoiceCols.includes('category')) db.exec("ALTER TABLE invoices ADD COLUMN category TEXT;");
-    if (!invoiceCols.includes('paid_at')) db.exec("ALTER TABLE invoices ADD COLUMN paid_at DATETIME;");
-    if (!invoiceCols.includes('payment_notes')) db.exec("ALTER TABLE invoices ADD COLUMN payment_notes TEXT;");
-    if (!invoiceCols.includes('viewed_by_owner')) db.exec("ALTER TABLE invoices ADD COLUMN viewed_by_owner INTEGER DEFAULT 0;");
-    if (!invoiceCols.includes('viewed_at')) db.exec("ALTER TABLE invoices ADD COLUMN viewed_at DATETIME;");
-    if (!invoiceCols.includes('viewed_by_staff')) db.exec("ALTER TABLE invoices ADD COLUMN viewed_by_staff INTEGER DEFAULT 1;");
-    if (!invoiceCols.includes('staff_viewed_at')) db.exec("ALTER TABLE invoices ADD COLUMN staff_viewed_at DATETIME;");
+    if (!invoiceCols.includes('buyer_id')) await db.exec("ALTER TABLE invoices ADD COLUMN buyer_id INTEGER;");
+    if (!invoiceCols.includes('place_of_supply')) await db.exec("ALTER TABLE invoices ADD COLUMN place_of_supply TEXT;");
+    if (!invoiceCols.includes('currency')) await db.exec("ALTER TABLE invoices ADD COLUMN currency TEXT DEFAULT 'INR';");
+    if (!invoiceCols.includes('payment_terms')) await db.exec("ALTER TABLE invoices ADD COLUMN payment_terms TEXT;");
+    if (!invoiceCols.includes('taxable_amount')) await db.exec("ALTER TABLE invoices ADD COLUMN taxable_amount REAL DEFAULT 0;");
+    if (!invoiceCols.includes('cgst')) await db.exec("ALTER TABLE invoices ADD COLUMN cgst REAL DEFAULT 0;");
+    if (!invoiceCols.includes('sgst')) await db.exec("ALTER TABLE invoices ADD COLUMN sgst REAL DEFAULT 0;");
+    if (!invoiceCols.includes('igst')) await db.exec("ALTER TABLE invoices ADD COLUMN igst REAL DEFAULT 0;");
+    if (!invoiceCols.includes('other_charges')) await db.exec("ALTER TABLE invoices ADD COLUMN other_charges REAL DEFAULT 0;");
+    if (!invoiceCols.includes('round_off')) await db.exec("ALTER TABLE invoices ADD COLUMN round_off REAL DEFAULT 0;");
+    if (!invoiceCols.includes('total_gst')) await db.exec("ALTER TABLE invoices ADD COLUMN total_gst REAL DEFAULT 0;");
+    if (!invoiceCols.includes('amount_paid')) await db.exec("ALTER TABLE invoices ADD COLUMN amount_paid REAL DEFAULT 0;");
+    if (!invoiceCols.includes('outstanding_balance')) await db.exec("ALTER TABLE invoices ADD COLUMN outstanding_balance REAL DEFAULT 0;");
+    if (!invoiceCols.includes('total_amount_in_words')) await db.exec("ALTER TABLE invoices ADD COLUMN total_amount_in_words TEXT;");
+    if (!invoiceCols.includes('created_by_user_id')) await db.exec("ALTER TABLE invoices ADD COLUMN created_by_user_id INTEGER;");
+    if (!invoiceCols.includes('approved_by_user_id')) await db.exec("ALTER TABLE invoices ADD COLUMN approved_by_user_id INTEGER;");
+    if (!invoiceCols.includes('payment_method')) await db.exec("ALTER TABLE invoices ADD COLUMN payment_method TEXT;");
+    if (!invoiceCols.includes('payment_reference')) await db.exec("ALTER TABLE invoices ADD COLUMN payment_reference TEXT;");
+    if (!invoiceCols.includes('freight_charges')) await db.exec("ALTER TABLE invoices ADD COLUMN freight_charges REAL DEFAULT 0;");
+    if (!invoiceCols.includes('advance_paid')) await db.exec("ALTER TABLE invoices ADD COLUMN advance_paid REAL DEFAULT 0;");
+    if (!invoiceCols.includes('paid')) await db.exec("ALTER TABLE invoices ADD COLUMN paid REAL DEFAULT 0;");
+    if (!invoiceCols.includes('category')) await db.exec("ALTER TABLE invoices ADD COLUMN category TEXT;");
+    if (!invoiceCols.includes('paid_at')) await db.exec("ALTER TABLE invoices ADD COLUMN paid_at DATETIME;");
+    if (!invoiceCols.includes('payment_notes')) await db.exec("ALTER TABLE invoices ADD COLUMN payment_notes TEXT;");
+    if (!invoiceCols.includes('viewed_by_owner')) await db.exec("ALTER TABLE invoices ADD COLUMN viewed_by_owner INTEGER DEFAULT 0;");
+    if (!invoiceCols.includes('viewed_at')) await db.exec("ALTER TABLE invoices ADD COLUMN viewed_at DATETIME;");
+    if (!invoiceCols.includes('viewed_by_staff')) await db.exec("ALTER TABLE invoices ADD COLUMN viewed_by_staff INTEGER DEFAULT 1;");
+    if (!invoiceCols.includes('staff_viewed_at')) await db.exec("ALTER TABLE invoices ADD COLUMN staff_viewed_at DATETIME;");
 
     // Store requirements migrations
-    const reqCols = db.query("PRAGMA table_info(store_requirements)").map(c => c.name);
-    if (!reqCols.includes('viewed_by_owner')) db.exec("ALTER TABLE store_requirements ADD COLUMN viewed_by_owner INTEGER DEFAULT 0;");
-    if (!reqCols.includes('viewed_at')) db.exec("ALTER TABLE store_requirements ADD COLUMN viewed_at DATETIME;");
-    if (!reqCols.includes('viewed_by_staff')) db.exec("ALTER TABLE store_requirements ADD COLUMN viewed_by_staff INTEGER DEFAULT 1;");
-    if (!reqCols.includes('staff_viewed_at')) db.exec("ALTER TABLE store_requirements ADD COLUMN staff_viewed_at DATETIME;");
+    const reqCols = (await db.query("PRAGMA table_info(store_requirements)")).map(c => c.name);
+    if (!reqCols.includes('viewed_by_owner')) await db.exec("ALTER TABLE store_requirements ADD COLUMN viewed_by_owner INTEGER DEFAULT 0;");
+    if (!reqCols.includes('viewed_at')) await db.exec("ALTER TABLE store_requirements ADD COLUMN viewed_at DATETIME;");
+    if (!reqCols.includes('viewed_by_staff')) await db.exec("ALTER TABLE store_requirements ADD COLUMN viewed_by_staff INTEGER DEFAULT 1;");
+    if (!reqCols.includes('staff_viewed_at')) await db.exec("ALTER TABLE store_requirements ADD COLUMN staff_viewed_at DATETIME;");
 
     // Invoice items migrations
-    if (!itemCols.includes('line_number')) db.exec("ALTER TABLE invoice_items ADD COLUMN line_number INTEGER;");
-    if (!itemCols.includes('item_description')) db.exec("ALTER TABLE invoice_items ADD COLUMN item_description TEXT;");
-    if (!itemCols.includes('hsn_code')) db.exec("ALTER TABLE invoice_items ADD COLUMN hsn_code TEXT;");
-    if (!itemCols.includes('unit_original')) db.exec("ALTER TABLE invoice_items ADD COLUMN unit_original TEXT;");
-    if (!itemCols.includes('unit_normalized')) db.exec("ALTER TABLE invoice_items ADD COLUMN unit_normalized TEXT;");
-    if (!itemCols.includes('price_unit_quantity')) db.exec("ALTER TABLE invoice_items ADD COLUMN price_unit_quantity NUMERIC DEFAULT 1;");
-    if (!itemCols.includes('price_unit_measure')) db.exec("ALTER TABLE invoice_items ADD COLUMN price_unit_measure TEXT;");
-    if (!itemCols.includes('discount_amount')) db.exec("ALTER TABLE invoice_items ADD COLUMN discount_amount NUMERIC DEFAULT 0;");
-    if (!itemCols.includes('taxable_value')) db.exec("ALTER TABLE invoice_items ADD COLUMN taxable_value NUMERIC DEFAULT 0;");
-    if (!itemCols.includes('gst_rate')) db.exec("ALTER TABLE invoice_items ADD COLUMN gst_rate NUMERIC DEFAULT 0;");
-    if (!itemCols.includes('cgst_amount')) db.exec("ALTER TABLE invoice_items ADD COLUMN cgst_amount NUMERIC DEFAULT 0;");
-    if (!itemCols.includes('sgst_amount')) db.exec("ALTER TABLE invoice_items ADD COLUMN sgst_amount NUMERIC DEFAULT 0;");
-    if (!itemCols.includes('igst_amount')) db.exec("ALTER TABLE invoice_items ADD COLUMN igst_amount NUMERIC DEFAULT 0;");
-    if (!itemCols.includes('line_total')) db.exec("ALTER TABLE invoice_items ADD COLUMN line_total NUMERIC DEFAULT 0;");
-    if (!itemCols.includes('calculation_valid')) db.exec("ALTER TABLE invoice_items ADD COLUMN calculation_valid INTEGER DEFAULT 1;");
-    if (!itemCols.includes('unit_flagged')) db.exec("ALTER TABLE invoice_items ADD COLUMN unit_flagged INTEGER DEFAULT 0;");
+    if (!itemCols.includes('line_number')) await db.exec("ALTER TABLE invoice_items ADD COLUMN line_number INTEGER;");
+    if (!itemCols.includes('item_description')) await db.exec("ALTER TABLE invoice_items ADD COLUMN item_description TEXT;");
+    if (!itemCols.includes('hsn_code')) await db.exec("ALTER TABLE invoice_items ADD COLUMN hsn_code TEXT;");
+    if (!itemCols.includes('unit_original')) await db.exec("ALTER TABLE invoice_items ADD COLUMN unit_original TEXT;");
+    if (!itemCols.includes('unit_normalized')) await db.exec("ALTER TABLE invoice_items ADD COLUMN unit_normalized TEXT;");
+    if (!itemCols.includes('price_unit_quantity')) await db.exec("ALTER TABLE invoice_items ADD COLUMN price_unit_quantity NUMERIC DEFAULT 1;");
+    if (!itemCols.includes('price_unit_measure')) await db.exec("ALTER TABLE invoice_items ADD COLUMN price_unit_measure TEXT;");
+    if (!itemCols.includes('discount_amount')) await db.exec("ALTER TABLE invoice_items ADD COLUMN discount_amount NUMERIC DEFAULT 0;");
+    if (!itemCols.includes('taxable_value')) await db.exec("ALTER TABLE invoice_items ADD COLUMN taxable_value NUMERIC DEFAULT 0;");
+    if (!itemCols.includes('gst_rate')) await db.exec("ALTER TABLE invoice_items ADD COLUMN gst_rate NUMERIC DEFAULT 0;");
+    if (!itemCols.includes('cgst_amount')) await db.exec("ALTER TABLE invoice_items ADD COLUMN cgst_amount NUMERIC DEFAULT 0;");
+    if (!itemCols.includes('sgst_amount')) await db.exec("ALTER TABLE invoice_items ADD COLUMN sgst_amount NUMERIC DEFAULT 0;");
+    if (!itemCols.includes('igst_amount')) await db.exec("ALTER TABLE invoice_items ADD COLUMN igst_amount NUMERIC DEFAULT 0;");
+    if (!itemCols.includes('line_total')) await db.exec("ALTER TABLE invoice_items ADD COLUMN line_total NUMERIC DEFAULT 0;");
+    if (!itemCols.includes('calculation_valid')) await db.exec("ALTER TABLE invoice_items ADD COLUMN calculation_valid INTEGER DEFAULT 1;");
+    if (!itemCols.includes('unit_flagged')) await db.exec("ALTER TABLE invoice_items ADD COLUMN unit_flagged INTEGER DEFAULT 0;");
   } catch (migErr) {
     console.warn('[initDb] Column migration note:', migErr.message);
   }
 
   // Ensure users table CHECK constraint allows 'staff'
   try {
-    const userTableDef = db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'");
+    const userTableDef = await db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'");
     if (userTableDef && userTableDef.sql && !userTableDef.sql.includes("'staff'")) {
       console.log('[initDb] Migrating users table constraint to support staff role...');
-      db.exec(`
+      await db.exec(`
         PRAGMA foreign_keys = OFF;
         DROP TABLE IF EXISTS users_migrated;
         CREATE TABLE users_migrated (
@@ -371,31 +377,31 @@ function initDb() {
   // Seed Developer Account (developer@supermarket.com with owner role)
   const bcrypt = require('bcryptjs');
   const devHash = bcrypt.hashSync('owner123', 10);
-  const devUser = db.get("SELECT id FROM users WHERE LOWER(email) IN ('developer@supermarket.com', 'developer@gmail.com')");
+  const devUser = await db.get("SELECT id FROM users WHERE LOWER(email) IN ('developer@supermarket.com', 'developer@gmail.com')");
   if (!devUser) {
-    db.run(`
+    await db.run(`
       INSERT INTO users (name, email, password_hash, role)
       VALUES (?, ?, ?, ?)
     `, ['Developer', 'developer@supermarket.com', devHash, 'owner']);
     console.log('[initDb] Seeded account: developer@supermarket.com (owner)');
   } else {
-    db.run("UPDATE users SET email = 'developer@supermarket.com', password_hash = ?, role = 'owner' WHERE id = ?", [devHash, devUser.id]);
+    await db.run("UPDATE users SET email = 'developer@supermarket.com', password_hash = ?, role = 'owner' WHERE id = ?", [devHash, devUser.id]);
   }
 
   // Seed Owner Account for akash.kornipati1969@gmail.com
-  const akashUser = db.get("SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'");
+  const akashUser = await db.get("SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'");
   if (!akashUser) {
-    db.run(`
+    await db.run(`
       INSERT INTO users (name, email, password_hash, role)
       VALUES (?, ?, ?, ?)
     `, ['Akash Kornipati', 'akash.kornipati1969@gmail.com', devHash, 'owner']);
     console.log('[initDb] Seeded owner account: akash.kornipati1969@gmail.com (owner)');
   } else {
-    db.run("UPDATE users SET password_hash = ?, role = 'owner' WHERE id = ?", [devHash, akashUser.id]);
+    await db.run("UPDATE users SET password_hash = ?, role = 'owner' WHERE id = ?", [devHash, akashUser.id]);
   }
 
   // Seed default Categories if empty
-  const categoryCount = db.get('SELECT COUNT(*) as count FROM categories').count;
+  const categoryCount = (await db.get('SELECT COUNT(*) as count FROM categories')).count;
   if (categoryCount === 0) {
     const defaultCategories = [
       'Electronics',
@@ -411,13 +417,13 @@ function initDb() {
       'Other'
     ];
     for (const cat of defaultCategories) {
-      db.run('INSERT OR IGNORE INTO categories (category_name) VALUES (?)', [cat]);
+      await db.run('INSERT OR IGNORE INTO categories (category_name) VALUES (?)', [cat]);
     }
     console.log(`Seeded ${defaultCategories.length} default categories.`);
   }
 
   // Seed default Vendor Types if empty
-  const typeCount = db.get('SELECT COUNT(*) as count FROM vendor_types').count;
+  const typeCount = (await db.get('SELECT COUNT(*) as count FROM vendor_types')).count;
   if (typeCount === 0) {
     const defaultTypes = [
       'Electronics Supplier',
@@ -430,37 +436,37 @@ function initDb() {
       'Other'
     ];
     for (const vt of defaultTypes) {
-      db.run('INSERT OR IGNORE INTO vendor_types (type_name) VALUES (?)', [vt]);
+      await db.run('INSERT OR IGNORE INTO vendor_types (type_name) VALUES (?)', [vt]);
     }
     console.log(`Seeded ${defaultTypes.length} default vendor types.`);
   }
 
   // Seed initial sample Vendors and Invoices if vendors table is empty
-  const vendorCount = db.get('SELECT COUNT(*) as count FROM vendors').count;
+  const vendorCount = (await db.get('SELECT COUNT(*) as count FROM vendors')).count;
   if (vendorCount === 0) {
-    seedInitialDemoData();
+    await seedInitialDemoData();
   }
 
   // Seed sample Store Requirements if empty
   try {
-    const reqCount = db.get('SELECT COUNT(*) as count FROM store_requirements').count;
+    const reqCount = (await db.get('SELECT COUNT(*) as count FROM store_requirements')).count;
     if (reqCount === 0) {
-      db.run(`
+      await db.run(`
         INSERT INTO store_requirements (item_name, specification, quantity, unit, category_name, priority, estimated_price, preferred_vendor_name, notes, status, requested_by_name)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, ['Rice', '25 KG', 10, 'bags', 'Grocery & Staples', 'High', 1450, 'Metro Supermarket Wholesalers', 'Supermarket aisle 2 low stock requirement', 'Pending', 'Priya Sharma (Staff)']);
 
-      db.run(`
+      await db.run(`
         INSERT INTO store_requirements (item_name, specification, quantity, unit, category_name, priority, estimated_price, preferred_vendor_name, notes, status, requested_by_name)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, ['Sunflower Cooking Oil', '15 L Tin', 8, 'tins', 'Grocery & Staples', 'Urgent', 2100, 'Metro Supermarket Wholesalers', 'Fast moving item, urgently needed for restocking', 'Approved', 'Rajesh Kumar (Owner)']);
 
-      db.run(`
+      await db.run(`
         INSERT INTO store_requirements (item_name, specification, quantity, unit, category_name, priority, estimated_price, preferred_vendor_name, notes, status, requested_by_name)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, ['Sugar', '50 KG', 5, 'bags', 'Grocery & Staples', 'Medium', 1950, 'Metro Supermarket Wholesalers', 'Wholesale packaging requirement', 'Pending', 'Priya Sharma (Staff)']);
 
-      db.run(`
+      await db.run(`
         INSERT INTO store_requirements (item_name, specification, quantity, unit, category_name, priority, estimated_price, preferred_vendor_name, notes, status, requested_by_name)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, ['A4 Billing Paper', '75 GSM', 15, 'reams', 'Office Supplies', 'Low', 240, 'ABC Electronics Pvt Ltd', 'Point-of-Sale thermal roll and printer paper', 'Ordered', 'Priya Sharma (Staff)']);
@@ -474,11 +480,11 @@ function initDb() {
   console.log('Database initialized successfully.');
 }
 
-function seedInitialDemoData() {
+async function seedInitialDemoData() {
   console.log('Seeding demo vendors and invoices...');
 
   // Sample vendors
-  const v1 = db.run(`
+  const v1 = await db.run(`
     INSERT INTO vendors (vendor_name, vendor_type, contact, email, address, gstin, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -491,7 +497,7 @@ function seedInitialDemoData() {
     'Primary supplier for digital displays, cables, and hardware accessories'
   ]);
 
-  const v2 = db.run(`
+  const v2 = await db.run(`
     INSERT INTO vendors (vendor_name, vendor_type, contact, email, address, gstin, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -504,7 +510,7 @@ function seedInitialDemoData() {
     'Daily milk, butter, cheese, and yogurt supplier'
   ]);
 
-  const v3 = db.run(`
+  const v3 = await db.run(`
     INSERT INTO vendors (vendor_name, vendor_type, contact, email, address, gstin, notes)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -519,11 +525,11 @@ function seedInitialDemoData() {
 
   // Seed initial invoices for rich dashboard charts
   const catMap = {};
-  const cats = db.query('SELECT id, category_name FROM categories');
+  const cats = await db.query('SELECT id, category_name FROM categories');
   cats.forEach(c => { catMap[c.category_name] = c.id; });
 
   // Invoice 1
-  const inv1 = db.run(`
+  const inv1 = await db.run(`
     INSERT INTO invoices (vendor_id, invoice_number, invoice_date, due_date, po_number, subtotal, discount, tax, total, status, ocr_text)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -540,7 +546,7 @@ function seedInitialDemoData() {
     'TAX INVOICE\nABC Electronics Pvt Ltd\nInvoice No: INV-10234\nDate: 15-09-2026\nGSTIN: 29ABCDE1234F1Z5\nItems:\n1. Samsung 55 inch LED TV - Qty: 2 - Price: 45000\n2. HDMI High Speed Cable - Qty: 5 - Price: 1200\nSubtotal: 96000\nTax (18%): 17280\nGrand Total: 113280'
   ]);
 
-  db.run(`
+  await db.run(`
     INSERT INTO invoice_items (invoice_id, item_name, sku, category_id, quantity, unit, unit_price, discount, tax, total_price, classification_confidence)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -557,7 +563,7 @@ function seedInitialDemoData() {
     0.98
   ]);
 
-  db.run(`
+  await db.run(`
     INSERT INTO invoice_items (invoice_id, item_name, sku, category_id, quantity, unit, unit_price, discount, tax, total_price, classification_confidence)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -575,7 +581,7 @@ function seedInitialDemoData() {
   ]);
 
   // Invoice 2
-  const inv2 = db.run(`
+  const inv2 = await db.run(`
     INSERT INTO invoices (vendor_id, invoice_number, invoice_date, due_date, po_number, subtotal, discount, tax, total, status, ocr_text)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -592,7 +598,7 @@ function seedInitialDemoData() {
     'INVOICE\nAmul Dairy & Agro Products\nInvoice: INV-20455\nDate: 28-09-2026\nAmul Taaza Milk 500ml - 300 packets\nAmul Salted Butter 500g - 50 units'
   ]);
 
-  db.run(`
+  await db.run(`
     INSERT INTO invoice_items (invoice_id, item_name, sku, category_id, quantity, unit, unit_price, discount, tax, total_price, classification_confidence)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -609,7 +615,7 @@ function seedInitialDemoData() {
     0.99
   ]);
 
-  db.run(`
+  await db.run(`
     INSERT INTO invoice_items (invoice_id, item_name, sku, category_id, quantity, unit, unit_price, discount, tax, total_price, classification_confidence)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -627,7 +633,7 @@ function seedInitialDemoData() {
   ]);
 
   // Invoice 3
-  const inv3 = db.run(`
+  const inv3 = await db.run(`
     INSERT INTO invoices (vendor_id, invoice_number, invoice_date, due_date, po_number, subtotal, discount, tax, total, status, ocr_text)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -644,7 +650,7 @@ function seedInitialDemoData() {
     'TAX INVOICE\nBritannia & FMCG Distributors\nInvoice: INV-30112\nGood Day Cashew Cookies - 200 boxes\nMarie Gold Biscuits - 300 boxes\nLays Classic Chips - 150 packs'
   ]);
 
-  db.run(`
+  await db.run(`
     INSERT INTO invoice_items (invoice_id, item_name, sku, category_id, quantity, unit, unit_price, discount, tax, total_price, classification_confidence)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
@@ -661,7 +667,7 @@ function seedInitialDemoData() {
     0.96
   ]);
 
-  db.run(`
+  await db.run(`
     INSERT INTO invoice_items (invoice_id, item_name, sku, category_id, quantity, unit, unit_price, discount, tax, total_price, classification_confidence)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [

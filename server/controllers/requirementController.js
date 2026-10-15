@@ -55,16 +55,24 @@ class RequirementController {
         ORDER BY ${finalSortBy} ${finalOrder}
       `;
 
-      const requirements = db.query(sql, params);
+      const requirements = await db.query(sql, params);
 
       // Summary counts for dashboard badges
+      const [totalR, pendingR, approvedR, orderedR, fulfilledR, urgentR] = await Promise.all([
+        db.get('SELECT COUNT(*) as c FROM store_requirements'),
+        db.get("SELECT COUNT(*) as c FROM store_requirements WHERE status = 'Pending'"),
+        db.get("SELECT COUNT(*) as c FROM store_requirements WHERE status = 'Approved'"),
+        db.get("SELECT COUNT(*) as c FROM store_requirements WHERE status = 'Ordered'"),
+        db.get("SELECT COUNT(*) as c FROM store_requirements WHERE status = 'Fulfilled'"),
+        db.get("SELECT COUNT(*) as c FROM store_requirements WHERE priority = 'Urgent' AND status != 'Fulfilled'")
+      ]);
       const counts = {
-        total: db.get('SELECT COUNT(*) as c FROM store_requirements').c || 0,
-        pending: db.get("SELECT COUNT(*) as c FROM store_requirements WHERE status = 'Pending'").c || 0,
-        approved: db.get("SELECT COUNT(*) as c FROM store_requirements WHERE status = 'Approved'").c || 0,
-        ordered: db.get("SELECT COUNT(*) as c FROM store_requirements WHERE status = 'Ordered'").c || 0,
-        fulfilled: db.get("SELECT COUNT(*) as c FROM store_requirements WHERE status = 'Fulfilled'").c || 0,
-        urgent: db.get("SELECT COUNT(*) as c FROM store_requirements WHERE priority = 'Urgent' AND status != 'Fulfilled'").c || 0,
+        total: totalR?.c || 0,
+        pending: pendingR?.c || 0,
+        approved: approvedR?.c || 0,
+        ordered: orderedR?.c || 0,
+        fulfilled: fulfilledR?.c || 0,
+        urgent: urgentR?.c || 0,
       };
 
       return res.json({
@@ -109,7 +117,7 @@ class RequirementController {
       const viewedByStaff = isOwner ? 0 : 1;
       const istNow = getIstIsoString();
 
-      const result = db.run(`
+      const result = await db.run(`
         INSERT INTO store_requirements (
           item_name, specification, quantity, unit,
           category_id, category_name, priority, estimated_price,
@@ -139,10 +147,10 @@ class RequirementController {
         istNow
       ]);
 
-      const created = db.get('SELECT * FROM store_requirements WHERE id = ?', [result.lastInsertRowid]);
+      const created = await db.get('SELECT * FROM store_requirements WHERE id = ?', [result.lastInsertRowid || result.insertId]);
 
       try {
-        notificationService.createNotification({
+        await notificationService.createNotification({
           target_role: isOwner ? 'staff' : 'owner',
           type: 'requirement_created',
           title: isOwner ? 'New Demand Added by Owner' : 'New Store Requirement',
@@ -184,7 +192,7 @@ class RequirementController {
         });
       }
 
-      const existing = db.get('SELECT * FROM store_requirements WHERE id = ?', [id]);
+      const existing = await db.get('SELECT * FROM store_requirements WHERE id = ?', [id]);
       if (!existing) {
         return res.status(404).json({ success: false, error: 'Requirement not found.' });
       }
@@ -229,7 +237,7 @@ class RequirementController {
       const viewedByStaff = 0;
       const staffViewedAt = null;
 
-      db.run(`
+      await db.run(`
         UPDATE store_requirements
         SET item_name = ?, specification = ?, quantity = ?, unit = ?,
             category_id = ?, category_name = ?, priority = ?, estimated_price = ?,
@@ -262,7 +270,7 @@ class RequirementController {
         id
       ]);
 
-      const updated = db.get('SELECT * FROM store_requirements WHERE id = ?', [id]);
+      const updated = await db.get('SELECT * FROM store_requirements WHERE id = ?', [id]);
 
       // Create distinct status notification for staff
       try {
@@ -292,7 +300,7 @@ class RequirementController {
           notifMsg = `Owner rejected demand for ${updated.item_name}`;
         }
 
-        notificationService.createNotification({
+        await notificationService.createNotification({
           target_role: 'staff',
           type: notifType,
           title: notifTitle,
@@ -332,14 +340,14 @@ class RequirementController {
         });
       }
 
-      const existing = db.get('SELECT * FROM store_requirements WHERE id = ?', [id]);
+      const existing = await db.get('SELECT * FROM store_requirements WHERE id = ?', [id]);
       if (!existing) {
         return res.status(404).json({ success: false, error: 'Requirement not found.' });
       }
 
-      db.transaction(() => {
-        db.run('DELETE FROM store_requirements WHERE id = ?', [id]);
-        db.run('DELETE FROM notifications WHERE related_id = ? AND related_type = ?', [id, 'requirement']);
+      await db.transaction(async () => {
+        await db.run('DELETE FROM store_requirements WHERE id = ?', [id]);
+        await db.run('DELETE FROM notifications WHERE related_id = ? AND related_type = ?', [id, 'requirement']);
       });
       return res.json({ success: true, message: `Requirement "${existing.item_name}" deleted.` });
     } catch (error) {
@@ -374,7 +382,7 @@ class RequirementController {
       }
 
       const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-      const items = db.query(`
+      const items = await db.query(`
         SELECT r.*
         FROM store_requirements r
         ${whereSql}

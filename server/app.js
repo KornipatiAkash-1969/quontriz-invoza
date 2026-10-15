@@ -19,8 +19,10 @@ const classificationService = require('./services/classifier/classificationServi
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize Database
-initDb();
+// Initialize Database (SQLite or MySQL depending on environment)
+initDb().catch(err => {
+  console.error('[App Fatal] Database initialization error:', err);
+});
 
 // Generate Sample PDFs asynchronously
 ensureSamplePdfs().catch(err => console.warn('[App] Sample PDF generation note:', err.message));

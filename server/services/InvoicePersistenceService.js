@@ -31,7 +31,7 @@ class InvoicePersistenceService {
     const invoiceNumber = (invoice.invoice_number || invoice.invoiceNumber).trim();
     const grandTotal = Number(invoice.grand_total || invoice.total || 0);
 
-    const persistedInvoice = db.transaction(() => {
+    const persistedInvoice = await db.transaction(async () => {
       // 1. Resolve or Create Vendor
       let vendorId = vendor?.id || invoice.vendor_id || null;
       const vendorName = vendor?.vendor_name || vendor?.name || invoice.vendor_name;
@@ -40,19 +40,19 @@ class InvoicePersistenceService {
       if (!vendorId && (vendorName || vendorGstin)) {
         // Try finding by GSTIN first
         if (vendorGstin) {
-          const matchByGstin = db.get('SELECT id FROM vendors WHERE LOWER(gstin) = LOWER(?)', [vendorGstin.trim()]);
+          const matchByGstin = await db.get('SELECT id FROM vendors WHERE LOWER(gstin) = LOWER(?)', [vendorGstin.trim()]);
           if (matchByGstin) vendorId = matchByGstin.id;
         }
 
         // Try finding by Name
         if (!vendorId && vendorName) {
-          const matchByName = db.get('SELECT id FROM vendors WHERE LOWER(vendor_name) = LOWER(?)', [vendorName.trim()]);
+          const matchByName = await db.get('SELECT id FROM vendors WHERE LOWER(vendor_name) = LOWER(?)', [vendorName.trim()]);
           if (matchByName) vendorId = matchByName.id;
         }
 
         // Insert new vendor if not found
         if (!vendorId && vendorName) {
-          const vResult = db.run(`
+          const vResult = await db.run(`
             INSERT INTO vendors (vendor_name, vendor_type, contact, email, address, gstin, notes)
             VALUES (?, ?, ?, ?, ?, ?, ?)
           `, [
@@ -64,7 +64,7 @@ class InvoicePersistenceService {
             vendorGstin || '',
             vendor.notes || 'Created via invoice OCR'
           ]);
-          vendorId = vResult.lastInsertRowid;
+          vendorId = vResult.lastInsertRowid || vResult.insertId;
         }
       }
 
@@ -75,17 +75,17 @@ class InvoicePersistenceService {
 
       if (!buyerId && (buyerName || buyerGstin)) {
         if (buyerGstin) {
-          const matchBuyerGstin = db.get('SELECT id FROM buyers WHERE LOWER(gstin) = LOWER(?)', [buyerGstin.trim()]);
+          const matchBuyerGstin = await db.get('SELECT id FROM buyers WHERE LOWER(gstin) = LOWER(?)', [buyerGstin.trim()]);
           if (matchBuyerGstin) buyerId = matchBuyerGstin.id;
         }
 
         if (!buyerId && buyerName) {
-          const matchBuyerName = db.get('SELECT id FROM buyers WHERE LOWER(company_name) = LOWER(?)', [buyerName.trim()]);
+          const matchBuyerName = await db.get('SELECT id FROM buyers WHERE LOWER(company_name) = LOWER(?)', [buyerName.trim()]);
           if (matchBuyerName) buyerId = matchBuyerName.id;
         }
 
         if (!buyerId && buyerName) {
-          const bResult = db.run(`
+          const bResult = await db.run(`
             INSERT INTO buyers (company_name, gstin, billing_address, shipping_address)
             VALUES (?, ?, ?, ?)
           `, [
@@ -94,7 +94,7 @@ class InvoicePersistenceService {
             buyer.billing_address || buyer.address || '',
             buyer.shipping_address || ''
           ]);
-          buyerId = bResult.lastInsertRowid;
+          buyerId = bResult.lastInsertRowid || bResult.insertId;
         }
       }
 
@@ -110,7 +110,7 @@ class InvoicePersistenceService {
       const freightCharges = Number(invoice.freight_charges) || 0;
       const roundOff = Number(invoice.round_off) || 0;
       const calculatedGrandTotal = Math.max(0, parseFloat((taxableAmount + totalGst + otherCharges + freightCharges + roundOff).toFixed(2)));
-      const grandTotal = Number(invoice.grand_total || invoice.total) || calculatedGrandTotal;
+      const invoiceGrandTotal = Number(invoice.grand_total || invoice.total) || calculatedGrandTotal;
       const advancePaid = Number(invoice.advance_paid) || 0;
       const amountPaid = Number(invoice.amount_paid || invoice.paid) || 0;
       const isPaid = (invoice.status || 'Pending Approval') === 'Paid';
@@ -118,7 +118,7 @@ class InvoicePersistenceService {
         ? 0
         : (invoice.outstanding_balance !== undefined
             ? Number(invoice.outstanding_balance)
-            : Math.max(0, parseFloat((grandTotal - advancePaid - amountPaid).toFixed(2))));
+            : Math.max(0, parseFloat((invoiceGrandTotal - advancePaid - amountPaid).toFixed(2))));
       const currency = invoice.currency || 'INR';
       const placeOfSupply = invoice.place_of_supply || '';
       const invoiceDate = invoice.invoice_date || invoice.invoiceDate || null;
@@ -135,7 +135,7 @@ class InvoicePersistenceService {
       const viewedAt = viewedByOwner ? istNow : null;
       const staffViewedAt = viewedByStaff ? istNow : null;
 
-      const invResult = db.run(`
+      const invResult = await db.run(`
         INSERT INTO invoices (
           vendor_id, buyer_id, invoice_number, invoice_date, due_date, po_number,
           place_of_supply, currency, payment_terms, payment_method, category,
@@ -168,7 +168,7 @@ class InvoicePersistenceService {
         otherCharges,
         roundOff,
         totalGst,
-        grandTotal,
+        invoiceGrandTotal,
         advancePaid,
         amountPaid,
         amountPaid,
@@ -186,7 +186,7 @@ class InvoicePersistenceService {
         istNow
       ]);
 
-      const invoiceId = invResult.lastInsertRowid;
+      const invoiceId = invResult.lastInsertRowid || invResult.insertId;
 
       // 4. Insert Line Items
       for (let i = 0; i < items.length; i++) {
@@ -196,12 +196,12 @@ class InvoicePersistenceService {
         // Auto-resolve or create category
         const catName = item.category || item.category_name;
         if (!categoryId && catName && typeof catName === 'string') {
-          const existingCat = db.get('SELECT id FROM categories WHERE LOWER(category_name) = LOWER(?)', [catName.trim()]);
+          const existingCat = await db.get('SELECT id FROM categories WHERE LOWER(category_name) = LOWER(?)', [catName.trim()]);
           if (existingCat) {
             categoryId = existingCat.id;
           } else {
-            const newCat = db.run('INSERT INTO categories (category_name) VALUES (?)', [catName.trim()]);
-            categoryId = newCat.lastInsertRowid;
+            const newCat = await db.run('INSERT INTO categories (category_name) VALUES (?)', [catName.trim()]);
+            categoryId = newCat.lastInsertRowid || newCat.insertId;
           }
         }
 
@@ -218,7 +218,7 @@ class InvoicePersistenceService {
         const itemTax = (cgstAmt + sgstAmt + igstAmt) || Number(item.tax) || 0;
         const lineTotal = Number(item.line_total || item.total_price || item.totalPrice) || (taxVal + itemTax);
 
-        db.run(`
+        await db.run(`
           INSERT INTO invoice_items (
             invoice_id, line_number, item_name, item_description, sku, hsn_code,
             category_id, quantity, unit, unit_original, unit_normalized,
@@ -261,7 +261,7 @@ class InvoicePersistenceService {
 
       // 5. Store AI Extraction Log if available
       if (aiLog) {
-        db.run(`
+        await db.run(`
           INSERT INTO ai_extraction_logs (
             invoice_id, engine, raw_text, ai_response, warnings, latency_ms
           ) VALUES (?, ?, ?, ?, ?, ?)
@@ -278,14 +278,14 @@ class InvoicePersistenceService {
       // 6. Continuous Learning: Record Ground-Truth Training Sample
       try {
         const aiTrainingService = require('./AiTrainingService');
-        aiTrainingService.recordTrainingSample({
+        await aiTrainingService.recordTrainingSample({
           invoiceId,
           vendorId,
           vendorName: (vendor && vendor.vendor_name) ? vendor.vendor_name : 'Verified Supplier',
           ocrText,
           aiPrediction: aiLog && aiLog.ai_response ? (typeof aiLog.ai_response === 'string' ? JSON.parse(aiLog.ai_response) : aiLog.ai_response) : null,
           groundTruth: {
-            invoice: { id: invoiceId, vendor_id: vendorId, total: grandTotal, subtotal, ...invoice },
+            invoice: { id: invoiceId, vendor_id: vendorId, total: invoiceGrandTotal, subtotal, ...invoice },
             items
           }
         });
@@ -293,14 +293,14 @@ class InvoicePersistenceService {
         console.warn('[InvoicePersistenceService] Training sample capture note:', trainErr.message);
       }
 
-      // 6. Return persisted invoice with all details
-      return this.fetchInvoiceById(invoiceId);
+      // Return persisted invoice with all details
+      return await this.fetchInvoiceById(invoiceId);
     });
 
     try {
       const isOwnerCreating = (data.userRole === 'owner' || userId === 1);
       const vName = vendor?.vendor_name || vendor?.name || invoice.vendor_name || 'Vendor';
-      notificationService.createNotification({
+      await notificationService.createNotification({
         target_role: isOwnerCreating ? 'staff' : 'owner',
         type: 'invoice_created',
         title: isOwnerCreating ? 'New Invoice Added by Owner' : 'New Invoice Uploaded by Staff',
@@ -324,8 +324,8 @@ class InvoicePersistenceService {
    * Fetch saved invoice with vendor, buyer, and items
    * @param {number} id 
    */
-  fetchInvoiceById(id) {
-    const invoice = db.get(`
+  async fetchInvoiceById(id) {
+    const invoice = await db.get(`
       SELECT 
         i.*,
         v.vendor_name,
@@ -351,7 +351,7 @@ class InvoicePersistenceService {
 
     if (!invoice) return null;
 
-    const items = db.query(`
+    const items = await db.query(`
       SELECT ii.*, c.category_name
       FROM invoice_items ii
       LEFT JOIN categories c ON ii.category_id = c.id

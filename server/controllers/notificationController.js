@@ -14,7 +14,7 @@ class NotificationController {
       const isOwner = !user || user.role === 'owner' || user.id === 1;
 
       // 1. Invoices list with upload_type and user metadata
-      const allInvoices = db.query(`
+      const allInvoices = await db.query(`
         SELECT 
           i.id,
           i.invoice_number,
@@ -49,7 +49,7 @@ class NotificationController {
       `);
 
       // 2. Requirements list
-      const allRequirements = db.query(`
+      const allRequirements = await db.query(`
         SELECT 
           r.id,
           r.item_name,
@@ -71,7 +71,7 @@ class NotificationController {
       `);
 
       // Total pending invoice summary
-      const totalPendingResult = db.get(`
+      const totalPendingResult = await db.get(`
         SELECT COUNT(*) as count, COALESCE(SUM(total), 0) as amount 
         FROM invoices 
         WHERE status LIKE 'Pending%' OR (status = 'Approved' AND (amount_paid IS NULL OR amount_paid = 0))
@@ -101,7 +101,7 @@ class NotificationController {
       }
 
       // Fetch persistent notifications from notifications table
-      const persistentNotifs = notificationService.getNotifications({
+      const persistentNotifs = await notificationService.getNotifications({
         role: isOwner ? 'owner' : 'staff',
         userId: user ? user.id : null,
         limit: 30
@@ -157,7 +157,7 @@ class NotificationController {
       const isOwner = !user || user.role === 'owner' || user.id === 1;
       const { isRead, type, limit = 50, offset = 0 } = req.query;
 
-      const result = notificationService.getNotifications({
+      const result = await notificationService.getNotifications({
         role: isOwner ? 'owner' : 'staff',
         userId: user ? user.id : null,
         isRead: isRead !== undefined && isRead !== '' ? (isRead === 'true' || isRead === '1') : null,
@@ -183,21 +183,21 @@ class NotificationController {
       const isOwner = !user || user.role === 'owner' || user.id === 1;
       const istNow = getIstIsoString();
 
-      const notif = db.get('SELECT * FROM notifications WHERE id = ?', [id]);
-      notificationService.markAsRead(id, isOwner ? 'owner' : 'staff', user ? user.id : null);
+      const notif = await db.get('SELECT * FROM notifications WHERE id = ?', [id]);
+      await notificationService.markAsRead(id, isOwner ? 'owner' : 'staff', user ? user.id : null);
 
       if (notif) {
         if (notif.related_type === 'invoice' && notif.related_id) {
           if (isOwner) {
-            db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, notif.related_id]);
+            await db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, notif.related_id]);
           } else {
-            db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, notif.related_id]);
+            await db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, notif.related_id]);
           }
         } else if (notif.related_type === 'requirement' && notif.related_id) {
           if (isOwner) {
-            db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, notif.related_id]);
+            await db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, notif.related_id]);
           } else {
-            db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, notif.related_id]);
+            await db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, notif.related_id]);
           }
         }
       }
@@ -219,15 +219,15 @@ class NotificationController {
       const istNow = getIstIsoString();
 
       // Mark notifications table rows as read
-      notificationService.markAllAsRead(isOwner ? 'owner' : 'staff', user ? user.id : null);
+      await notificationService.markAllAsRead(isOwner ? 'owner' : 'staff', user ? user.id : null);
 
       // Mark invoices and requirements viewed
       if (isOwner) {
-        db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
-        db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
+        await db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
+        await db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
       } else {
-        db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
-        db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
+        await db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
+        await db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
       }
 
       return res.json({ success: true, message: 'All notifications marked as read.' });
@@ -243,7 +243,7 @@ class NotificationController {
   async deleteNotification(req, res) {
     try {
       const { id } = req.params;
-      notificationService.deleteNotification(id);
+      await notificationService.deleteNotification(id);
       return res.json({ success: true, message: `Notification #${id} deleted.` });
     } catch (error) {
       console.error('[NotificationController] deleteNotification error:', error);
@@ -260,14 +260,14 @@ class NotificationController {
       const isOwner = !user || user.role === 'owner' || user.id === 1;
       const istNow = getIstIsoString();
 
-      notificationService.clearAll(isOwner ? 'owner' : 'staff', user ? user.id : null);
+      await notificationService.clearAll(isOwner ? 'owner' : 'staff', user ? user.id : null);
 
       if (isOwner) {
-        db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
-        db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
+        await db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
+        await db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
       } else {
-        db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
-        db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
+        await db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
+        await db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
       }
 
       return res.json({ success: true, message: 'All notifications cleared.' });
@@ -288,11 +288,11 @@ class NotificationController {
       const istNow = getIstIsoString();
 
       if (isOwner) {
-        db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, id]);
-        db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND target_role = ?', [istNow, 'invoice', id, 'owner']);
+        await db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, id]);
+        await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND target_role = ?', [istNow, 'invoice', id, 'owner']);
       } else {
-        db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, id]);
-        db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND target_role = ?', [istNow, 'invoice', id, 'staff']);
+        await db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, id]);
+        await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND target_role = ?', [istNow, 'invoice', id, 'staff']);
       }
 
       return res.json({ success: true, message: `Invoice #${id} marked as viewed.` });
@@ -312,11 +312,11 @@ class NotificationController {
       const istNow = getIstIsoString();
 
       if (isOwner) {
-        db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
-        db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND (target_role = ? OR target_role = ?) AND is_read = 0', [istNow, 'invoice', 'owner', 'all']);
+        await db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
+        await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND (target_role = ? OR target_role = ?) AND is_read = 0', [istNow, 'invoice', 'owner', 'all']);
       } else {
-        db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
-        db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND (target_role = ? OR target_role = ?) AND is_read = 0', [istNow, 'invoice', 'staff', 'all']);
+        await db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
+        await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND (target_role = ? OR target_role = ?) AND is_read = 0', [istNow, 'invoice', 'staff', 'all']);
       }
 
       return res.json({ success: true, message: 'All invoices marked as viewed.' });
@@ -337,11 +337,11 @@ class NotificationController {
       const istNow = getIstIsoString();
 
       if (isOwner) {
-        db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, id]);
-        db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND (target_role = ? OR target_role = ?)', [istNow, 'requirement', id, 'owner', 'all']);
+        await db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, id]);
+        await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND (target_role = ? OR target_role = ?)', [istNow, 'requirement', id, 'owner', 'all']);
       } else {
-        db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, id]);
-        db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND (target_role = ? OR target_role = ?)', [istNow, 'requirement', id, 'staff', 'all']);
+        await db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE id = ?', [istNow, id]);
+        await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND (target_role = ? OR target_role = ?)', [istNow, 'requirement', id, 'staff', 'all']);
       }
 
       return res.json({ success: true, message: `Requirement #${id} marked as viewed.` });
@@ -361,11 +361,11 @@ class NotificationController {
       const istNow = getIstIsoString();
 
       if (isOwner) {
-        db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
-        db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND (target_role = ? OR target_role = ?) AND is_read = 0', [istNow, 'requirement', 'owner', 'all']);
+        await db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
+        await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND (target_role = ? OR target_role = ?) AND is_read = 0', [istNow, 'requirement', 'owner', 'all']);
       } else {
-        db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
-        db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND (target_role = ? OR target_role = ?) AND is_read = 0', [istNow, 'requirement', 'staff', 'all']);
+        await db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
+        await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND (target_role = ? OR target_role = ?) AND is_read = 0', [istNow, 'requirement', 'staff', 'all']);
       }
 
       return res.json({ success: true, message: 'All requirements marked as viewed.' });
@@ -384,14 +384,14 @@ class NotificationController {
       const isOwner = !user || user.role === 'owner' || user.id === 1;
       const istNow = getIstIsoString();
 
-      notificationService.markAllAsRead(isOwner ? 'owner' : 'staff', user ? user.id : null);
+      await notificationService.markAllAsRead(isOwner ? 'owner' : 'staff', user ? user.id : null);
 
       if (isOwner) {
-        db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
-        db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
+        await db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
+        await db.run('UPDATE store_requirements SET viewed_by_owner = 1, viewed_at = ? WHERE (viewed_by_owner IS NULL OR viewed_by_owner = 0)', [istNow]);
       } else {
-        db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
-        db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
+        await db.run('UPDATE invoices SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
+        await db.run('UPDATE store_requirements SET viewed_by_staff = 1, staff_viewed_at = ? WHERE (viewed_by_staff IS NULL OR viewed_by_staff = 0)', [istNow]);
       }
 
       return res.json({ success: true, message: 'All notifications marked as viewed.' });

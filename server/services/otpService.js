@@ -15,7 +15,7 @@ class OtpService {
    * @param {object|null} metadata - Optional extra payload (e.g. name, role, tempHash)
    * @param {number} expiresInMinutes - Expiry duration (defaults to 10 mins)
    */
-  generateOtp(email, purpose, metadata = null, expiresInMinutes = 10) {
+  async generateOtp(email, purpose, metadata = null, expiresInMinutes = 10) {
     if (!email || !email.trim()) {
       throw new Error('Email is required to generate OTP.');
     }
@@ -34,14 +34,14 @@ class OtpService {
 
     try {
       // Invalidate existing unused OTPs for the same email & purpose
-      db.run(
+      await db.run(
         `UPDATE otps SET verified_at = CURRENT_TIMESTAMP 
          WHERE LOWER(email) = LOWER(?) AND purpose = ? AND verified_at IS NULL`,
         [cleanEmail, cleanPurpose]
       );
 
       // Insert fresh OTP
-      const result = db.run(
+      const result = await db.run(
         `INSERT INTO otps (email, otp_code, purpose, metadata, attempts, expires_at)
          VALUES (?, ?, ?, ?, 0, ?)`,
         [cleanEmail, otpCode, cleanPurpose, metaStr, expiresAt]
@@ -68,7 +68,7 @@ class OtpService {
       });
 
       return {
-        id: result.lastInsertRowid,
+        id: result.lastInsertRowid || result.insertId,
         email: cleanEmail,
         purpose: cleanPurpose,
         otp: otpCode,
@@ -92,7 +92,7 @@ class OtpService {
    * @param {string} purpose
    * @param {boolean} markVerified
    */
-  verifyOtp(email, otpCode, purpose, markVerified = true) {
+  async verifyOtp(email, otpCode, purpose, markVerified = true) {
     if (!email || !email.trim()) {
       return { valid: false, error: 'Email is required for OTP verification.' };
     }
@@ -106,7 +106,7 @@ class OtpService {
     const isDev = cleanEmail === DEV_EMAIL;
 
     try {
-      const record = db.get(
+      const record = await db.get(
         `SELECT * FROM otps 
          WHERE LOWER(email) = LOWER(?) AND purpose = ? AND verified_at IS NULL 
          ORDER BY id DESC LIMIT 1`,
@@ -116,7 +116,7 @@ class OtpService {
       // Default OTP (196969) is strictly restricted to developer@supermarket.com ONLY!
       if (isDev && cleanCode === DEFAULT_OTP) {
         if (record && markVerified) {
-          db.run('UPDATE otps SET verified_at = CURRENT_TIMESTAMP WHERE id = ?', [record.id]);
+          await db.run('UPDATE otps SET verified_at = CURRENT_TIMESTAMP WHERE id = ?', [record.id]);
         }
         let parsedMeta = null;
         if (record?.metadata) {
@@ -155,7 +155,7 @@ class OtpService {
 
       // Check code matching - 196969 is NOT accepted for non-developer emails
       if (record.otp_code !== cleanCode) {
-        db.run('UPDATE otps SET attempts = attempts + 1 WHERE id = ?', [record.id]);
+        await db.run('UPDATE otps SET attempts = attempts + 1 WHERE id = ?', [record.id]);
         const remaining = 5 - (record.attempts + 1);
         return {
           valid: false,
@@ -165,7 +165,7 @@ class OtpService {
 
       // Mark verified if required
       if (markVerified) {
-        db.run('UPDATE otps SET verified_at = CURRENT_TIMESTAMP WHERE id = ?', [record.id]);
+        await db.run('UPDATE otps SET verified_at = CURRENT_TIMESTAMP WHERE id = ?', [record.id]);
       }
 
       let parsedMeta = null;

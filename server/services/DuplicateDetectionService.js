@@ -14,7 +14,7 @@ class DuplicateDetectionService {
    * @param {Object} invoiceDetails - { invoiceNumber, vendorId, vendorName, invoiceDate, grandTotal }
    * @returns {Object}
    */
-  checkDuplicate({ invoiceNumber, vendorId, vendorName, invoiceDate, grandTotal }) {
+  async checkDuplicate({ invoiceNumber, vendorId, vendorName, invoiceDate, grandTotal }) {
     if (!invoiceNumber && !grandTotal) {
       return { isDuplicate: false };
     }
@@ -24,7 +24,7 @@ class DuplicateDetectionService {
 
     // 1. Exact match by invoice number and vendor_id
     if (cleanInvNo && vendorId) {
-      const match = db.get(`
+      const match = await db.get(`
         SELECT i.id, i.invoice_number, i.invoice_date, i.total, i.vendor_id, v.vendor_name, i.status
         FROM invoices i
         LEFT JOIN vendors v ON i.vendor_id = v.id
@@ -48,7 +48,7 @@ class DuplicateDetectionService {
 
     // 2. Exact match by invoice number and same vendor name (if vendorId is unassigned/new)
     if (cleanInvNo && cleanVendorName) {
-      const match = db.get(`
+      const match = await db.get(`
         SELECT i.id, i.invoice_number, i.invoice_date, i.total, i.vendor_id, v.vendor_name, i.status
         FROM invoices i
         LEFT JOIN vendors v ON i.vendor_id = v.id
@@ -72,7 +72,7 @@ class DuplicateDetectionService {
 
     // 3. Match by vendor name, date, and exact total
     if (cleanVendorName && invoiceDate && Number(grandTotal) > 0) {
-      const match = db.get(`
+      const match = await db.get(`
         SELECT i.id, i.invoice_number, i.invoice_date, i.total, i.vendor_id, v.vendor_name, i.status
         FROM invoices i
         LEFT JOIN vendors v ON i.vendor_id = v.id

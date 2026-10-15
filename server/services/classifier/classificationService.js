@@ -60,12 +60,12 @@ class ClassificationService {
     // Lookup category id in database if available
     let categoryId = null;
     try {
-      const catRow = db.get('SELECT id FROM categories WHERE LOWER(category_name) = LOWER(?)', [result.category]);
+      const catRow = await db.get('SELECT id FROM categories WHERE LOWER(category_name) = LOWER(?)', [result.category]);
       if (catRow) {
         categoryId = catRow.id;
       } else {
         // If exact match not found, check for 'Other'
-        const otherRow = db.get('SELECT id FROM categories WHERE category_name = ?', ['Other']);
+        const otherRow = await db.get('SELECT id FROM categories WHERE category_name = ?', ['Other']);
         if (otherRow) categoryId = otherRow.id;
       }
     } catch (_) {}

@@ -7,7 +7,7 @@ class AiTrainingController {
    */
   async getStats(req, res) {
     try {
-      const stats = aiTrainingService.getTrainingStats();
+      const stats = await aiTrainingService.getTrainingStats();
       return res.json({ success: true, data: stats });
     } catch (err) {
       console.error('[AiTrainingController] getStats error:', err);
@@ -34,7 +34,7 @@ class AiTrainingController {
   async exportDataset(req, res) {
     try {
       const format = req.params.format || req.query.format || 'openai';
-      const result = aiTrainingService.generateFineTuningDataset(format);
+      const result = await aiTrainingService.generateFineTuningDataset(format);
 
       if (req.query.download === 'true') {
         const fileName = `invoice_ai_finetune_${format}_${Date.now()}.jsonl`;
@@ -66,8 +66,9 @@ class AiTrainingController {
       const limit = parseInt(req.query.limit) || 20;
       const offset = (page - 1) * limit;
 
-      const total = db.get('SELECT COUNT(*) as count FROM ai_training_samples').count;
-      const samples = db.query(`
+      const totalRow = await db.get('SELECT COUNT(*) as count FROM ai_training_samples');
+      const total = totalRow?.count || 0;
+      const samples = await db.query(`
         SELECT s.*, i.invoice_number, i.total
         FROM ai_training_samples s
         LEFT JOIN invoices i ON s.invoice_id = i.id
@@ -110,7 +111,7 @@ class AiTrainingController {
    */
   async runBenchmark(req, res) {
     try {
-      const samples = db.query('SELECT * FROM ai_training_samples WHERE is_validated = 1');
+      const samples = await db.query('SELECT * FROM ai_training_samples WHERE is_validated = 1');
       const stats = aiTrainingService.computeBenchmarkAccuracy(samples);
       return res.json({
         success: true,
