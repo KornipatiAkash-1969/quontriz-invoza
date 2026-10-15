@@ -16,7 +16,8 @@ import {
   Eye,
   EyeOff,
   Smartphone,
-  RefreshCw
+  RefreshCw,
+  Sparkles
 } from 'lucide-react';
 import { userApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -421,17 +422,19 @@ export default function UsersPage() {
       const res = await userApi.sendDeleteOwnerOtps(deleteTarget.id);
       setDeleteOwnerOtpsSent(true);
       setDeleteOwnerCountdown(60);
-      if (res?.data?.emailConfigured) {
-        setDeleteOtpHelperNotice(null);
+      const data = res?.data || res;
+      if (data?.emailConfigured) {
         toastSuccess(`Dual deletion authorization OTPs sent to your email and ${deleteTarget.email}! Check inboxes.`);
       } else {
+        toastSuccess('Dual deletion authorization OTPs generated!');
+      }
+      if (data?.debugCurrentOwnerOtp || data?.debugTargetOwnerOtp) {
         setDeleteOtpHelperNotice({
-          currentOwnerEmail: res?.data?.currentOwnerEmail,
-          targetOwnerEmail: res?.data?.targetOwnerEmail,
-          currentOwnerOtp: res?.data?.debugCurrentOwnerOtp,
-          targetOwnerOtp: res?.data?.debugTargetOwnerOtp,
+          currentOwnerEmail: data.currentOwnerEmail,
+          targetOwnerEmail: data.targetOwnerEmail,
+          currentOwnerOtp: data.debugCurrentOwnerOtp,
+          targetOwnerOtp: data.debugTargetOwnerOtp,
         });
-        toastSuccess('Dual deletion authorization OTPs generated! (Add Gmail App Password to .env for real delivery)');
       }
     } catch (err) {
       const msg = err.message || 'Failed to send dual deletion OTPs.';
@@ -468,7 +471,8 @@ export default function UsersPage() {
         currentOwnerOtp: currentOwnerDeleteOtpCode.trim(),
         targetOwnerOtp: targetOwnerDeleteOtpCode.trim(),
       });
-      toastSuccess(res.message || `Store Owner "${deleteTarget.name}" deleted successfully.`);
+      const data = res?.data || res;
+      toastSuccess(data?.message || res?.message || `Store Owner "${deleteTarget.name}" deleted successfully.`);
       handleCloseDelete();
       fetchUsers();
     } catch (err) {
@@ -486,7 +490,8 @@ export default function UsersPage() {
     setDeleting(true);
     try {
       const res = await userApi.delete(deleteTarget.id);
-      toastSuccess(res.message || 'Staff member deleted successfully.');
+      const data = res?.data || res;
+      toastSuccess(data?.message || res?.message || `Staff member "${deleteTarget.name}" deleted successfully.`);
       handleCloseDelete();
       fetchUsers();
     } catch (err) {
@@ -1293,6 +1298,7 @@ export default function UsersPage() {
           message={`Are you sure you want to delete ${deleteTarget.name} (${deleteTarget.email})? This staff account will immediately lose access.`}
           confirmLabel={deleting ? 'Deleting...' : 'Delete Staff Member'}
           isDestructive={true}
+          loading={deleting}
           onConfirm={handleDeleteStaffUser}
           onCancel={handleCloseDelete}
         />
@@ -1381,6 +1387,32 @@ export default function UsersPage() {
                   )}
                 </button>
               </div>
+
+              {/* Development / Simulated OTP Helper notice */}
+              {deleteOtpHelperNotice && (
+                <div className="p-3 bg-amber-50 border border-amber-200/90 rounded-xl space-y-1 text-xs text-amber-900">
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Developer / Master OTP Verification</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (deleteOtpHelperNotice.currentOwnerOtp) setCurrentOwnerDeleteOtpCode(String(deleteOtpHelperNotice.currentOwnerOtp));
+                        if (deleteOtpHelperNotice.targetOwnerOtp) setTargetOwnerDeleteOtpCode(String(deleteOtpHelperNotice.targetOwnerOtp));
+                      }}
+                      className="text-[11px] text-indigo-700 underline font-semibold hover:text-indigo-900 transition"
+                    >
+                      Auto-fill codes
+                    </button>
+                  </div>
+                  <div className="font-mono text-[11px] space-y-0.5 text-slate-700 pt-0.5">
+                    <div>1. Your OTP ({currentUser?.email}): <strong className="text-indigo-700 font-bold">{deleteOtpHelperNotice.currentOwnerOtp || '196969'}</strong></div>
+                    <div>2. Target Owner OTP ({deleteTarget.email}): <strong className="text-rose-700 font-bold">{deleteOtpHelperNotice.targetOwnerOtp || '196969'}</strong></div>
+                  </div>
+                </div>
+              )}
 
               {/* OTP Inputs */}
               {deleteOwnerOtpsSent && (

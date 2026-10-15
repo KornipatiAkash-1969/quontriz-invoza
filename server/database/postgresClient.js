@@ -46,20 +46,26 @@ function convertPgDdlToWasm(sql) {
     .replace(/ON CONFLICT \([^)]+\) DO NOTHING/gi, '');
 }
 
+let lastMtime = 0;
+
 async function getWasmDb() {
-  if (wasmDb) return wasmDb;
   if (!SQL_ENGINE) {
     const initSqlJs = require('sql.js');
     SQL_ENGINE = await initSqlJs();
   }
+
   if (fs.existsSync(WASM_DB_FILE)) {
     try {
-      const buffer = fs.readFileSync(WASM_DB_FILE);
-      wasmDb = new SQL_ENGINE.Database(buffer);
+      const stats = fs.statSync(WASM_DB_FILE);
+      if (!wasmDb || stats.mtimeMs > lastMtime) {
+        const buffer = fs.readFileSync(WASM_DB_FILE);
+        wasmDb = new SQL_ENGINE.Database(buffer);
+        lastMtime = stats.mtimeMs;
+      }
     } catch {
-      wasmDb = new SQL_ENGINE.Database();
+      if (!wasmDb) wasmDb = new SQL_ENGINE.Database();
     }
-  } else {
+  } else if (!wasmDb) {
     wasmDb = new SQL_ENGINE.Database();
   }
   return wasmDb;
@@ -70,6 +76,10 @@ function persistWasmDb() {
   try {
     const data = wasmDb.export();
     fs.writeFileSync(WASM_DB_FILE, Buffer.from(data));
+    try {
+      const stats = fs.statSync(WASM_DB_FILE);
+      lastMtime = stats.mtimeMs;
+    } catch {}
   } catch (err) {
     // Non-fatal warning if file is locked
   }

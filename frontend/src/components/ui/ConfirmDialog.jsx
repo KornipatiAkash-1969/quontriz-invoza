@@ -43,8 +43,8 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={loading}
             className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition disabled:opacity-50 ${
-              isDanger
-                ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
+              finalIsDanger
+                ? 'bg-rose-600 hover:bg-rose-700 focus:ring-rose-500'
                 : 'bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
             }`}
           >
@@ -54,8 +54,8 @@ export default function ConfirmDialog({
       }
     >
       <div className="flex items-start gap-4">
-        {isDanger && (
-          <div className="p-3 bg-red-100 text-red-600 rounded-full flex-shrink-0">
+        {finalIsDanger && (
+          <div className="p-3 bg-rose-100 text-rose-600 rounded-full flex-shrink-0">
             <AlertTriangle className="w-6 h-6" />
           </div>
         )}
