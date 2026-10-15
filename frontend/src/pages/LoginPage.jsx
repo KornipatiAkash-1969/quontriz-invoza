@@ -335,11 +335,6 @@ export default function LoginPage() {
                 <div>
                   <p className="text-[11px] font-semibold text-slate-500">Signing in as:</p>
                   <p className="text-xs font-bold text-slate-900 truncate">{email}</p>
-                  {email.toLowerCase() === 'developer@supermarket.com' && (
-                    <p className="text-[11px] text-indigo-600 font-bold mt-1">
-                      Master OTP: <span className="font-mono bg-indigo-100 text-indigo-900 px-1.5 py-0.5 rounded font-black tracking-wider">196969</span>
-                    </p>
-                  )}
                 </div>
                 <button
                   type="button"
@@ -391,20 +386,6 @@ export default function LoginPage() {
                   className="w-full text-center text-2xl font-mono font-black tracking-[0.5em] py-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-slate-900"
                 />
               </div>
-
-              {loginOtpHelper && (
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs space-y-1 animate-in fade-in">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-amber-950">Local Testing OTP Code:</span>
-                    <span className="font-mono bg-white px-2 py-0.5 rounded border border-amber-300 font-extrabold text-amber-950 text-sm">
-                      {loginOtpHelper}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-amber-700">
-                    (Real email delivery requires SMTP in server/.env, displaying code for testing)
-                  </p>
-                </div>
-              )}
 
               <button
                 type="submit"

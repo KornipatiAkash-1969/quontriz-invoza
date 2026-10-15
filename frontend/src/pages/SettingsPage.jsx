@@ -43,6 +43,10 @@ export default function SettingsPage() {
   const [savingOpenAi, setSavingOpenAi] = useState(false);
   const [testingOpenAi, setTestingOpenAi] = useState(false);
   const [openAiTestResult, setOpenAiTestResult] = useState(null);
+  const [dbInfo, setDbInfo] = useState({
+    engine: 'Loading...',
+    journalMode: 'ACID / WAL'
+  });
 
   // Load Settings on Mount
   useEffect(() => {
@@ -56,6 +60,9 @@ export default function SettingsPage() {
           setOpenAiStatus(openai.status || 'Active (OpenAI GPT-4o)');
           if (openai.keyPreview) {
             setApiKey(openai.keyPreview);
+          }
+          if (res.data.database) {
+            setDbInfo(res.data.database);
           }
         }
       } catch (err) {
@@ -463,19 +470,19 @@ export default function SettingsPage() {
           <div className="space-y-3 text-xs">
             <div className="flex justify-between py-1 border-b border-slate-50">
               <span className="text-slate-500">Database Engine:</span>
-              <span className="font-semibold text-slate-800">SQLite 3 (Node.js Native)</span>
+              <span className="font-semibold text-slate-800">{dbInfo.engine || 'SQLite 3 (Node.js Native)'}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-50">
               <span className="text-slate-500">Active Learning Memory:</span>
               <span className="font-semibold text-emerald-600">Enabled (ai_learned_vendor_templates)</span>
             </div>
             <div className="flex justify-between py-1 border-b border-slate-50">
-              <span className="text-slate-500">Journal Mode:</span>
-              <span className="font-semibold text-slate-800">WAL (Write-Ahead Logging)</span>
+              <span className="text-slate-500">Transaction / Mode:</span>
+              <span className="font-semibold text-slate-800">{dbInfo.journalMode || 'WAL / ACID'}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-slate-500">Financial Storage:</span>
-              <span className="font-semibold text-slate-800">NUMERIC precision</span>
+              <span className="font-semibold text-slate-800">NUMERIC(12,2) precision</span>
             </div>
           </div>
         </div>

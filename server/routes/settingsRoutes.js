@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const openAiService = require('../services/OpenAiInvoiceService');
+const db = require('../database/db');
 
 /**
- * Settings Routes for OpenAI Engine
+ * Settings Routes for OpenAI Engine & System Diagnostics
  */
 
-// 1. Get current OpenAI configuration & connection status
+// 1. Get current OpenAI configuration, connection status & database engine
 router.get('/', async (req, res) => {
   try {
     const isConfigured = openAiService.isConfigured();
@@ -25,6 +26,12 @@ router.get('/', async (req, res) => {
           status: isConfigured
             ? `Active (OpenAI ${openAiService.model})`
             : 'Unconfigured (Local Fallback Ready)'
+        },
+        database: {
+          engine: db.isMysql ? 'MySQL 8.0+ (Connection Pool)' : 'SQLite 3 (Node.js Native)',
+          dialect: db.isMysql ? 'MySQL' : 'SQLite',
+          journalMode: db.isMysql ? 'InnoDB ACID Transactions' : 'WAL (Write-Ahead Logging)',
+          status: 'Connected'
         }
       }
     });
