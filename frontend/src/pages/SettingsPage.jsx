@@ -44,8 +44,8 @@ export default function SettingsPage() {
   const [testingOpenAi, setTestingOpenAi] = useState(false);
   const [openAiTestResult, setOpenAiTestResult] = useState(null);
   const [dbInfo, setDbInfo] = useState({
-    engine: 'Loading...',
-    journalMode: 'ACID / WAL'
+    engine: 'MySQL 8.0+ / SQLite 3',
+    journalMode: 'ACID Transactions / WAL'
   });
 
   // Load Settings on Mount
@@ -61,12 +61,21 @@ export default function SettingsPage() {
           if (openai.keyPreview) {
             setApiKey(openai.keyPreview);
           }
-          if (res.data.database) {
+          if (res.data?.database) {
             setDbInfo(res.data.database);
+          } else {
+            setDbInfo({
+              engine: 'SQLite 3 (Node.js Native)',
+              journalMode: 'WAL (Write-Ahead Logging)'
+            });
           }
         }
       } catch (err) {
         console.warn('Failed to load initial settings:', err.message);
+        setDbInfo({
+          engine: 'SQLite 3 (Node.js Native)',
+          journalMode: 'WAL (Write-Ahead Logging)'
+        });
       }
     }
     loadSettings();
