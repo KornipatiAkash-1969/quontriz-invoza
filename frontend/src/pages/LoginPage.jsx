@@ -32,8 +32,17 @@ export default function LoginPage() {
 
   const from = location.state?.from?.pathname;
 
+  // Ensure fields are completely empty on mount and reset
+  React.useEffect(() => {
+    setEmail('');
+    setPassword('');
+    setErrorMessage('');
+  }, []);
+
   const handlePortalSwitch = (newRole) => {
     setPortalRole(newRole);
+    setEmail('');
+    setPassword('');
     setErrorMessage('');
   };
 
@@ -162,14 +171,19 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Direct Sign-In Form */}
+          {/* Direct Sign-In Form (Protected against browser auto-fill/prefilling) */}
           <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
+            {/* Hidden dummy fields to consume aggressive browser autofill heuristics */}
+            <input type="text" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+            <input type="password" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" />
+
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">Work Email</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type="email"
+                  name="user_work_email"
                   required
                   autoComplete="off"
                   value={email}
@@ -177,7 +191,7 @@ export default function LoginPage() {
                     setEmail(e.target.value);
                     if (errorMessage) setErrorMessage('');
                   }}
-                  placeholder="name@supermarket.com"
+                  placeholder="Enter your email address"
                   className={`w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm border rounded-xl outline-none font-medium text-slate-900 transition ${
                     portalRole === 'staff'
                       ? 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
@@ -193,8 +207,9 @@ export default function LoginPage() {
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                 <input
                   type={showPassword ? 'text' : 'password'}
+                  name="user_secret_password"
                   required
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);

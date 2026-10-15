@@ -45,17 +45,17 @@ export default function UsersPage() {
     message: '',
   });
 
-  // Form state - Default password based on role (staff123 / owner123)
+  // Form state - Clean initial state without prefilling
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('staff');
-  const [password, setPassword] = useState('staff123');
+  const [password, setPassword] = useState('');
   const [showModalPassword, setShowModalPassword] = useState(false);
 
   // Password change & reset state
   const [showSelfChangePassword, setShowSelfChangePassword] = useState(false);
   const [resetPasswordTarget, setResetPasswordTarget] = useState(null);
-  const [newResetPassword, setNewResetPassword] = useState('staff123');
+  const [newResetPassword, setNewResetPassword] = useState('');
   const [showResetEye, setShowResetEye] = useState(false);
   const [resettingPassword, setResettingPassword] = useState(false);
 
@@ -83,16 +83,13 @@ export default function UsersPage() {
     setRole(newRole);
     setFormError(null);
     setShowModalPassword(false);
-    if (password === 'staff123' || password === 'owner123' || !password) {
-      setPassword(newRole === 'owner' ? 'owner123' : 'staff123');
-    }
   };
 
   const openCreateModal = () => {
     setName('');
     setEmail('');
     setRole('staff');
-    setPassword('staff123');
+    setPassword('');
     setShowModalPassword(false);
     setFormError(null);
     setDuplicatePopup({
@@ -158,7 +155,7 @@ export default function UsersPage() {
       setShowCreateModal(false);
       setName('');
       setEmail('');
-      setPassword('staff123');
+      setPassword('');
       setRole('staff');
       setShowModalPassword(false);
       setFormError(null);
@@ -227,7 +224,7 @@ export default function UsersPage() {
       const res = await userApi.resetPassword(resetPasswordTarget.id, newResetPassword);
       toastSuccess(res.message || `Password for ${resetPasswordTarget.name} updated successfully!`);
       setResetPasswordTarget(null);
-      setNewResetPassword('staff123');
+      setNewResetPassword('');
     } catch (err) {
       toastError(err.message || 'Failed to update user password.');
     } finally {
@@ -435,7 +432,7 @@ export default function UsersPage() {
                                 type="button"
                                 onClick={() => {
                                   setResetPasswordTarget(u);
-                                  setNewResetPassword(u.role === 'owner' ? 'owner123' : 'staff123');
+                                  setNewResetPassword('');
                                   setShowResetEye(false);
                                 }}
                                 className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
@@ -608,7 +605,7 @@ export default function UsersPage() {
                     setEmail(e.target.value);
                     if (formError) setFormError(null);
                   }}
-                  placeholder="name@supermarket.com"
+                  placeholder="Enter team member email"
                   className={`w-full pl-9 pr-3 py-2 text-xs border rounded-xl outline-none transition ${
                     isEmailDuplicate
                       ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20 text-slate-900'
@@ -630,21 +627,6 @@ export default function UsersPage() {
                 <label className="block text-xs font-semibold text-slate-700">
                   Initial Password <span className="text-rose-500">*</span>
                 </label>
-                <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
-                    role === 'owner'
-                      ? 'text-indigo-700 bg-indigo-50 border-indigo-200'
-                      : 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                  }`}
-                >
-                  <KeyRound className="w-3 h-3" />
-                  <span>
-                    Default:{' '}
-                    <strong className="font-mono">
-                      {showModalPassword ? (role === 'owner' ? 'owner123' : 'staff123') : '••••••••'}
-                    </strong>
-                  </span>
-                </span>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -655,7 +637,7 @@ export default function UsersPage() {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Enter initial password (min 4 characters)"
                   className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium font-mono"
                 />
                 <button
@@ -803,21 +785,6 @@ export default function UsersPage() {
                 <label className="block text-xs font-semibold text-slate-700">
                   New Password <span className="text-rose-500">*</span>
                 </label>
-                <span
-                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
-                    resetPasswordTarget.role === 'owner'
-                      ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}
-                >
-                  <KeyRound className="w-3 h-3" />
-                  <span>
-                    Default:{' '}
-                    <strong className="font-mono">
-                      {showResetEye ? (resetPasswordTarget.role === 'owner' ? 'owner123' : 'staff123') : '••••••••'}
-                    </strong>
-                  </span>
-                </span>
               </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -827,7 +794,7 @@ export default function UsersPage() {
                   minLength={4}
                   value={newResetPassword}
                   onChange={(e) => setNewResetPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Enter new password (min 4 characters)"
                   className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium font-mono"
                 />
                 <button
