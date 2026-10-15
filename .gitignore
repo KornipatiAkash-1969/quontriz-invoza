@@ -17,7 +17,8 @@ server/uploads/*
 .env
 server/.env
 
-# Database journal & temp files
+# Database files
+server/database/*.db
 server/database/*.db-wal
 server/database/*.db-shm
 
