@@ -39,39 +39,48 @@ async function initPostgres() {
     );
   }
 
-  // Seed akash.kornipati1969@gmail.com
-  const akashUser = await postgresClient.get(
-    "SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
-  );
-  if (!akashUser) {
-    await postgresClient.run(
-      'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
-      ['Akash Kornipati', 'akash.kornipati1969@gmail.com', devHash, 'owner']
+  // One-time database migration: Permanently remove legacy auto-seeded non-developer accounts
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id VARCHAR(255) PRIMARY KEY,
+      applied_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     );
-    console.log('[PostgreSQL] ✅ Seeded akash.kornipati1969@gmail.com (owner)');
-  } else {
-    await postgresClient.run(
-      "UPDATE users SET password_hash = $1, role = 'owner' WHERE id = $2",
-      [devHash, akashUser.id]
-    );
-  }
+  `);
 
-  // Seed staff member akash.kornipati9@gmail.com
-  const staffHash = bcrypt.hashSync('staff123', 10);
-  const staffUser = await postgresClient.get(
-    "SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati9@gmail.com'"
+  const legacySeedCleanup = await postgresClient.get(
+    "SELECT id FROM schema_migrations WHERE id = 'cleanup_legacy_autoseeded_users_v1'"
   );
-  if (!staffUser) {
-    await postgresClient.run(
-      'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
-      ['AB', 'akash.kornipati9@gmail.com', staffHash, 'staff']
-    );
-    console.log('[PostgreSQL] ✅ Seeded akash.kornipati9@gmail.com (staff)');
-  } else {
-    await postgresClient.run(
-      "UPDATE users SET password_hash = $1, role = 'staff' WHERE id = $2",
-      [staffHash, staffUser.id]
-    );
+  if (!legacySeedCleanup) {
+    try {
+      // Disassociate foreign keys
+      await postgresClient.run(
+        "UPDATE invoices SET created_by_user_id = NULL WHERE created_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
+      );
+      await postgresClient.run(
+        "UPDATE invoices SET approved_by_user_id = NULL WHERE approved_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
+      );
+      await postgresClient.run(
+        "UPDATE store_requirements SET requested_by_user_id = NULL WHERE requested_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
+      );
+      await postgresClient.run(
+        "UPDATE store_requirements SET fulfilled_by_user_id = NULL WHERE fulfilled_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
+      );
+      await postgresClient.run(
+        "DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
+      );
+      await postgresClient.run(
+        "DELETE FROM otps WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
+      );
+      await postgresClient.run(
+        "DELETE FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
+      );
+      await postgresClient.run(
+        "INSERT INTO schema_migrations (id) VALUES ('cleanup_legacy_autoseeded_users_v1')"
+      );
+      console.log('[PostgreSQL] 🧹 Purged legacy auto-seeded akash.kornipati1969@gmail.com from database.');
+    } catch (cleanErr) {
+      console.warn('[PostgreSQL Cleanup Warning]', cleanErr.message);
+    }
   }
 
   // 3. Seed Default Categories if empty

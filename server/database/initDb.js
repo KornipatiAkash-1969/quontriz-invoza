@@ -394,16 +394,28 @@ async function initDb() {
     await db.run("UPDATE users SET email = 'developer@supermarket.com', password_hash = ?, role = 'owner' WHERE id = ?", [devHash, devUser.id]);
   }
 
-  // Seed Owner Account for akash.kornipati1969@gmail.com
-  const akashUser = await db.get("SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'");
-  if (!akashUser) {
-    await db.run(`
-      INSERT INTO users (name, email, password_hash, role)
-      VALUES (?, ?, ?, ?)
-    `, ['Akash Kornipati', 'akash.kornipati1969@gmail.com', devHash, 'owner']);
-    console.log('[initDb] Seeded owner account: akash.kornipati1969@gmail.com (owner)');
-  } else {
-    await db.run("UPDATE users SET password_hash = ?, role = 'owner' WHERE id = ?", [devHash, akashUser.id]);
+  // One-time database migration: Permanently remove legacy auto-seeded non-developer accounts
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id TEXT PRIMARY KEY,
+      applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  const legacySeedCleanup = await db.get("SELECT id FROM schema_migrations WHERE id = 'cleanup_legacy_autoseeded_users_v1'");
+  if (!legacySeedCleanup) {
+    try {
+      await db.run("UPDATE invoices SET created_by_user_id = NULL WHERE created_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')");
+      await db.run("UPDATE invoices SET approved_by_user_id = NULL WHERE approved_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')");
+      await db.run("UPDATE store_requirements SET requested_by_user_id = NULL WHERE requested_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')");
+      await db.run("UPDATE store_requirements SET fulfilled_by_user_id = NULL WHERE fulfilled_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')");
+      await db.run("DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')");
+      await db.run("DELETE FROM otps WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'");
+      await db.run("DELETE FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'");
+      await db.run("INSERT INTO schema_migrations (id) VALUES ('cleanup_legacy_autoseeded_users_v1')");
+      console.log('[initDb] 🧹 Purged legacy auto-seeded akash.kornipati1969@gmail.com from database.');
+    } catch (cleanErr) {
+      console.warn('[initDb Cleanup Warning]', cleanErr.message);
+    }
   }
 
   // Seed default Categories if empty

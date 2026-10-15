@@ -39,39 +39,41 @@ async function initMysql() {
     );
   }
 
-  // Seed akash.kornipati1969@gmail.com
-  const akashUser = await mysqlClient.get(
-    "SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
-  );
-  if (!akashUser) {
-    await mysqlClient.run(
-      'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      ['Akash Kornipati', 'akash.kornipati1969@gmail.com', devHash, 'owner']
+  // One-time database migration: Permanently remove legacy auto-seeded non-developer accounts
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id VARCHAR(255) PRIMARY KEY,
+      applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    console.log('[MySQL] ✅ Seeded akash.kornipati1969@gmail.com (owner)');
-  } else {
-    await mysqlClient.run(
-      "UPDATE users SET password_hash = ?, role = 'owner' WHERE id = ?",
-      [devHash, akashUser.id]
-    );
-  }
+  `);
 
-  // Seed staff member akash.kornipati9@gmail.com
-  const staffHash = bcrypt.hashSync('staff123', 10);
-  const staffUser = await mysqlClient.get(
-    "SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati9@gmail.com'"
+  const legacySeedCleanup = await mysqlClient.get(
+    "SELECT id FROM schema_migrations WHERE id = 'cleanup_legacy_autoseeded_users_v1'"
   );
-  if (!staffUser) {
-    await mysqlClient.run(
-      'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      ['AB', 'akash.kornipati9@gmail.com', staffHash, 'staff']
-    );
-    console.log('[MySQL] ✅ Seeded akash.kornipati9@gmail.com (staff)');
-  } else {
-    await mysqlClient.run(
-      "UPDATE users SET password_hash = ?, role = 'staff' WHERE id = ?",
-      [staffHash, staffUser.id]
-    );
+  if (!legacySeedCleanup) {
+    try {
+      await mysqlClient.run(
+        "UPDATE invoices SET created_by_user_id = NULL WHERE created_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
+      );
+      await mysqlClient.run(
+        "UPDATE invoices SET approved_by_user_id = NULL WHERE approved_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
+      );
+      await mysqlClient.run(
+        "DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
+      );
+      await mysqlClient.run(
+        "DELETE FROM otps WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
+      );
+      await mysqlClient.run(
+        "DELETE FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
+      );
+      await mysqlClient.run(
+        "INSERT INTO schema_migrations (id) VALUES ('cleanup_legacy_autoseeded_users_v1')"
+      );
+      console.log('[MySQL] 🧹 Purged legacy auto-seeded akash.kornipati1969@gmail.com from database.');
+    } catch (cleanErr) {
+      console.warn('[MySQL Cleanup Warning]', cleanErr.message);
+    }
   }
 
   // 3. Seed Default Categories if empty
