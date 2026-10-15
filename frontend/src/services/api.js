@@ -83,26 +83,14 @@ export const authApi = {
   getMe: () => api.get('/auth/me'),
   getDemoUsers: () => api.get('/auth/demo-users'),
   changePassword: (data) => api.post('/auth/change-password', data),
-  // OTP System APIs
-  sendLoginOtp: (data) => api.post('/auth/otp/send-login', data),
-  verifyLoginOtp: (data) => api.post('/auth/otp/verify-login', data),
-  sendRegisterOtp: (data) => api.post('/auth/otp/send-register', data),
-  verifyRegisterOtp: (data) => api.post('/auth/otp/verify-register', data),
-  sendCreateMemberOtp: (data) => api.post('/auth/otp/send-create-member', data),
-  verifyCreateMemberOtp: (data) => api.post('/auth/otp/verify-create-member', data),
 };
 
 export const userApi = {
   getAll: () => api.get('/auth/users'),
   create: (data) => api.post('/auth/users', data),
-  sendStaffOtp: (data) => api.post('/auth/users/send-staff-otp', data),
   createStaff: (data) => api.post('/auth/users/create-staff', data),
-  sendOwnerOtps: (data) => api.post('/auth/users/send-owner-otps', data),
   createOwner: (data) => api.post('/auth/users/create-owner', data),
-  createWithOtp: (data) => api.post('/auth/otp/verify-create-member', data),
-  sendOtp: (data) => api.post('/auth/otp/send-create-member', data),
-  sendDeleteOwnerOtps: (id) => api.post(`/auth/users/${id}/send-delete-owner-otps`),
-  delete: (id, data) => api.delete(`/auth/users/${id}`, { data }),
+  delete: (id) => api.delete(`/auth/users/${id}`),
   resetPassword: (id, newPassword) => api.put(`/auth/users/${id}/password`, { newPassword }),
 };
 

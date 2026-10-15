@@ -107,7 +107,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
       title: 'Team & Staff',
       icon: Users,
       iconBg: 'bg-rose-600',
-      explanation: 'Manage store staff accounts and co-owners with dual-owner OTP verification security.',
+      explanation: 'Manage store staff accounts and co-owners with role-based access control.',
       tip: 'Staff passwords remain confidential and are never visible to store owners.',
       preferredPlacement: 'right'
     },

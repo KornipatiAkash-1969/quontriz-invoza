@@ -127,21 +127,8 @@ export function AuthProvider({ children }) {
     return newUser;
   };
 
-  const login = async (email, password, portalRole = null, otp = null) => {
-    const res = await authApi.login({ email, password, portalRole, otp });
-    if (res && res.requiresOtp) {
-      return res;
-    }
-    return handleAuthSuccess(res);
-  };
-
-  const loginWithOtp = async (email, otp, portalRole = null) => {
-    const res = await authApi.verifyLoginOtp({ email, otp, portalRole });
-    return handleAuthSuccess(res);
-  };
-
-  const registerWithOtp = async (formData) => {
-    const res = await authApi.verifyRegisterOtp(formData);
+  const login = async (email, password, portalRole = null) => {
+    const res = await authApi.login({ email, password, portalRole });
     return handleAuthSuccess(res);
   };
 
@@ -162,8 +149,6 @@ export function AuthProvider({ children }) {
         isStaff,
         isEmployee,
         login,
-        loginWithOtp,
-        registerWithOtp,
         logout,
         sessionExpiredNotice,
         setSessionExpiredNotice,

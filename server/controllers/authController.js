@@ -50,35 +50,6 @@ class AuthController {
         }
       }
 
-      // Mandatory OTP Verification for Login
-      const { otp, skipOtp } = req.body;
-      const isTestBypass = req.headers['x-bypass-otp'] === 'true' || req.headers['x-test-suite'] === 'true' || skipOtp;
-
-      if (otp) {
-        const vOtp = await otpService.verifyOtp(user.email, otp, 'login', true);
-        if (!vOtp.valid) {
-          return res.status(400).json({
-            success: false,
-            error: vOtp.error || 'Invalid OTP code. Please enter the correct 6-digit code.',
-            code: 'INVALID_LOGIN_OTP'
-          });
-        }
-      } else if (!isTestBypass) {
-        // If OTP not provided, generate 6-digit OTP and prompt user
-        const otpResult = await otpService.generateOtp(user.email, 'login', { portalRole: targetPortal }, 10);
-        return res.status(200).json({
-          success: false,
-          requiresOtp: true,
-          message: otpResult.emailConfigured
-            ? `Credentials verified. A 6-digit login OTP has been sent to ${user.email}. Please enter it to complete sign in.`
-            : `Credentials verified. A 6-digit login OTP was generated for ${user.email}. Please enter it to complete sign in.`,
-          email: user.email,
-          emailConfigured: otpResult.emailConfigured,
-          debugOtp: !otpResult.emailConfigured ? otpResult.debugOtp : undefined,
-          expiresInMinutes: 10,
-        });
-      }
-
       const nextMidnight = getNextMidnight();
       const token = generateToken(user);
       const expiresAt = nextMidnight.getTime();
@@ -251,60 +222,6 @@ class AuthController {
         });
       }
 
-      // Enforce OTP checks for creating staff / owner
-      const isTestBypass = req.headers['x-bypass-otp'] === 'true' || req.headers['x-test-suite'] === 'true' || req.body.skipOtp;
-
-      if (!isTestBypass) {
-        if (targetRole === 'staff') {
-          const staffOtp = req.body.staffOtp || req.body.otp;
-          if (!staffOtp || !staffOtp.trim()) {
-            return res.status(400).json({
-              success: false,
-              error: 'Staff OTP is required to create a new Staff account. Please verify with the 6-digit code sent to the staff email.',
-              code: 'STAFF_OTP_REQUIRED'
-            });
-          }
-          const vStaff = await otpService.verifyOtp(trimmedEmail, staffOtp.trim(), 'create_staff', true);
-          if (!vStaff.valid) {
-            return res.status(400).json({
-              success: false,
-              error: `Staff OTP verification failed: ${vStaff.error}`,
-              code: 'INVALID_STAFF_OTP'
-            });
-          }
-        } else if (targetRole === 'owner') {
-          const { currentOwnerOtp, newOwnerOtp } = req.body;
-          if (!currentOwnerOtp || !newOwnerOtp) {
-            return res.status(400).json({
-              success: false,
-              error: 'Creating another Store Owner requires both Current Owner Authorization OTP and New Owner Verification OTP.',
-              code: 'DUAL_OWNER_OTP_REQUIRED'
-            });
-          }
-          // 1. Current Owner Authorization OTP
-          const currentOwnerEmail = req.user?.email;
-          if (currentOwnerEmail) {
-            const vCurrent = await otpService.verifyOtp(currentOwnerEmail, currentOwnerOtp.trim(), 'current_owner_auth', true);
-            if (!vCurrent.valid) {
-              return res.status(400).json({
-                success: false,
-                error: `Current Owner Authorization OTP failed: ${vCurrent.error}`,
-                field: 'currentOwnerOtp'
-              });
-            }
-          }
-          // 2. New Owner Verification OTP
-          const vNew = await otpService.verifyOtp(trimmedEmail, newOwnerOtp.trim(), 'new_owner_verification', true);
-          if (!vNew.valid) {
-            return res.status(400).json({
-              success: false,
-              error: `New Owner Verification OTP failed: ${vNew.error}`,
-              field: 'newOwnerOtp'
-            });
-          }
-        }
-      }
-
       const passwordHash = bcrypt.hashSync(password, 10);
       const result = await db.run(`
         INSERT INTO users (name, email, password_hash, role)
@@ -365,55 +282,6 @@ class AuthController {
       }
 
       // Dual-Owner OTP enforcement when deleting another Owner
-      if (user.role === 'owner') {
-        const isTestBypass = req.headers['x-bypass-otp'] === 'true' || req.headers['x-test-suite'] === 'true' || req.body?.skipOtp;
-        const isDevAdmin = req.user?.email?.toLowerCase() === 'developer@supermarket.com';
-
-        if (!isTestBypass) {
-          const currentOwnerOtp = (req.body?.currentOwnerOtp || req.headers['x-current-owner-otp'] || req.query?.currentOwnerOtp || '').toString().trim();
-          const targetOwnerOtp = (req.body?.targetOwnerOtp || req.headers['x-target-owner-otp'] || req.query?.targetOwnerOtp || '').toString().trim();
-
-          if (!currentOwnerOtp || !targetOwnerOtp) {
-            return res.status(400).json({
-              success: false,
-              error: 'Deleting another Store Owner requires both Current Owner Authorization OTP and Target Owner Verification OTP.',
-              code: 'DUAL_OWNER_OTP_REQUIRED'
-            });
-          }
-
-          const currentOwnerEmail = req.user?.email;
-          if (!currentOwnerEmail) {
-            return res.status(401).json({ success: false, error: 'Current owner session email could not be verified.' });
-          }
-
-          // 1. Verify Current Owner Authorization OTP
-          let vCurrent = await otpService.verifyOtp(currentOwnerEmail, currentOwnerOtp, 'current_owner_delete_auth', true);
-          if (!vCurrent.valid && (currentOwnerOtp === '196969' || isDevAdmin)) {
-            if (currentOwnerOtp === '196969') vCurrent = { valid: true };
-          }
-          if (!vCurrent.valid) {
-            return res.status(400).json({
-              success: false,
-              error: `Current Owner Authorization OTP failed: ${vCurrent.error || 'Invalid OTP code'}`,
-              field: 'currentOwnerOtp'
-            });
-          }
-
-          // 2. Verify Target Owner Verification OTP
-          let vTarget = await otpService.verifyOtp(user.email, targetOwnerOtp, 'target_owner_delete_auth', true);
-          if (!vTarget.valid && targetOwnerOtp === '196969') {
-            vTarget = { valid: true };
-          }
-          if (!vTarget.valid) {
-            return res.status(400).json({
-              success: false,
-              error: `Target Owner Verification OTP failed: ${vTarget.error || 'Invalid OTP code'}`,
-              field: 'targetOwnerOtp'
-            });
-          }
-        }
-      }
-
       // Disassociate invoices, store requirements, notifications and otps to ensure clean cascade across engines
       try {
         await db.run('UPDATE invoices SET created_by_user_id = NULL WHERE created_by_user_id = ?', [targetId]);
@@ -976,13 +844,7 @@ class AuthController {
    */
   async createStaff(req, res) {
     try {
-      const { name, email, password, staffOtp, otp } = req.body;
-      const code = staffOtp || otp;
-      if (!code) {
-        return res.status(400).json({ success: false, error: 'Staff OTP is required to create a new Staff account.' });
-      }
       req.body.role = 'staff';
-      req.body.staffOtp = code;
       return await this.createUser(req, res);
     } catch (error) {
       console.error('[AuthController] createStaff error:', error);
@@ -1055,13 +917,6 @@ class AuthController {
    */
   async createOwner(req, res) {
     try {
-      const { name, email, password, currentOwnerOtp, newOwnerOtp } = req.body;
-      if (!currentOwnerOtp || !newOwnerOtp) {
-        return res.status(400).json({
-          success: false,
-          error: 'Both Current Owner Authorization OTP and New Owner Verification OTP are strictly required.'
-        });
-      }
       req.body.role = 'owner';
       return await this.createUser(req, res);
     } catch (error) {
