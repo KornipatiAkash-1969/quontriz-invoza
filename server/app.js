@@ -37,8 +37,8 @@ app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 // Serve Uploads statically for PDF viewing/download
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Health check
-app.get('/api/health', (req, res) => {
+// Health check (supports /api/health and Render default /healthz)
+app.get(['/api/health', '/healthz', '/health'], (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
