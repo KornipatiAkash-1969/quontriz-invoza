@@ -16,8 +16,7 @@ import {
   Eye,
   EyeOff,
   Smartphone,
-  RefreshCw,
-  Sparkles
+  RefreshCw
 } from 'lucide-react';
 import { userApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -75,7 +74,6 @@ export default function UsersPage() {
   const [targetOwnerDeleteOtpCode, setTargetOwnerDeleteOtpCode] = useState('');
   const [sendingDeleteOwnerOtps, setSendingDeleteOwnerOtps] = useState(false);
   const [deleteOwnerCountdown, setDeleteOwnerCountdown] = useState(0);
-  const [deleteOtpHelperNotice, setDeleteOtpHelperNotice] = useState(null);
   const [deleteOwnerError, setDeleteOwnerError] = useState(null);
 
   // Countdown timers
@@ -400,7 +398,6 @@ export default function UsersPage() {
     setCurrentOwnerDeleteOtpCode('');
     setTargetOwnerDeleteOtpCode('');
     setDeleteOwnerCountdown(0);
-    setDeleteOtpHelperNotice(null);
     setDeleteOwnerError(null);
   };
 
@@ -410,7 +407,6 @@ export default function UsersPage() {
     setCurrentOwnerDeleteOtpCode('');
     setTargetOwnerDeleteOtpCode('');
     setDeleteOwnerCountdown(0);
-    setDeleteOtpHelperNotice(null);
     setDeleteOwnerError(null);
   };
 
@@ -419,23 +415,10 @@ export default function UsersPage() {
     setSendingDeleteOwnerOtps(true);
     setDeleteOwnerError(null);
     try {
-      const res = await userApi.sendDeleteOwnerOtps(deleteTarget.id);
+      await userApi.sendDeleteOwnerOtps(deleteTarget.id);
       setDeleteOwnerOtpsSent(true);
       setDeleteOwnerCountdown(60);
-      const data = res?.data || res;
-      if (data?.emailConfigured) {
-        toastSuccess(`Dual deletion authorization OTPs sent to your email and ${deleteTarget.email}! Check inboxes.`);
-      } else {
-        toastSuccess('Dual deletion authorization OTPs generated!');
-      }
-      if (data?.debugCurrentOwnerOtp || data?.debugTargetOwnerOtp) {
-        setDeleteOtpHelperNotice({
-          currentOwnerEmail: data.currentOwnerEmail,
-          targetOwnerEmail: data.targetOwnerEmail,
-          currentOwnerOtp: data.debugCurrentOwnerOtp,
-          targetOwnerOtp: data.debugTargetOwnerOtp,
-        });
-      }
+      toastSuccess(`Dual deletion authorization OTPs sent to your email and ${deleteTarget.email}! Check inboxes.`);
     } catch (err) {
       const msg = err.message || 'Failed to send dual deletion OTPs.';
       setDeleteOwnerError(msg);
@@ -1387,32 +1370,6 @@ export default function UsersPage() {
                   )}
                 </button>
               </div>
-
-              {/* Development / Simulated OTP Helper notice */}
-              {deleteOtpHelperNotice && (
-                <div className="p-3 bg-amber-50 border border-amber-200/90 rounded-xl space-y-1 text-xs text-amber-900">
-                  <div className="flex items-center justify-between font-bold">
-                    <span className="flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Developer / Master OTP Verification</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (deleteOtpHelperNotice.currentOwnerOtp) setCurrentOwnerDeleteOtpCode(String(deleteOtpHelperNotice.currentOwnerOtp));
-                        if (deleteOtpHelperNotice.targetOwnerOtp) setTargetOwnerDeleteOtpCode(String(deleteOtpHelperNotice.targetOwnerOtp));
-                      }}
-                      className="text-[11px] text-indigo-700 underline font-semibold hover:text-indigo-900 transition"
-                    >
-                      Auto-fill codes
-                    </button>
-                  </div>
-                  <div className="font-mono text-[11px] space-y-0.5 text-slate-700 pt-0.5">
-                    <div>1. Your OTP ({currentUser?.email}): <strong className="text-indigo-700 font-bold">{deleteOtpHelperNotice.currentOwnerOtp || '196969'}</strong></div>
-                    <div>2. Target Owner OTP ({deleteTarget.email}): <strong className="text-rose-700 font-bold">{deleteOtpHelperNotice.targetOwnerOtp || '196969'}</strong></div>
-                  </div>
-                </div>
-              )}
 
               {/* OTP Inputs */}
               {deleteOwnerOtpsSent && (
