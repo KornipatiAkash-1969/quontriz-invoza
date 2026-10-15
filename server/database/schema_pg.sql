@@ -178,19 +178,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 CREATE INDEX IF NOT EXISTS idx_notifications_target ON notifications(target_role, is_read);
 
-CREATE TABLE IF NOT EXISTS otps (
-  id SERIAL PRIMARY KEY,
-  email VARCHAR(255) NOT NULL,
-  otp_code VARCHAR(20) NOT NULL,
-  purpose VARCHAR(100) NOT NULL,
-  metadata TEXT,
-  attempts INT DEFAULT 0,
-  expires_at TIMESTAMPTZ NOT NULL,
-  verified_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
 
-CREATE INDEX IF NOT EXISTS idx_otps_email_purpose ON otps(email, purpose);
 
 CREATE TABLE IF NOT EXISTS ai_learned_vendor_templates (
   id SERIAL PRIMARY KEY,

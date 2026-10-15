@@ -10,8 +10,7 @@ async function purgeAllExceptDeveloper() {
   try { await db.run('DELETE FROM invoice_items'); } catch (e) {}
   try { await db.run('DELETE FROM invoices'); } catch (e) {}
   try { await db.run('DELETE FROM store_requirements'); } catch (e) {}
-  try { await db.run('DELETE FROM notifications'); } catch (e) {}
-  try { await db.run('DELETE FROM otps'); } catch (e) {}
+  try { await db.run('DROP TABLE IF EXISTS otps CASCADE'); } catch (e) {}
   try { await db.run('DELETE FROM buyers'); } catch (e) {}
   try { await db.run('DELETE FROM ai_training_samples'); } catch (e) {}
   try { await db.run('DELETE FROM ai_learned_vendor_templates'); } catch (e) {}

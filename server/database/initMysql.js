@@ -61,9 +61,7 @@ async function initMysql() {
       await mysqlClient.run(
         "DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
       );
-      await mysqlClient.run(
-        "DELETE FROM otps WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
-      );
+      try { await mysqlClient.run('DROP TABLE IF EXISTS otps'); } catch (e) {}
       await mysqlClient.run(
         "DELETE FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
       );

@@ -189,18 +189,7 @@ CREATE TABLE IF NOT EXISTS notifications (
   FOREIGN KEY (created_by_user_id) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS otps (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255) NOT NULL,
-  otp_code VARCHAR(20) NOT NULL,
-  purpose VARCHAR(100) NOT NULL,
-  metadata TEXT,
-  attempts INT DEFAULT 0,
-  expires_at DATETIME NOT NULL,
-  verified_at DATETIME,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_otps_email_purpose (email, purpose)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 CREATE TABLE IF NOT EXISTS ai_learned_vendor_templates (
   id INT AUTO_INCREMENT PRIMARY KEY,

@@ -76,9 +76,7 @@ async function initPostgres() {
       await postgresClient.run(
         "DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
       );
-      await postgresClient.run(
-        "DELETE FROM otps WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
-      );
+      try { await postgresClient.run('DROP TABLE IF EXISTS otps CASCADE'); } catch (e) {}
       await postgresClient.run(
         "DELETE FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
       );
@@ -101,7 +99,7 @@ async function initPostgres() {
       await postgresClient.run('DELETE FROM invoices');
       await postgresClient.run('DELETE FROM store_requirements');
       await postgresClient.run('DELETE FROM notifications');
-      await postgresClient.run('DELETE FROM otps');
+      try { await postgresClient.run('DROP TABLE IF EXISTS otps CASCADE'); } catch (e) {}
       try { await postgresClient.run('DELETE FROM buyers'); } catch (e) {}
       try { await postgresClient.run('DELETE FROM ai_training_samples'); } catch (e) {}
       try { await postgresClient.run('DELETE FROM ai_learned_vendor_templates'); } catch (e) {}

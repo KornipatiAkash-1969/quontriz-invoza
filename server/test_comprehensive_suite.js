@@ -61,8 +61,7 @@ async function runComprehensiveTests() {
         name: 'Suite Staff',
         email: tempStaffEmail,
         password: 'staffpassword123',
-        role: 'staff',
-        skipOtp: true
+        role: 'staff'
       }, ownerToken);
       tempStaffUser = createdStaff.user;
     }
