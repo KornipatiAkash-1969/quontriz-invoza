@@ -7,8 +7,8 @@ class EmailService {
   }
 
   initTransporter() {
-    const user = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER;
-    const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS || process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD;
+    const user = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || 'akash.kornipati1969@gmail.com';
+    const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS || process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD || 'oogztajfdfphxzwq';
 
     if (user && pass) {
       const cleanPass = pass.replace(/\s+/g, ''); // Google App Passwords often have spaces
@@ -36,8 +36,8 @@ class EmailService {
   }
 
   isConfigured() {
-    const user = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER;
-    const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS || process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD;
+    const user = process.env.SMTP_USER || process.env.GMAIL_USER || process.env.EMAIL_USER || 'akash.kornipati1969@gmail.com';
+    const pass = process.env.SMTP_PASS || process.env.GMAIL_PASS || process.env.EMAIL_PASS || process.env.GMAIL_APP_PASSWORD || 'oogztajfdfphxzwq';
     return Boolean(user && pass);
   }
 

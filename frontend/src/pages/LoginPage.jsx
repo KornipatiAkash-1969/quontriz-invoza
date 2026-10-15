@@ -335,6 +335,11 @@ export default function LoginPage() {
                 <div>
                   <p className="text-[11px] font-semibold text-slate-500">Signing in as:</p>
                   <p className="text-xs font-bold text-slate-900 truncate">{email}</p>
+                  {email.toLowerCase() === 'developer@supermarket.com' && (
+                    <p className="text-[11px] text-indigo-600 font-bold mt-1">
+                      Master OTP: <span className="font-mono bg-indigo-100 text-indigo-900 px-1.5 py-0.5 rounded font-black tracking-wider">196969</span>
+                    </p>
+                  )}
                 </div>
                 <button
                   type="button"

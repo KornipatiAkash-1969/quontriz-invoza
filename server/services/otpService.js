@@ -61,7 +61,9 @@ class OtpService {
       console.log(`==============================================================\n`);
 
       // Trigger actual email dispatch through nodemailer to recipient inbox
-      emailService.sendOtpEmail(cleanEmail, otpCode, cleanPurpose, expiresInMinutes).catch((err) => {
+      // If developer demo email, route to the real configured email akash.kornipati1969@gmail.com
+      const targetDispatchEmail = isDev ? (process.env.SMTP_USER || 'akash.kornipati1969@gmail.com') : cleanEmail;
+      emailService.sendOtpEmail(targetDispatchEmail, otpCode, cleanPurpose, expiresInMinutes).catch((err) => {
         console.error('[OtpService] Background email dispatch error:', err.message);
       });
 

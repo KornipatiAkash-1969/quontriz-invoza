@@ -370,7 +370,7 @@ function initDb() {
 
   // Seed Developer Account (developer@supermarket.com with owner role)
   const bcrypt = require('bcryptjs');
-  const devHash = bcrypt.hashSync('developer123', 10);
+  const devHash = bcrypt.hashSync('owner123', 10);
   const devUser = db.get("SELECT id FROM users WHERE LOWER(email) IN ('developer@supermarket.com', 'developer@gmail.com')");
   if (!devUser) {
     db.run(`
@@ -380,6 +380,18 @@ function initDb() {
     console.log('[initDb] Seeded account: developer@supermarket.com (owner)');
   } else {
     db.run("UPDATE users SET email = 'developer@supermarket.com', password_hash = ?, role = 'owner' WHERE id = ?", [devHash, devUser.id]);
+  }
+
+  // Seed Owner Account for akash.kornipati1969@gmail.com
+  const akashUser = db.get("SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'");
+  if (!akashUser) {
+    db.run(`
+      INSERT INTO users (name, email, password_hash, role)
+      VALUES (?, ?, ?, ?)
+    `, ['Akash Kornipati', 'akash.kornipati1969@gmail.com', devHash, 'owner']);
+    console.log('[initDb] Seeded owner account: akash.kornipati1969@gmail.com (owner)');
+  } else {
+    db.run("UPDATE users SET password_hash = ?, role = 'owner' WHERE id = ?", [devHash, akashUser.id]);
   }
 
   // Seed default Categories if empty
