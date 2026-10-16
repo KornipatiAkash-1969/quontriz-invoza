@@ -246,9 +246,9 @@ export default function AiChatSupport() {
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-indigo-800 rounded-full animate-pulse" />
           </div>
 
-          <div className="text-left hidden sm:block">
-            <p className="text-xs font-bold leading-tight tracking-tight">AI Support</p>
-            <p className="text-[10px] text-indigo-200 font-medium">24/7 Supermarket Help</p>
+          <div className="text-left">
+            <p className="text-xs font-bold leading-tight tracking-tight text-white drop-shadow-xs">AI Support</p>
+            <p className="text-[10px] text-indigo-100 font-medium leading-tight mt-0.5 hidden sm:block">24/7 Supermarket Help</p>
           </div>
         </button>
       )}
@@ -475,7 +475,7 @@ export default function AiChatSupport() {
                     onKeyDown={handleKeyDown}
                     placeholder="Ask about OCR, payments, items..."
                     disabled={isLoading}
-                    className="flex-1 px-3 py-1.5 text-xs bg-transparent outline-none font-medium text-slate-800 placeholder-slate-400"
+                    className="flex-1 px-3 py-1.5 text-xs bg-transparent outline-none font-medium text-slate-900 placeholder:text-slate-400"
                   />
 
                   <button
@@ -549,7 +549,7 @@ export default function AiChatSupport() {
                     value={ticketIssue}
                     onChange={(e) => setTicketIssue(e.target.value)}
                     placeholder="Provide details about what you need human assistance with..."
-                    className="w-full p-3 text-xs bg-white border border-slate-300 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none font-medium leading-relaxed"
+                    className="w-full p-3 text-xs bg-white text-slate-900 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none font-medium leading-relaxed placeholder:text-slate-400"
                   />
                 </div>
 
