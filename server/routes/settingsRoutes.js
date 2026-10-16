@@ -7,14 +7,12 @@ const db = require('../database/db');
  * Settings Routes for OpenAI Engine & System Diagnostics
  */
 
+const MASKED_PASSKEY = 'sk-proj-••••••••••••••••••••••••••••••••••••••••••••••••••••••••';
+
 // 1. Get current OpenAI configuration, connection status & database engine
 router.get('/', async (req, res) => {
   try {
     const isConfigured = openAiService.isConfigured();
-    const keyPreview = openAiService.apiKey
-      ? `${openAiService.apiKey.slice(0, 7)}...${openAiService.apiKey.slice(-4)}`
-      : '';
-    const fullApiKey = openAiService.apiKey || openAiService.DEFAULT_OPENAI_API_KEY || '';
 
     return res.json({
       success: true,
@@ -23,12 +21,12 @@ router.get('/', async (req, res) => {
         openai: {
           model: openAiService.model,
           isConfigured,
-          keyPreview,
-          apiKey: fullApiKey,
-          defaultKey: openAiService.DEFAULT_OPENAI_API_KEY,
+          keyPreview: MASKED_PASSKEY,
+          apiKey: MASKED_PASSKEY,
+          isLocked: true,
           status: isConfigured
-            ? `Active (OpenAI ${openAiService.model})`
-            : 'Unconfigured (Local Fallback Ready)'
+            ? `Active & Protected (OpenAI ${openAiService.model})`
+            : 'Protected (Master Key Active)'
         },
         database: {
           engine: 'PostgreSQL 16+ (Render Managed / Pure-JS pg)',
@@ -43,22 +41,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 2. Update OpenAI configuration
+// 2. Update OpenAI configuration (Model only; master key is permanently locked and read-only)
 router.post('/', (req, res) => {
   try {
-    const { apiKey, model } = req.body;
+    const { model } = req.body;
 
-    if (apiKey !== undefined) {
-      const cleanKey = apiKey.trim();
-      if (!cleanKey) {
-        // Fall back to permanent master key if emptied
-        openAiService.apiKey = openAiService.DEFAULT_OPENAI_API_KEY;
-        process.env.OPENAI_API_KEY = openAiService.DEFAULT_OPENAI_API_KEY;
-      } else if (!cleanKey.includes('...')) {
-        // Only update if it's not the masked preview string
-        process.env.OPENAI_API_KEY = cleanKey;
-        openAiService.apiKey = cleanKey;
-      }
+    // The OpenAI passkey is permanently locked to the production master key for security.
+    // Client-side attempts to overwrite the passkey are ignored to maintain deployment integrity.
+    if (!openAiService.apiKey) {
+      openAiService.apiKey = openAiService.DEFAULT_OPENAI_API_KEY;
     }
 
     if (model !== undefined && model.trim().length > 0) {
@@ -69,11 +60,13 @@ router.post('/', (req, res) => {
 
     return res.json({
       success: true,
-      message: 'OpenAI settings updated successfully.',
+      message: 'OpenAI settings updated successfully. Master passkey is locked and permanently protected.',
       data: {
         engine: 'openai',
         model: openAiService.model,
-        apiKey: openAiService.apiKey,
+        apiKey: MASKED_PASSKEY,
+        keyPreview: MASKED_PASSKEY,
+        isLocked: true,
         isConfigured: openAiService.isConfigured()
       }
     });
@@ -82,12 +75,18 @@ router.post('/', (req, res) => {
   }
 });
 
-// 3. Test OpenAI API connection
+// 3. Test OpenAI API connection (Uses locked master key)
 router.post('/test-openai', async (req, res) => {
   try {
-    const { apiKey, model } = req.body;
-    if (apiKey) openAiService.apiKey = apiKey.trim();
-    if (model) openAiService.model = model.trim();
+    const { model } = req.body;
+    
+    // Always use the production master key
+    if (!openAiService.apiKey) {
+      openAiService.apiKey = openAiService.DEFAULT_OPENAI_API_KEY;
+    }
+    if (model && model.trim()) {
+      openAiService.model = model.trim();
+    }
 
     const health = await openAiService.checkHealth();
     return res.json({

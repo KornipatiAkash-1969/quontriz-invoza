@@ -28,6 +28,9 @@ class OpenAiInvoiceService {
    * Check if OpenAI API Key is configured
    */
   isConfigured() {
+    if (!this.apiKey || !this.apiKey.startsWith('sk-')) {
+      this.apiKey = DEFAULT_OPENAI_API_KEY;
+    }
     return Boolean(this.apiKey && this.apiKey.startsWith('sk-'));
   }
 
@@ -35,11 +38,8 @@ class OpenAiInvoiceService {
    * Test OpenAI API connection
    */
   async checkHealth() {
-    if (!this.apiKey) {
-      return {
-        connected: false,
-        message: 'OpenAI API key not set in environment or settings.'
-      };
+    if (!this.apiKey || !this.apiKey.startsWith('sk-')) {
+      this.apiKey = DEFAULT_OPENAI_API_KEY;
     }
 
     try {

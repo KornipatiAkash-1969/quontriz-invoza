@@ -16,14 +16,17 @@ import {
   Check,
   Zap,
   Activity,
-  Eye,
-  EyeOff
+  Lock,
+  Shield,
+  ShieldCheck,
+  KeyRound
 } from 'lucide-react';
 import { classifierApi, settingsApi } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { Spinner } from '../components/ui';
 import ChangePasswordModal from '../components/auth/ChangePasswordModal';
-import { KeyRound, ShieldCheck } from 'lucide-react';
+
+const MASKED_PASSKEY = 'sk-proj-••••••••••••••••••••••••••••••••••••••••••••••••••••••••';
 
 export default function SettingsPage() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -34,12 +37,10 @@ export default function SettingsPage() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
 
-  // OpenAI Settings State
-  const [apiKey, setApiKey] = useState('');
-  const [defaultMasterKey, setDefaultMasterKey] = useState('');
-  const [showKey, setShowKey] = useState(false);
+  // OpenAI Settings State (Locked & Protected Master Passkey)
+  const [apiKey, setApiKey] = useState(MASKED_PASSKEY);
   const [model, setModel] = useState('gpt-4o');
-  const [openAiStatus, setOpenAiStatus] = useState('Active (OpenAI GPT-4o)');
+  const [openAiStatus, setOpenAiStatus] = useState('Active & Protected (OpenAI GPT-4o)');
   const [isOpenAiConfigured, setIsOpenAiConfigured] = useState(true);
   const [savingOpenAi, setSavingOpenAi] = useState(false);
   const [testingOpenAi, setTestingOpenAi] = useState(false);
@@ -58,13 +59,8 @@ export default function SettingsPage() {
           const openai = res.data.openai || {};
           setModel(openai.model || 'gpt-4o');
           setIsOpenAiConfigured(Boolean(openai.isConfigured));
-          setOpenAiStatus(openai.status || 'Active (OpenAI GPT-4o)');
-          if (openai.apiKey || openai.keyPreview) {
-            setApiKey(openai.apiKey || openai.keyPreview);
-          }
-          if (openai.defaultKey) {
-            setDefaultMasterKey(openai.defaultKey);
-          }
+          setOpenAiStatus(openai.status || 'Active & Protected (OpenAI GPT-4o)');
+          setApiKey(openai.apiKey || openai.keyPreview || MASKED_PASSKEY);
           if (res.data?.database) {
             setDbInfo(res.data.database);
           } else {
@@ -120,13 +116,12 @@ export default function SettingsPage() {
     setSavingOpenAi(true);
     try {
       const res = await settingsApi.save({
-        apiKey,
         model
       });
       if (res.success) {
-        toastSuccess('OpenAI settings saved successfully.');
+        toastSuccess('OpenAI model preference saved successfully.');
         setIsOpenAiConfigured(true);
-        setOpenAiStatus(`Active (OpenAI ${model})`);
+        setOpenAiStatus(`Active & Protected (OpenAI ${model})`);
       }
     } catch (err) {
       toastError(err.message || 'Failed to save settings.');
@@ -141,7 +136,6 @@ export default function SettingsPage() {
     setOpenAiTestResult(null);
     try {
       const res = await settingsApi.testOpenAI({
-        apiKey,
         model
       });
       const data = res.data || {};
@@ -234,45 +228,38 @@ export default function SettingsPage() {
 
         {/* Form Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* OpenAI API Key */}
+          {/* OpenAI API Passkey - Permanently Locked and Protected */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-              <Key className="w-3.5 h-3.5 text-slate-400" />
-              <span>OpenAI API Key</span>
+            <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                <span>OpenAI Passkey</span>
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <ShieldCheck className="w-3 h-3 text-emerald-600" /> Protected & Read-Only
+              </span>
             </label>
             <div className="relative">
               <input
-                type={showKey ? 'text' : 'password'}
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                placeholder="sk-proj-..."
-                className="w-full px-3.5 py-2 pr-10 text-xs sm:text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none font-mono"
+                type="text"
+                value={apiKey || MASKED_PASSKEY}
+                readOnly
+                disabled
+                tabIndex={-1}
+                className="w-full px-3.5 py-2.5 pr-10 text-xs sm:text-sm border border-slate-200 rounded-xl bg-slate-100/90 text-slate-600 font-mono cursor-not-allowed select-none shadow-inner"
               />
-              <button
-                type="button"
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
-              >
-                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+              <div className="absolute right-3 top-3 text-emerald-600 flex items-center" title="Master production passkey permanently locked and protected">
+                <Lock className="w-4 h-4" />
+              </div>
             </div>
             <div className="flex items-center justify-between text-[11px] pt-1">
-              <span className="text-slate-400">Production master key pre-configured & editable.</span>
-              <button
-                type="button"
-                onClick={() => {
-                  if (defaultMasterKey) {
-                    setApiKey(defaultMasterKey);
-                    toastSuccess('Loaded master production OpenAI key.');
-                  } else {
-                    setApiKey('');
-                    toastSuccess('Reset to system master key.');
-                  }
-                }}
-                className="text-emerald-600 hover:text-emerald-700 font-semibold transition hover:underline"
-              >
-                Reset to Master Key
-              </button>
+              <span className="text-slate-500 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Master key active across localhost & Render deployments
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                Locked
+              </span>
             </div>
           </div>
 
