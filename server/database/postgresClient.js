@@ -95,13 +95,28 @@ function init() {
 
   const isLocal = connectionString && (connectionString.includes('localhost') || connectionString.includes('127.0.0.1'));
 
+  let sslConfig = false;
+  if (!isLocal) {
+    if (connectionString && (connectionString.includes('sslmode=disable') || connectionString.includes('ssl=false'))) {
+      sslConfig = false;
+    } else {
+      sslConfig = { rejectUnauthorized: false };
+    }
+  }
+
+  // 15 seconds connection timeout for cloud cold starts (Render, Supabase, Neon)
+  const timeoutMs = parseInt(process.env.PG_CONNECT_TIMEOUT || '15000', 10);
+  const maxPool = parseInt(process.env.PG_MAX_POOL || '10', 10);
+
   const poolConfig = connectionString
     ? {
         connectionString,
-        ssl: isLocal ? false : { rejectUnauthorized: false },
-        max: 20,
+        ssl: sslConfig,
+        max: maxPool,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 3000,
+        connectionTimeoutMillis: timeoutMs,
+        keepAlive: true,
+        keepAliveInitialDelayMillis: 10000,
       }
     : {
         host: process.env.PGHOST || 'localhost',
@@ -110,9 +125,11 @@ function init() {
         password: process.env.PGPASSWORD || 'postgres',
         database: process.env.PGDATABASE || 'quontriz_invoza',
         ssl: false,
-        max: 20,
+        max: maxPool,
         idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 3000,
+        connectionTimeoutMillis: timeoutMs,
+        keepAlive: true,
+        keepAliveInitialDelayMillis: 10000,
       };
 
   realPool = new RealPgPool(poolConfig);
@@ -126,26 +143,51 @@ function init() {
   return realPool;
 }
 
-async function checkConnection() {
-  if (isRealPostgres !== null) return isRealPostgres;
+async function checkConnection(forceRetry = false) {
+  if (isRealPostgres !== null && !forceRetry) return isRealPostgres;
 
   const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.PG_URL;
   const isCloudOrCustom = connectionString &&
     !connectionString.includes('localhost:5432') &&
     !connectionString.includes('127.0.0.1:5432');
 
-  // If in production or explicitly connected to remote cloud PostgreSQL
+  // If in production or explicitly connected to remote cloud PostgreSQL (Render, Supabase, Neon)
   if (isCloudOrCustom || process.env.NODE_ENV === 'production') {
     init();
-    try {
-      const res = await realPool.query('SELECT 1 as connected');
-      isRealPostgres = Boolean(res && res.rows && res.rows[0]);
-      console.log('[PostgreSQL] ✅ Connected to live PostgreSQL server.');
-      return true;
-    } catch (err) {
-      console.error('[PostgreSQL Connection Error]', err.message);
-      isRealPostgres = false;
-      return false;
+    const maxAttempts = 5;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        console.log(`[PostgreSQL] 🔌 Connecting to live PostgreSQL server (attempt ${attempt}/${maxAttempts})...`);
+        const res = await realPool.query('SELECT 1 as connected');
+        isRealPostgres = Boolean(res && res.rows && res.rows[0]);
+        console.log('[PostgreSQL] ✅ Successfully connected to live PostgreSQL server.');
+        return true;
+      } catch (err) {
+        console.warn(`[PostgreSQL Notice] Attempt ${attempt}/${maxAttempts} failed: ${err.message}`);
+        if (attempt < maxAttempts) {
+          const delayMs = attempt * 2000; // 2s, 4s, 6s, 8s backoff
+          console.log(`[PostgreSQL] ⏳ Waiting ${delayMs}ms for database service to initialize...`);
+          await new Promise((r) => setTimeout(r, delayMs));
+        } else {
+          console.error('[PostgreSQL Connection Error]', err.message);
+          if (err.message && (err.message.includes('timeout') || err.message.includes('Connection terminated'))) {
+            console.error('\n' + '='.repeat(70));
+            console.error('❌ [Render PostgreSQL Timeout Diagnostics & Quick Fix]');
+            console.error('1. REGION MISMATCH (Most Common):');
+            console.error('   Render Internal URLs only work when Web Service & Database are in the');
+            console.error('   EXACT SAME REGION (e.g. Oregon). If regions differ, you MUST use the');
+            console.error('   External Database URL (ends with .render.com).');
+            console.error('2. DATABASE STATUS:');
+            console.error('   Check your Render Dashboard to verify quontriz-invoza-db is "Available"');
+            console.error('   (Render free tier databases suspend after 30 days or period of inactivity).');
+            console.error('3. CONNECTION STRING:');
+            console.error('   Ensure DATABASE_URL environment variable has no surrounding spaces or quotes.');
+            console.error('='.repeat(70) + '\n');
+          }
+          isRealPostgres = false;
+          return false;
+        }
+      }
     }
   }
 

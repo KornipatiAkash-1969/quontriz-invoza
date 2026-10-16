@@ -22,6 +22,10 @@ services:
         fromDatabase:
           name: quontriz-invoza-db
           property: connectionString
+      - key: PG_CONNECT_TIMEOUT
+        value: "20000"
+      - key: PG_MAX_POOL
+        value: "10"
       - key: JWT_SECRET
         value: quontriz_invoza_jwt_secret_key_2026_secure
       - key: OPENAI_MODEL
