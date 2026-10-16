@@ -194,6 +194,7 @@ export default function AiChatSupport() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
+          data-tour="ai-support-btn"
           className="fixed bottom-5 right-5 z-[9980] flex items-center gap-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-4 py-3 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-200 group border border-indigo-400/30"
           title="Open AI Chat Support"
           aria-label="Open AI Chat Support"
