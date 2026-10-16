@@ -32,7 +32,12 @@ export default function ProductTourModal({ isOpen, onClose }) {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [targetRect, setTargetRect] = useState(null);
-  const [cardPosition, setCardPosition] = useState({ top: 0, left: 0, placement: 'center' });
+  const [cardPosition, setCardPosition] = useState({
+    top: 0,
+    left: 0,
+    placement: 'center',
+    arrowTop: 28
+  });
   const [isTargetFound, setIsTargetFound] = useState(false);
   const tooltipRef = useRef(null);
   const retryTimerRef = useRef(null);
@@ -45,170 +50,182 @@ export default function ProductTourModal({ isOpen, onClose }) {
   }, [isOpen]);
 
   // =========================================================================
-  // 1. OWNER TOUR STEPS: Real Feature Highlights Across the Application
+  // 1. OWNER TOUR STEPS: In Strict Sidebar Top-to-Bottom Order
   // =========================================================================
   const ownerSteps = [
     {
-      id: 'dashboard-kpis',
-      target: '[data-tour="dashboard-kpis"], [data-tour="nav-dashboard"]',
+      id: 'nav-dashboard',
+      target: '[data-tour="nav-dashboard"]',
       route: '/',
-      badge: '📊 Live Overview',
-      title: 'Supermarket Spend & Key Metrics',
+      badge: '📊 1. Overview',
+      title: 'Store Dashboard & KPI Metrics',
       icon: LayoutDashboard,
       iconBg: 'bg-indigo-600',
-      explanation: 'View real-time supermarket spend, pending bill counts, and automated GST tax breakdowns.',
-      tip: 'KPIs and status counters update automatically as invoices are uploaded.',
-      preferredPlacement: 'bottom'
+      explanation: 'View real-time supermarket spend, pending bill counts, monthly expense analytics, and automated GST tax breakdowns.',
+      tip: 'KPI counters and expense charts update immediately as store invoices are uploaded.',
+      preferredPlacement: 'right'
     },
     {
-      id: 'pending-approvals',
-      target: '[data-tour="pending-approvals"]',
-      route: '/',
-      badge: '⚡ 1-Tap Approvals',
-      title: 'Pending Invoices & Instant Payments',
-      icon: CreditCard,
-      iconBg: 'bg-amber-500',
-      explanation: 'Inspect bills uploaded by staff awaiting owner approval. Approve and settle payments with 1 tap via UPI, Bank Transfer, Card, or Cash.',
-      tip: 'Settling payments records an instant audit timestamp and updates store ledger balances.',
-      preferredPlacement: 'top'
+      id: 'nav-invoices',
+      target: '[data-tour="nav-invoices"]',
+      route: '/invoices',
+      badge: '🧾 2. Invoices',
+      title: 'Invoices Audit Directory & Vouchers',
+      icon: FileText,
+      iconBg: 'bg-emerald-600',
+      explanation: 'Search, filter, audit, approve pending bills, and download PDF payment vouchers for all digitized supermarket invoices.',
+      tip: 'Approve pending staff uploads with 1 tap via UPI, Bank Transfer, Card, or Cash.',
+      preferredPlacement: 'right'
     },
     {
-      id: 'dashboard-charts',
-      target: '[data-tour="dashboard-charts"]',
-      route: '/',
-      badge: '📈 Expense Insights',
-      title: 'Monthly Expense & Category Analytics',
-      icon: TrendingUp,
-      iconBg: 'bg-blue-600',
-      explanation: 'Visualize supermarket spending trends and departmental breakdowns across Grocery, FMCG, Dairy, and Staples.',
-      tip: 'Helps identify vendor price fluctuations and manage monthly supermarket cash flow.',
-      preferredPlacement: 'top'
+      id: 'nav-requirements',
+      target: '[data-tour="nav-requirements"]',
+      route: '/requirements',
+      badge: '📦 3. Stock Control',
+      title: 'Shelf Replenishment Requisitions',
+      icon: ClipboardList,
+      iconBg: 'bg-teal-600',
+      explanation: 'Manage supermarket shelf restocking requests submitted by floor staff in real time. Update statuses to Ordered or Completed.',
+      tip: 'Export open purchase demands directly to Excel for bulk distributor orders.',
+      preferredPlacement: 'right'
     },
     {
-      id: 'upload-dropzone',
-      target: '[data-tour="upload-dropzone"], [data-tour="nav-upload"]',
+      id: 'nav-upload',
+      target: '[data-tour="nav-upload"]',
       route: '/upload',
-      badge: '📄 Multimodal OCR',
+      badge: '📄 4. OCR Intake',
       title: 'AI OCR Intake & Manual Entry',
       icon: UploadCloud,
       iconBg: 'bg-violet-600',
       explanation: 'Upload supplier invoices as digital PDF or mobile photos (PNG, JPG, WebP). Multimodal AI extracts vendor names, items, quantities, and GST.',
       tip: 'You can also switch to manual entry to record hand-written bills directly into the database.',
-      preferredPlacement: 'bottom'
+      preferredPlacement: 'right'
     },
     {
-      id: 'invoices-directory',
-      target: '[data-tour="invoices-header"], [data-tour="nav-invoices"]',
-      route: '/invoices',
-      badge: '🧾 Full Audit Trail',
-      title: 'Invoices Audit Directory & Vouchers',
-      icon: FileText,
-      iconBg: 'bg-emerald-600',
-      explanation: 'Search, filter, audit, and download PDF payment vouchers for all digitized supermarket invoices.',
-      tip: 'On mobile screens, invoices automatically transform into responsive high-density touch cards.',
-      preferredPlacement: 'bottom'
-    },
-    {
-      id: 'requirements-stock',
-      target: '[data-tour="requirements-header"], [data-tour="nav-requirements"]',
-      route: '/requirements',
-      badge: '📦 Stock Control',
-      title: 'Shelf Replenishment Requisitions',
-      icon: ClipboardList,
-      iconBg: 'bg-teal-600',
-      explanation: 'Manage supermarket shelf restocking requests submitted by floor staff in real time. Update statuses to Ordered or Completed with 1 click.',
-      tip: 'Export all open purchase demands directly to Excel for bulk ordering from distributors.',
-      preferredPlacement: 'bottom'
-    },
-    {
-      id: 'users-rbac',
-      target: '[data-tour="users-header"], [data-tour="nav-users"]',
+      id: 'nav-users',
+      target: '[data-tour="nav-users"]',
       route: '/users',
-      badge: '👥 Role Guarded (RBAC)',
-      title: 'Staff Accounts & Access Security',
+      badge: '👥 5. Team Access',
+      title: 'Staff Accounts & RBAC Security',
       icon: Users,
       iconBg: 'bg-rose-600',
       explanation: 'Manage store staff accounts and co-owners with role-based access control. Daily midnight session resets protect account security.',
       tip: 'Staff accounts are upload-only and can never approve payments or view confidential owner credentials.',
-      preferredPlacement: 'bottom'
+      preferredPlacement: 'right'
     },
     {
-      id: 'vendors-hub',
-      target: '[data-tour="vendors-header"], [data-tour="nav-vendors"]',
+      id: 'nav-vendors',
+      target: '[data-tour="nav-vendors"]',
       route: '/vendors',
-      badge: '🏢 GSTIN & Ledger',
+      badge: '🏢 6. Suppliers',
       title: 'Supermarket Supplier Registry',
       icon: Building2,
       iconBg: 'bg-indigo-600',
       explanation: 'Maintain your supplier directory with GSTIN numbers, contact details, payment terms, and total lifetime spend.',
       tip: 'Click any supplier to view their invoice payment history and purchased items.',
-      preferredPlacement: 'bottom'
+      preferredPlacement: 'right'
+    },
+    {
+      id: 'nav-categories',
+      target: '[data-tour="nav-categories"]',
+      route: '/categories',
+      badge: '🏷️ 7. Categories',
+      title: 'Departmental Expense Classification',
+      icon: Tags,
+      iconBg: 'bg-amber-600',
+      explanation: 'Organize store expenses across departments like Grocery, FMCG, Dairy, Beverages, Household, and Staples.',
+      tip: 'Categorization feeds directly into your monthly spend charts and GST reports.',
+      preferredPlacement: 'right'
+    },
+    {
+      id: 'nav-vendor-types',
+      target: '[data-tour="nav-vendor-types"]',
+      route: '/vendor-types',
+      badge: '📑 8. Supplier Tiers',
+      title: 'Vendor Types & Distribution Channels',
+      icon: Layers,
+      iconBg: 'bg-cyan-600',
+      explanation: 'Segment suppliers by business type such as Wholesaler, Direct Manufacturer, Local Farmer, or Distributor.',
+      tip: 'Helps negotiate bulk volume discounts and analyze vendor tier expenditure.',
+      preferredPlacement: 'right'
+    },
+    {
+      id: 'nav-settings',
+      target: '[data-tour="nav-settings"]',
+      route: '/settings',
+      badge: '⚙️ 9. Settings',
+      title: 'Store Profile, OpenAI API & Security',
+      icon: Settings,
+      iconBg: 'bg-slate-700',
+      explanation: 'Configure supermarket profile details, address, currency, OpenAI passkey, and security preferences.',
+      tip: 'Owner passkeys are securely masked and protected with encrypted storage.',
+      preferredPlacement: 'right'
     },
     {
       id: 'ai-support',
       target: '[data-tour="ai-support-btn"]',
-      route: '/',
-      badge: '🤖 24/7 Helpdesk',
+      route: '/settings',
+      badge: '🤖 10. Helpdesk',
       title: 'Interactive AI Support & Escalation',
       icon: Bot,
       iconBg: 'bg-indigo-700',
       explanation: 'Get instant answers about invoice OCR, payments, or stock requisitions. If your issue is unresolved, escalate directly to support@supermarket.com.',
       tip: 'Click the floating AI Support button anytime in the bottom right corner.',
-      preferredPlacement: 'top'
+      preferredPlacement: 'left'
     }
   ];
 
   // =========================================================================
-  // 2. STAFF TOUR STEPS: Streamlined, Action-Oriented Steps
+  // 2. STAFF TOUR STEPS: In Strict Sidebar Top-to-Bottom Order
   // =========================================================================
   const staffSteps = [
     {
-      id: 'upload-dropzone',
-      target: '[data-tour="upload-dropzone"], [data-tour="nav-upload"]',
+      id: 'nav-upload',
+      target: '[data-tour="nav-upload"]',
       route: '/upload',
-      badge: '⚡ Quick Upload',
+      badge: '⚡ 1. Upload',
       title: 'Upload Supplier Invoices & Receipts',
       icon: UploadCloud,
       iconBg: 'bg-indigo-600',
       explanation: 'Upload vendor bills and delivery receipts (PDF or mobile photos) for automated OCR data extraction.',
       tip: 'Supports PDF, PNG, JPG, and WebP files up to 15 MB.',
-      preferredPlacement: 'bottom'
+      preferredPlacement: 'right'
     },
     {
-      id: 'my-invoices',
-      target: '[data-tour="invoices-header"], [data-tour="nav-invoices"]',
+      id: 'nav-invoices',
+      target: '[data-tour="nav-invoices"]',
       route: '/invoices',
-      badge: '📋 My Uploads',
+      badge: '📋 2. My Invoices',
       title: 'Track Verification & Owner Approval',
       icon: FileText,
       iconBg: 'bg-emerald-600',
       explanation: 'Track the status of all invoices you have uploaded as the store owner reviews and approves payments.',
       tip: 'Quickly find past bills when delivery agents or suppliers ask for updates.',
-      preferredPlacement: 'bottom'
+      preferredPlacement: 'right'
     },
     {
-      id: 'stock-requisitions',
-      target: '[data-tour="requirements-header"], [data-tour="nav-requirements"]',
+      id: 'nav-requirements',
+      target: '[data-tour="nav-requirements"]',
       route: '/requirements',
-      badge: '📦 Stock Demand',
+      badge: '📦 3. Stock Demand',
       title: 'Request Store Shelf Restocking',
       icon: ClipboardList,
       iconBg: 'bg-purple-600',
       explanation: 'Request urgent stock replenishments from the store owner when supermarket shelves run low on items.',
       tip: 'Set priority levels (Urgent, High, Normal) so the owner orders critical stock first.',
-      preferredPlacement: 'bottom'
+      preferredPlacement: 'right'
     },
     {
       id: 'staff-support',
       target: '[data-tour="ai-support-btn"]',
-      route: '/upload',
-      badge: '🤖 Staff Helpdesk',
+      route: '/requirements',
+      badge: '🤖 4. Helpdesk',
       title: 'AI Assistant & Ticket Escalation',
       icon: Bot,
       iconBg: 'bg-indigo-700',
       explanation: 'Ask questions about uploading invoices or stock requisitions. Unresolved questions can be escalated to support@supermarket.com.',
       tip: 'Click the AI Support button in the bottom right corner whenever you need assistance.',
-      preferredPlacement: 'top'
+      preferredPlacement: 'left'
     }
   ];
 
@@ -217,8 +234,20 @@ export default function ProductTourModal({ isOpen, onClose }) {
   const StepIcon = step?.icon || Sparkles;
   const isLast = currentStep === steps.length - 1;
 
+  // Auto-open mobile sidebar when highlighting sidebar navigation item
+  useEffect(() => {
+    if (!isOpen) {
+      window.dispatchEvent(new CustomEvent('set-mobile-sidebar-open', { detail: false }));
+      return;
+    }
+    const isSidebarTarget = step?.target && step.target.includes('nav-');
+    if (window.innerWidth < 1024 && isSidebarTarget) {
+      window.dispatchEvent(new CustomEvent('set-mobile-sidebar-open', { detail: true }));
+    }
+  }, [isOpen, step]);
+
   // =========================================================================
-  // 3. TARGET POSITIONING & SMART VIEWPORT CLAMPING (ZERO BLUR, FULL NORMAL DISPLAY)
+  // 3. TARGET POSITIONING: ANCHORED BESIDE THE SIDEBAR WITH ARROW POINTER
   // =========================================================================
   const updateTargetPosition = useCallback(() => {
     if (!step || !isOpen) return;
@@ -229,9 +258,10 @@ export default function ProductTourModal({ isOpen, onClose }) {
       setTargetRect(null);
       // Fallback: Centered card
       setCardPosition({
-        top: Math.max(80, (window.innerHeight - 220) / 2),
+        top: Math.max(80, (window.innerHeight - 240) / 2),
         left: Math.max(16, (window.innerWidth - 360) / 2),
-        placement: 'center'
+        placement: 'center',
+        arrowTop: 28
       });
       return;
     }
@@ -239,20 +269,16 @@ export default function ProductTourModal({ isOpen, onClose }) {
     setIsTargetFound(true);
 
     const initialRect = el.getBoundingClientRect();
-    const isLarge = initialRect.height > 260 || initialRect.height > window.innerHeight * 0.45;
+    const isSidebarTarget = step.target && step.target.includes('nav-');
 
     // Check if element is already comfortably in viewport before scrolling
     const isInView = initialRect.top >= 54 && initialRect.bottom <= window.innerHeight - 20;
     if (!isInView) {
-      if (isLarge) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
-      } else {
-        el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-      }
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     }
 
     const rect = el.getBoundingClientRect();
-    const padding = 8;
+    const padding = 6;
     setTargetRect({
       top: rect.top,
       left: rect.left,
@@ -262,79 +288,83 @@ export default function ProductTourModal({ isOpen, onClose }) {
       right: rect.right
     });
 
-    // Real measured dimensions with fallback (card footprint: 360px width, ~210px height)
+    // Real measured dimensions with fallback (card footprint: 360px width, ~220px height)
     const cardW = Math.min(360, window.innerWidth - 32);
-    const cardH = tooltipRef.current?.offsetHeight || 210;
-    const pref = step.preferredPlacement || 'bottom';
+    const cardH = tooltipRef.current?.offsetHeight || 220;
+    const pref = step.preferredPlacement || (isSidebarTarget ? 'right' : 'bottom');
 
     let top = 0;
     let left = 0;
     let actualPlacement = pref;
+    let arrowTop = 28;
 
-    if (isLarge) {
-      // OVERSIZED ELEMENT STRATEGY (Prevents card overflowing below viewport)
-      if (window.innerWidth - rect.right >= cardW + 24) {
+    const targetCenterY = rect.top + (rect.height / 2);
+    const targetCenterX = rect.left + (rect.width / 2);
+
+    if (isSidebarTarget || pref === 'right') {
+      const hasRoomOnRight = window.innerWidth - rect.right >= cardW + 20;
+      if (hasRoomOnRight) {
         actualPlacement = 'right';
-        top = Math.max(20, rect.top + 16);
-        left = rect.right + padding + 14;
-      } else if (rect.top >= cardH + 24) {
-        actualPlacement = 'top';
-        top = rect.top - padding - cardH - 12;
-        left = Math.max(16, rect.left + (rect.width - cardW) / 2);
-      } else if (rect.left >= cardW + 24) {
-        actualPlacement = 'left';
-        top = Math.max(20, rect.top + 16);
-        left = rect.left - padding - cardW - 14;
+        // Anchor directly BESIDE the sidebar (at least 272px from screen edge on desktop)
+        left = Math.max(rect.right + 18, 272);
+        top = targetCenterY - (cardH / 2);
       } else {
-        actualPlacement = 'center';
-        top = Math.max(20, window.innerHeight - cardH - 24);
+        // Fallback for mobile screen
+        actualPlacement = 'bottom';
         left = Math.max(16, (window.innerWidth - cardW) / 2);
+        top = rect.bottom + 12;
       }
-    } else if (pref === 'bottom') {
-      top = rect.bottom + padding + 12;
-      left = rect.left + rect.width / 2 - cardW / 2;
+    } else if (pref === 'left') {
+      const hasRoomOnLeft = rect.left >= cardW + 20;
+      if (hasRoomOnLeft) {
+        actualPlacement = 'left';
+        left = rect.left - cardW - 18;
+        top = targetCenterY - (cardH / 2);
+      } else {
+        actualPlacement = 'top';
+        top = rect.top - cardH - 12;
+        left = Math.max(16, targetCenterX - (cardW / 2));
+      }
+    } else if (pref === 'top') {
+      top = rect.top - cardH - 12;
+      left = targetCenterX - (cardW / 2);
+      if (top < 16) {
+        actualPlacement = 'bottom';
+        top = rect.bottom + 12;
+      }
+    } else {
+      // bottom
+      top = rect.bottom + 12;
+      left = targetCenterX - (cardW / 2);
       if (top + cardH > window.innerHeight - 20) {
         if (rect.top >= cardH + 24) {
           actualPlacement = 'top';
-          top = rect.top - padding - cardH - 12;
+          top = rect.top - cardH - 12;
         } else {
           actualPlacement = 'center';
           top = Math.max(20, window.innerHeight - cardH - 24);
         }
       }
-    } else if (pref === 'top') {
-      top = rect.top - padding - cardH - 12;
-      left = rect.left + rect.width / 2 - cardW / 2;
-      if (top < 16) {
-        actualPlacement = 'bottom';
-        top = rect.bottom + padding + 12;
-      }
-    } else if (pref === 'right') {
-      top = rect.top + rect.height / 2 - cardH / 2;
-      left = rect.right + padding + 14;
-      if (left + cardW > window.innerWidth - 16) {
-        actualPlacement = 'bottom';
-        top = rect.bottom + padding + 12;
-        left = rect.left + rect.width / 2 - cardW / 2;
-      }
-    } else {
-      top = rect.bottom + padding + 12;
-      left = rect.left + rect.width / 2 - cardW / 2;
     }
 
-    // STRICT VIEWPORT CLAMPING: Card always fully visible on all mobile/desktop displays
+    // STRICT VIEWPORT CLAMPING: Card always fully visible on all displays
     const minTop = 16;
-    const maxTop = Math.max(minTop, window.innerHeight - cardH - 20);
+    const maxTop = Math.max(minTop, window.innerHeight - cardH - 16);
     const clampedTop = Math.max(minTop, Math.min(top, maxTop));
 
     const minLeft = 16;
     const maxLeft = Math.max(minLeft, window.innerWidth - cardW - 16);
     const clampedLeft = Math.max(minLeft, Math.min(left, maxLeft));
 
+    if (actualPlacement === 'right' || actualPlacement === 'left') {
+      arrowTop = Math.max(18, Math.min(targetCenterY - clampedTop, cardH - 22));
+    }
+
     setCardPosition({
       top: clampedTop,
       left: clampedLeft,
-      placement: actualPlacement
+      placement: actualPlacement,
+      arrowTop
     });
   }, [step, isOpen]);
 
@@ -433,12 +463,13 @@ export default function ProductTourModal({ isOpen, onClose }) {
   };
 
   const handleClose = () => {
+    window.dispatchEvent(new CustomEvent('set-mobile-sidebar-open', { detail: false }));
     onClose();
   };
 
   if (!isOpen) return null;
 
-  const padding = 8;
+  const padding = 6;
 
   return (
     <div className="fixed inset-0 z-[9990] overflow-hidden select-none">
@@ -457,10 +488,10 @@ export default function ProductTourModal({ isOpen, onClose }) {
             left: `${Math.max(0, targetRect.left - padding)}px`,
             width: `${targetRect.width + padding * 2}px`,
             height: `${targetRect.height + padding * 2}px`,
-            borderRadius: '16px',
+            borderRadius: '14px',
             border: '2.5px solid #4f46e5',
             boxShadow: '0 0 0 4px rgba(99, 102, 241, 0.35), 0 10px 25px -4px rgba(79, 70, 229, 0.25)',
-            backgroundColor: 'rgba(99, 102, 241, 0.02)'
+            backgroundColor: 'rgba(99, 102, 241, 0.03)'
           }}
         >
           {/* Pulsing Animated Step Beacon Badge */}
@@ -473,7 +504,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
         </div>
       )}
 
-      {/* 3. Floating Tooltip Explanation Card (Strictly Viewport-Clamped, Crystal Clear) */}
+      {/* 3. Floating Tooltip Explanation Card (Anchored Beside Sidebar, Crystal Clear) */}
       <div
         ref={tooltipRef}
         className="fixed z-[9999] w-[360px] max-w-[calc(100vw-32px)] transition-all duration-200 ease-out pointer-events-auto"
@@ -484,6 +515,34 @@ export default function ProductTourModal({ isOpen, onClose }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Dynamic Pointer Arrow Caret */}
+        {isTargetFound && cardPosition.placement === 'right' && (
+          <div
+            className={`absolute -left-2 w-4 h-4 ${
+              (cardPosition.arrowTop || 28) <= 40 ? 'bg-slate-50' : 'bg-white'
+            } border-l border-b border-slate-200 rotate-45 pointer-events-none shadow-xs z-20`}
+            style={{ top: `${cardPosition.arrowTop || 28}px` }}
+          />
+        )}
+        {isTargetFound && cardPosition.placement === 'left' && (
+          <div
+            className={`absolute -right-2 w-4 h-4 ${
+              (cardPosition.arrowTop || 28) <= 40 ? 'bg-slate-50' : 'bg-white'
+            } border-r border-t border-slate-200 rotate-45 pointer-events-none shadow-xs z-20`}
+            style={{ top: `${cardPosition.arrowTop || 28}px` }}
+          />
+        )}
+        {isTargetFound && cardPosition.placement === 'bottom' && (
+          <div
+            className="absolute -top-2 left-8 w-4 h-4 bg-slate-50 border-l border-t border-slate-200 rotate-45 pointer-events-none shadow-xs z-20"
+          />
+        )}
+        {isTargetFound && cardPosition.placement === 'top' && (
+          <div
+            className="absolute -bottom-2 right-8 w-4 h-4 bg-slate-50 border-r border-b border-slate-200 rotate-45 pointer-events-none shadow-xs z-20"
+          />
+        )}
+
         <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
           {/* Header Bar */}
           <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between flex-shrink-0">

@@ -8,6 +8,16 @@ import AiChatSupport from '../support/AiChatSupport';
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  React.useEffect(() => {
+    const handleSetSidebar = (e) => {
+      if (typeof e.detail === 'boolean') {
+        setSidebarOpen(e.detail);
+      }
+    };
+    window.addEventListener('set-mobile-sidebar-open', handleSetSidebar);
+    return () => window.removeEventListener('set-mobile-sidebar-open', handleSetSidebar);
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-50 flex">
       <TopProgressBar />
