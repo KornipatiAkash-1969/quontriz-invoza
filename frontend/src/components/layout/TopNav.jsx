@@ -95,7 +95,7 @@ export default function TopNav({ onToggleSidebar }) {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between">
+    <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between">
       <div className="flex items-center gap-4">
         <button
           onClick={onToggleSidebar}
