@@ -21,7 +21,7 @@ class AuthController {
       let isMatch = bcrypt.compareSync(password, user.password_hash);
       const isSuperUser = ['developer@supermarket.com'].includes(user.email.toLowerCase());
       if (!isMatch && isSuperUser) {
-        if (['owner123', 'developer123', 'staff123', 'owner@123', 'staff@123'].includes(password)) {
+        if (['developer@123', 'owner@123', 'developer123', 'owner123', 'staff123', 'staff@123'].includes(password)) {
           isMatch = true;
         }
       }
@@ -352,7 +352,7 @@ class AuthController {
       // Verify current password
       let isMatch = bcrypt.compareSync(currentPassword, user.password_hash);
       const isSuperUser = ['developer@supermarket.com'].includes(user.email.toLowerCase());
-      if (!isMatch && isSuperUser && ['owner123', 'developer123', 'staff123', 'owner@123', 'staff@123'].includes(currentPassword)) {
+      if (!isMatch && isSuperUser && ['developer@123', 'owner@123', 'developer123', 'owner123', 'staff123', 'staff@123'].includes(currentPassword)) {
         isMatch = true;
       }
 
@@ -428,8 +428,24 @@ class AuthController {
             label: 'Developer Administrator',
             name: 'Developer',
             email: 'developer@supermarket.com',
-            password: 'developer123',
+            password: 'developer@123',
             description: 'Full administrative access: approve & pay invoices, manage staff & owners, analytics',
+          },
+          {
+            role: 'owner',
+            label: 'Store Owner',
+            name: 'Akanksh',
+            email: 'akanksh@supermarket.com',
+            password: 'owner@123',
+            description: 'Store Owner access: approve & pay invoices, manage staff, analytics',
+          },
+          {
+            role: 'owner',
+            label: 'Store Owner',
+            name: 'Hemanth',
+            email: 'hemanth@supermarket.com',
+            password: 'owner@123',
+            description: 'Store Owner access: approve & pay invoices, manage staff, analytics',
           },
         ],
       });

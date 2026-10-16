@@ -28,7 +28,7 @@ async function initPostgres() {
   }
 
   // 2. Seed Default Accounts
-  const devHash = bcrypt.hashSync('developer123', 10);
+  const devHash = bcrypt.hashSync('developer@123', 10);
 
   // Seed developer@supermarket.com
   const devUser = await postgresClient.get(
@@ -42,9 +42,10 @@ async function initPostgres() {
     console.log('[PostgreSQL] ✅ Seeded developer@supermarket.com (owner)');
   } else {
     await postgresClient.run(
-      "UPDATE users SET email = 'developer@supermarket.com', password_hash = $1, role = 'owner' WHERE id = $2",
+      "UPDATE users SET name = 'Developer', email = 'developer@supermarket.com', password_hash = $1, role = 'owner' WHERE id = $2",
       [devHash, devUser.id]
     );
+    console.log('[PostgreSQL] ✅ Updated developer@supermarket.com (owner, password: developer@123)');
   }
 
   // Seed requested Store Owner accounts: akanksh@supermarket.com and hemanth@supermarket.com
@@ -137,6 +138,30 @@ async function initPostgres() {
       console.log('[PostgreSQL] 🧹 Cleaned all data and kept only primary Developer, Akanksh, and Hemanth accounts.');
     } catch (cleanErr) {
       console.warn('[PostgreSQL Clean Notice]', cleanErr.message);
+    }
+  }
+
+  // Database Reset: Reset entire database, purge all transactions and keep only developer, akanksh, and hemanth
+  const resetDbMigration = await postgresClient.get(
+    "SELECT id FROM schema_migrations WHERE id = 'reset_database_v2_clean_all'"
+  );
+  if (!resetDbMigration) {
+    try {
+      await postgresClient.run('DELETE FROM invoice_items');
+      await postgresClient.run('DELETE FROM invoices');
+      await postgresClient.run('DELETE FROM store_requirements');
+      await postgresClient.run('DELETE FROM notifications');
+      try { await postgresClient.run('DROP TABLE IF EXISTS otps CASCADE'); } catch (e) {}
+      try { await postgresClient.run('DELETE FROM buyers'); } catch (e) {}
+      try { await postgresClient.run('DELETE FROM ai_training_samples'); } catch (e) {}
+      try { await postgresClient.run('DELETE FROM ai_learned_vendor_templates'); } catch (e) {}
+      try { await postgresClient.run('DELETE FROM ai_training_runs'); } catch (e) {}
+      try { await postgresClient.run('DELETE FROM ai_extraction_logs'); } catch (e) {}
+      await postgresClient.run("DELETE FROM users WHERE LOWER(email) NOT IN ('developer@supermarket.com', 'akanksh@supermarket.com', 'hemanth@supermarket.com')");
+      await postgresClient.run("INSERT INTO schema_migrations (id) VALUES ('reset_database_v2_clean_all')");
+      console.log('[PostgreSQL] 🔄 Full database reset executed: purged all transactions; preserved developer, akanksh, and hemanth.');
+    } catch (cleanErr) {
+      console.warn('[PostgreSQL Reset Notice]', cleanErr.message);
     }
   }
 
