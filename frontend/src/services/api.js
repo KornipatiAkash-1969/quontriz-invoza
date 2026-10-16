@@ -182,4 +182,9 @@ export const settingsApi = {
   testOpenAI: (data) => api.post('/settings/test-openai', data),
 };
 
+export const supportApi = {
+  chat: (messages, context) => api.post('/support/chat', { messages, context }),
+  escalate: (payload) => api.post('/support/escalate', payload),
+};
+
 export default api;

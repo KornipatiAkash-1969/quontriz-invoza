@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import TopNav from './TopNav';
 import { TopProgressBar } from '../ui';
+import AiChatSupport from '../support/AiChatSupport';
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -23,6 +24,11 @@ export default function Layout() {
         <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           <Outlet />
         </main>
+      </div>
+
+      {/* Global AI Chat Support Assistant & Helpdesk */}
+      <div className="no-print">
+        <AiChatSupport />
       </div>
     </div>
   );

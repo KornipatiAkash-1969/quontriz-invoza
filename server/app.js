@@ -80,6 +80,7 @@ app.get('/api/samples', (req, res) => {
 // Mount Resource Routes
 const aiTrainingRoutes = require('./routes/aiTrainingRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const supportRoutes = require('./routes/supportRoutes');
 const requirementRoutes = require('./routes/requirementRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 app.use('/api/auth', authRoutes);
@@ -92,6 +93,7 @@ app.use('/api/vendor-types', vendorTypeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/ai-training', aiTrainingRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/support', supportRoutes);
 
 // Serve frontend static assets if built (Production / Unified Full-Stack deployment)
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
