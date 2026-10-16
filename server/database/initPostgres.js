@@ -28,7 +28,7 @@ async function initPostgres() {
   }
 
   // 2. Seed Default Accounts
-  const devHash = bcrypt.hashSync('owner123', 10);
+  const devHash = bcrypt.hashSync('developer123', 10);
 
   // Seed developer@supermarket.com
   const devUser = await postgresClient.get(
@@ -132,9 +132,9 @@ async function initPostgres() {
       try { await postgresClient.run('DELETE FROM ai_learned_vendor_templates'); } catch (e) {}
       try { await postgresClient.run('DELETE FROM ai_training_runs'); } catch (e) {}
       try { await postgresClient.run('DELETE FROM ai_extraction_logs'); } catch (e) {}
-      await postgresClient.run("DELETE FROM users WHERE LOWER(email) NOT IN ('developer@supermarket.com', 'developer@gmail.com')");
+      await postgresClient.run("DELETE FROM users WHERE LOWER(email) NOT IN ('developer@supermarket.com', 'developer@gmail.com', 'akanksh@supermarket.com', 'hemanth@supermarket.com')");
       await postgresClient.run("INSERT INTO schema_migrations (id) VALUES ('purge_all_keep_developer_v1')");
-      console.log('[PostgreSQL] 🧹 Cleaned all data and kept only primary Developer account.');
+      console.log('[PostgreSQL] 🧹 Cleaned all data and kept only primary Developer, Akanksh, and Hemanth accounts.');
     } catch (cleanErr) {
       console.warn('[PostgreSQL Clean Notice]', cleanErr.message);
     }

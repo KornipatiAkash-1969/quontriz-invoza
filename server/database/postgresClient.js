@@ -166,6 +166,7 @@ async function checkConnection() {
 
 const postgresClient = {
   init,
+  checkConnection,
 
   getPool() {
     if (!realPool) return init();
