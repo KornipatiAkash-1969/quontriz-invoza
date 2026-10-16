@@ -448,9 +448,11 @@ export default function ProductTourModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[9990] overflow-hidden select-none">
-      {/* 1. Dark Backdrop Overlay */}
+      {/* 1. Backdrop Overlay (No blur effect, transparent when spotlight is active) */}
       <div
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-[2px] transition-opacity duration-300 pointer-events-auto"
+        className={`fixed inset-0 transition-opacity duration-300 pointer-events-auto ${
+          targetRect && isTargetFound ? 'bg-transparent' : 'bg-slate-950/60'
+        }`}
         onClick={handleClose}
       />
 

@@ -24,9 +24,9 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto overscroll-contain">
-      {/* Backdrop */}
+      {/* Backdrop (Crisp background without blur effect) */}
       <div
-        className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-900/50 transition-opacity"
         onClick={onClose}
       />
 

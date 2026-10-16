@@ -706,7 +706,7 @@ export default function RequirementsPage() {
           ========================================================================= */}
       {showModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/50 backdrop-blur-xs overscroll-contain"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/50 overscroll-contain"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowModal(false);
           }}
