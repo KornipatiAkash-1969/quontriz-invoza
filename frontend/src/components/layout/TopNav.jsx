@@ -1,18 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Menu,
   UploadCloud,
   Store,
   LogOut,
   LogIn,
-  Clock,
   Bell,
   FileText,
-  Image as ImageIcon,
   ClipboardList,
   ChevronRight,
-  ExternalLink,
   Sparkles,
   Check,
   CheckCircle2,
@@ -24,26 +21,15 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useUpdates } from '../../context/UpdatesContext';
 import { useProductTour } from '../../context/ProductTourContext';
-import { formatCurrency, formatDateTime } from '../../utils/formatters';
+import { formatDateTime } from '../../utils/formatters';
 
 export default function TopNav({ onToggleSidebar }) {
   const navigate = useNavigate();
   const { user, isOwner, logout, isAuthenticated } = useAuth();
   const { openTour } = useProductTour();
   const {
-    totalUpdatesCount,
-    staffInvoicesCount,
-    staffPdfUploadsCount,
-    staffImageUploadsCount,
-    pendingRequirementsCount,
-    recentStaffInvoices,
-    recentRequirements,
     notifications = [],
     unreadCount = 0,
-    refreshUpdates,
-    markInvoiceViewed,
-    markRequirementViewed,
-    markAllViewed,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     clearAllNotifications,

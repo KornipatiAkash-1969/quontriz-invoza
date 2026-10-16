@@ -3,20 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import {
   UploadCloud,
   FileText,
-  Image as ImageIcon,
   X,
   AlertCircle,
   ArrowRight,
-  ShieldCheck,
-  FileCheck2,
-  Sparkles,
   Edit3,
   Plus,
   Trash2,
   Building2,
   Calculator,
-  Save,
-  CheckCircle2,
   RefreshCw,
   RotateCcw
 } from 'lucide-react';
@@ -40,7 +34,6 @@ export default function UploadPage() {
   // --- Upload State ---
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [errorMessage, setErrorMessage] = useState('');
@@ -208,27 +201,6 @@ export default function UploadPage() {
       console.error('Invoice processing failed:', err);
       setErrorMessage(err.message || 'Failed to process document.');
       toastError(err.message || 'Processing failed.');
-      setIsProcessing(false);
-    }
-  };
-
-  const handleSelectSample = async (sample) => {
-    try {
-      setIsProcessing(true);
-      setCurrentStep(1);
-      toastSuccess(`Loading sample invoice: ${sample.title}...`);
-      const res = await fetch(sample.fileUrl);
-      if (!res.ok) throw new Error('Could not fetch sample document');
-      const blob = await res.blob();
-      const ext = sample.fileUrl.endsWith('.png') ? 'png' : (sample.fileUrl.endsWith('.jpg') ? 'jpg' : 'pdf');
-      const sampleFileName = `${sample.key}.${ext}`;
-      const mime = ext === 'png' ? 'image/png' : (ext === 'jpg' ? 'image/jpeg' : 'application/pdf');
-      const file = new File([blob], sampleFileName, { type: mime });
-      setSelectedFile(file);
-      processFile(file);
-    } catch (err) {
-      console.error('Failed to load sample:', err);
-      toastError('Failed to load sample invoice: ' + err.message);
       setIsProcessing(false);
     }
   };

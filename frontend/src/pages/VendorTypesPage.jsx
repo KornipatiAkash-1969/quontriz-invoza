@@ -7,13 +7,8 @@ import {
   ArrowRight,
   Search,
   ExternalLink,
-  MapPin,
   Phone,
-  Mail,
-  Receipt,
-  TrendingUp,
-  X,
-  FileText
+  Mail
 } from 'lucide-react';
 import { vendorTypeApi } from '../services/api';
 import { Spinner, CardSkeleton } from '../components/ui';

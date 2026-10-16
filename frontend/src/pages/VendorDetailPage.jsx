@@ -2,20 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
-  Building2,
   Phone,
   Mail,
-  MapPin,
-  CreditCard,
-  FileText,
-  Package,
-  TrendingUp,
-  Calendar,
-  ExternalLink
+  MapPin
 } from 'lucide-react';
 import { vendorApi } from '../services/api';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import { Spinner, PageLoader } from '../components/ui';
+import { PageLoader } from '../components/ui';
 import { useToast } from '../context/ToastContext';
 
 export default function VendorDetailPage() {

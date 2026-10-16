@@ -4,29 +4,21 @@ import {
   FileText,
   Search,
   Filter,
-  ArrowUpDown,
   Eye,
   Trash2,
-  Calendar,
-  Building2,
-  Tag,
   Download,
   Plus,
   CreditCard,
   CheckCircle2,
   Clock,
-  ShieldCheck,
   UploadCloud,
   Image as ImageIcon,
-  FileSpreadsheet,
-  Sparkles,
   Check,
-  UserCheck,
-  User
+  UserCheck
 } from 'lucide-react';
 import { invoiceApi, vendorApi, categoryApi } from '../services/api';
 import { formatCurrency, formatDate, formatDateTime } from '../utils/formatters';
-import { Spinner, Pagination, TableSkeleton } from '../components/ui';
+import { Pagination, TableSkeleton } from '../components/ui';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import PaymentApprovalModal from '../components/review/PaymentApprovalModal';
 import { useToast } from '../context/ToastContext';
@@ -37,9 +29,7 @@ export default function InvoicesPage() {
   const navigate = useNavigate();
   const { user, isOwner } = useAuth();
   const {
-    staffInvoicesCount,
     refreshUpdates,
-    broadcastUpdate,
     markInvoiceViewed,
     markAllInvoicesViewed
   } = useUpdates();
@@ -651,10 +641,6 @@ export default function InvoicesPage() {
                 const isUnviewed = isOwner
                   ? (!inv.viewed_by_owner || inv.viewed_by_owner === 0)
                   : (!inv.viewed_by_staff || inv.viewed_by_staff === 0);
-                const ext = (inv.pdf_path || '').split('.').pop().toLowerCase();
-                const isPdf = ext === 'pdf';
-                const isImage = ['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext);
-
                 return (
                   <div
                     key={inv.id}

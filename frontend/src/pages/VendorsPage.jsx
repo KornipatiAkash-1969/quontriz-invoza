@@ -12,13 +12,12 @@ import {
   Receipt,
   TrendingUp,
   MapPin,
-  Filter,
   X,
   Layers
 } from 'lucide-react';
 import { vendorApi, vendorTypeApi } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
-import { Spinner, TableSkeleton } from '../components/ui';
+import { TableSkeleton } from '../components/ui';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';

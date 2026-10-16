@@ -3,14 +3,11 @@ import {
   Tags,
   Plus,
   Edit2,
-  Trash2,
-  Package,
-  TrendingUp,
-  FolderOpen
+  Trash2
 } from 'lucide-react';
 import { categoryApi } from '../services/api';
 import { formatCurrency } from '../utils/formatters';
-import { Spinner, TableSkeleton } from '../components/ui';
+import { TableSkeleton } from '../components/ui';
 import Modal from '../components/ui/Modal';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import { useToast } from '../context/ToastContext';

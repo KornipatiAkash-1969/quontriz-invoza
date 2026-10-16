@@ -31,7 +31,7 @@ import {
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import { dashboardApi } from '../services/api';
 import { formatCurrency, formatDate, formatDateTime } from '../utils/formatters';
-import { Spinner, CardSkeleton } from '../components/ui';
+import { CardSkeleton } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useUpdates } from '../context/UpdatesContext';
 import PaymentApprovalModal from '../components/review/PaymentApprovalModal';
@@ -52,7 +52,7 @@ ChartJS.register(
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, isOwner, loading: authLoading } = useAuth();
+  const { isOwner, loading: authLoading } = useAuth();
   const {
     staffInvoicesCount,
     pendingRequirementsCount,
@@ -131,7 +131,6 @@ export default function DashboardPage() {
   const categoryBreakdown = data?.charts?.categoryBreakdown || [];
   const vendorBreakdown = data?.charts?.vendorBreakdown || [];
   const monthlyPurchases = data?.charts?.monthlyPurchases || [];
-  const employeeStats = data?.employeeStats || {};
   const paymentMethods = data?.paymentMethods || [];
   const classificationStats = data?.classificationStats || { avgConfidence: 96 };
 

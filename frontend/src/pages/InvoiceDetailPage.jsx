@@ -2,21 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
-  Building2,
-  Calendar,
   CreditCard,
   FileText,
   Printer,
   Download,
   Trash2,
   FileCode,
-  Tag,
   CheckCircle2,
   Clock,
   ExternalLink,
-  ShieldCheck,
-  UserCheck,
-  Banknote,
   UploadCloud,
   Image as ImageIcon
 } from 'lucide-react';
@@ -33,7 +27,7 @@ import { useUpdates } from '../context/UpdatesContext';
 export default function InvoiceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isOwner } = useAuth();
+  const { isOwner } = useAuth();
   const { refreshUpdates, broadcastUpdate } = useUpdates();
   const { success: toastSuccess, error: toastError } = useToast();
 

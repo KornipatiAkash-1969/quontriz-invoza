@@ -9,13 +9,8 @@ import {
   Layers,
   Settings,
   ScanText,
-  CheckCircle2,
   Clock,
   LogOut,
-  UserCheck,
-  ShieldCheck,
-  PlusCircle,
-  BrainCircuit,
   Users,
   KeyRound,
   ChevronRight,
@@ -30,7 +25,7 @@ import { useUpdates } from '../../context/UpdatesContext';
 
 export default function Sidebar({ isOpen, setIsOpen }) {
   const navigate = useNavigate();
-  const { user, isOwner, isStaff, logout, isAuthenticated } = useAuth();
+  const { user, isOwner, logout, isAuthenticated } = useAuth();
   const { openTour } = useProductTour();
   const { invoicesRouteBadge, requirementsRouteBadge, staffInvoicesCount } = useUpdates();
   const [showPasswordModal, setShowPasswordModal] = useState(false);

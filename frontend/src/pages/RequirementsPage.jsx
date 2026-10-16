@@ -14,12 +14,7 @@ import {
   X,
   FileSpreadsheet,
   Package,
-  Layers,
-  Building2,
   Sparkles,
-  ArrowUpDown,
-  RefreshCw,
-  ExternalLink,
   Check
 } from 'lucide-react';
 import { requirementApi, vendorApi, categoryApi } from '../services/api';
@@ -27,19 +22,18 @@ import { Spinner, TableSkeleton } from '../components/ui';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useUpdates } from '../context/UpdatesContext';
-import { formatDate, formatDateTime, formatCurrency } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
 
 const COMMON_SPEC_SUGGESTIONS = ['25 KG', '50 KG', '10 KG', '5 KG', '1 KG', '15 L Tin', '1 Litre', '500 ml', '1 Pack', '75 GSM'];
 const COMMON_UNITS = ['bags', 'boxes', 'kg', 'pcs', 'packets', 'tins', 'cartons', 'reams', 'litres', 'bundles'];
 
 export default function RequirementsPage() {
-  const { user, isOwner, isStaff } = useAuth();
+  const { isOwner } = useAuth();
   const {
     refreshUpdates,
     broadcastUpdate,
     markRequirementViewed,
-    markAllRequirementsViewed,
-    pendingRequirementsCount
+    markAllRequirementsViewed
   } = useUpdates();
   const { success: toastSuccess, error: toastError } = useToast();
 

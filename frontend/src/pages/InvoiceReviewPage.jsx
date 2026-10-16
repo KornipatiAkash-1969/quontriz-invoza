@@ -12,17 +12,10 @@ import {
   CheckCircle2,
   Eye,
   Save,
-  RotateCcw,
-  Sparkles,
   Calculator,
-  HelpCircle,
-  FileCode,
   ExternalLink,
   ZoomIn,
   ZoomOut,
-  Maximize2,
-  Minimize2,
-  RefreshCw,
   Layers,
   Scale,
   Receipt,
@@ -39,7 +32,7 @@ import { formatCurrency } from '../utils/formatters';
 import RawOcrViewerModal from '../components/review/RawOcrViewerModal';
 import DuplicateWarningModal from '../components/review/DuplicateWarningModal';
 import VendorCreateModal from '../components/review/VendorCreateModal';
-import { Spinner, PageLoader } from '../components/ui';
+import { Spinner } from '../components/ui';
 
 export default function InvoiceReviewPage() {
   const location = useLocation();
