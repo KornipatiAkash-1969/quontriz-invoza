@@ -47,6 +47,33 @@ async function initPostgres() {
     );
   }
 
+  // Seed requested Store Owner accounts: akanksh@supermarket.com and hemanth@supermarket.com
+  const ownerHash = bcrypt.hashSync('owner@123', 10);
+  const ownersToSeed = [
+    { name: 'Akanksh', email: 'akanksh@supermarket.com' },
+    { name: 'Hemanth', email: 'hemanth@supermarket.com' },
+  ];
+
+  for (const o of ownersToSeed) {
+    const existing = await postgresClient.get(
+      'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
+      [o.email]
+    );
+    if (!existing) {
+      await postgresClient.run(
+        'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
+        [o.name, o.email, ownerHash, 'owner']
+      );
+      console.log(`[PostgreSQL] ✅ Seeded Owner account: ${o.email}`);
+    } else {
+      await postgresClient.run(
+        'UPDATE users SET name = $1, password_hash = $2, role = $3 WHERE id = $4',
+        [o.name, ownerHash, 'owner', existing.id]
+      );
+      console.log(`[PostgreSQL] ✅ Updated Owner account: ${o.email}`);
+    }
+  }
+
   // One-time database migration: Permanently remove legacy auto-seeded non-developer accounts
   await postgresClient.exec(`
     CREATE TABLE IF NOT EXISTS schema_migrations (

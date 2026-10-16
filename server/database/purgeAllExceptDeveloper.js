@@ -17,8 +17,8 @@ async function purgeAllExceptDeveloper() {
   try { await db.run('DELETE FROM ai_training_runs'); } catch (e) {}
   try { await db.run('DELETE FROM ai_extraction_logs'); } catch (e) {}
 
-  // 2. Remove all users except Developer
-  await db.run("DELETE FROM users WHERE LOWER(email) NOT IN ('developer@supermarket.com', 'developer@gmail.com')");
+  // 2. Remove all users except Developer, Akanksh, and Hemanth
+  await db.run("DELETE FROM users WHERE LOWER(email) NOT IN ('developer@supermarket.com', 'developer@gmail.com', 'akanksh@supermarket.com', 'hemanth@supermarket.com')");
 
   // 3. Ensure primary Developer account exists with credentials
   const devHash = bcrypt.hashSync('developer123', 10);
@@ -35,6 +35,29 @@ async function purgeAllExceptDeveloper() {
       ['Developer', 'developer@supermarket.com', devHash, 'owner', dev.id]
     );
     console.log('[Purge] ✅ Reset Developer credentials to default (developer@supermarket.com / developer123).');
+  }
+
+  // 3b. Ensure Akanksh and Hemanth owner accounts exist
+  const ownerHash = bcrypt.hashSync('owner@123', 10);
+  const owners = [
+    { name: 'Akanksh', email: 'akanksh@supermarket.com' },
+    { name: 'Hemanth', email: 'hemanth@supermarket.com' },
+  ];
+  for (const o of owners) {
+    const existing = await db.get("SELECT id FROM users WHERE LOWER(email) = LOWER(?)", [o.email]);
+    if (!existing) {
+      await db.run(
+        'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
+        [o.name, o.email, ownerHash, 'owner']
+      );
+      console.log(`[Purge] ✅ Seeded Owner account: ${o.email}`);
+    } else {
+      await db.run(
+        'UPDATE users SET name = ?, password_hash = ?, role = ? WHERE id = ?',
+        [o.name, ownerHash, 'owner', existing.id]
+      );
+      console.log(`[Purge] ✅ Updated Owner account: ${o.email}`);
+    }
   }
 
   // 4. Remove uploaded test invoice files in server/uploads/ (keep samples/ & subfolders)
