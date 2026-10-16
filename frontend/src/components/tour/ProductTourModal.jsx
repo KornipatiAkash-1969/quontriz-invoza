@@ -466,7 +466,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
             width: `${targetRect.width + padding * 2}px`,
             height: `${targetRect.height + padding * 2}px`,
             borderRadius: '16px',
-            boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.72), 0 0 25px rgba(99, 102, 241, 0.5)',
+            boxShadow: '0 0 0 9999px rgba(15, 23, 42, 0.55)',
             border: '2px solid #6366f1'
           }}
         >
