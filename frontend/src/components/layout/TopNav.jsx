@@ -98,27 +98,31 @@ export default function TopNav({ onToggleSidebar }) {
     <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/80 px-4 sm:px-8 flex items-center justify-between">
       <div className="flex items-center gap-4">
         <button
+          type="button"
           onClick={onToggleSidebar}
-          className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg lg:hidden"
+          aria-label="Toggle navigation sidebar"
+          className="w-10 h-10 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl lg:hidden transition active:scale-95"
         >
           <Menu className="w-5 h-5" />
         </button>
 
-        <div data-tour="branch-info" className="hidden sm:flex items-center gap-2 text-xs font-medium text-slate-500 bg-slate-100/80 py-1.5 px-3 rounded-lg border border-slate-200/60">
+        <div data-tour="branch-info" className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-100/90 py-1.5 px-3 rounded-xl border border-slate-200/70">
           <Store className="w-3.5 h-3.5 text-indigo-600" />
-          <span>Branch #01: City Supermarket Central</span>
+          <span className="truncate max-w-[180px] md:max-w-none">Branch #01: City Supermarket Central</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Real-Time Notifications Bell */}
         {isAuthenticated && (
           <div ref={notifRef} data-tour="notifications-bell" className="relative">
             <button
+              type="button"
               onClick={() => setShowNotifications(!showNotifications)}
-              className={`relative p-2 rounded-xl transition ${
+              aria-label="Toggle notifications panel"
+              className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition active:scale-95 ${
                 showNotifications
-                  ? 'bg-indigo-50 text-indigo-700'
+                  ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500/20'
                   : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
               }`}
               title={
@@ -129,15 +133,15 @@ export default function TopNav({ onToggleSidebar }) {
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white font-bold text-[10px] flex items-center justify-center shadow-xs ring-2 ring-white">
+                <span className="absolute 1.5 top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white font-black text-[10px] flex items-center justify-center shadow-xs ring-2 ring-white">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </button>
 
-            {/* Notification Dropdown Panel */}
+            {/* Notification Dropdown Panel (Clamped to viewport on mobile) */}
             {showNotifications && (
-              <div className="absolute right-[-1rem] sm:right-0 mt-2 w-80 sm:w-96 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="fixed sm:absolute left-2 right-2 sm:left-auto sm:right-0 top-16 sm:top-full mt-1.5 w-auto sm:w-96 max-w-[calc(100vw-1rem)] bg-white rounded-2xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                 {/* Header */}
                 <div className="p-3.5 px-4 bg-white border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">

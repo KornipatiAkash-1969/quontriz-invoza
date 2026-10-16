@@ -327,149 +327,249 @@ export default function UsersPage() {
             <p className="font-semibold text-slate-700">No users found.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/70">
-                  <th className="py-3 px-6">Name &amp; Account</th>
-                  <th className="py-3 px-6">Email Address</th>
-                  <th className="py-3 px-6">Role &amp; Permissions</th>
-                  <th className="py-3 px-6">Last Login</th>
-                  <th className="py-3 px-6">Created On</th>
-                  <th className="py-3 px-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {users.map((u) => {
-                  const isUserOwner = u.role === 'owner';
-                  const isCurrent = currentUser?.id === u.id;
+          <>
+            {/* Desktop / Tablet Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/70">
+                    <th className="py-3 px-6">Name &amp; Account</th>
+                    <th className="py-3 px-6">Email Address</th>
+                    <th className="py-3 px-6">Role &amp; Permissions</th>
+                    <th className="py-3 px-6">Last Login</th>
+                    <th className="py-3 px-6">Created On</th>
+                    <th className="py-3 px-6 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {users.map((u) => {
+                    const isUserOwner = u.role === 'owner';
+                    const isCurrent = currentUser?.id === u.id;
 
-                  return (
-                    <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3.5 px-6 font-bold text-slate-900">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
-                              isUserOwner ? 'bg-indigo-600' : 'bg-emerald-600'
-                            }`}
-                          >
-                            {isUserOwner ? 'OW' : 'ST'}
+                    return (
+                      <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-6 font-bold text-slate-900">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white ${
+                                isUserOwner ? 'bg-indigo-600' : 'bg-emerald-600'
+                              }`}
+                            >
+                              {isUserOwner ? 'OW' : 'ST'}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900 flex items-center gap-1.5">
+                                <span>{u.name}</span>
+                                {isCurrent && (
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600 font-medium">
+                                    You
+                                  </span>
+                                )}
+                              </p>
+                              <p className="text-[10px] text-slate-400 font-medium">ID #{u.id}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="font-bold text-slate-900 flex items-center gap-1.5">
-                              <span>{u.name}</span>
+                        </td>
+                        <td className="py-3.5 px-6 font-medium text-slate-700">
+                          <div className="flex items-center gap-1.5">
+                            <Mail className="w-3.5 h-3.5 text-slate-400" />
+                            <span>{u.email}</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-6">
+                          {isUserOwner ? (
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1">
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                <span>Store Owner</span>
+                              </span>
+                              <span className="text-[10px] text-slate-400 hidden sm:inline">
+                                Full Access &amp; Pay
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5">
+                              <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                                <UserCheck className="w-3.5 h-3.5" />
+                                <span>Store Staff</span>
+                              </span>
+                              <span className="text-[10px] text-slate-400 hidden sm:inline">
+                                Upload Only
+                              </span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-6">
+                          {u.last_login_at ? (
+                            <div className="space-y-0.5">
+                              <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                                <span>{formatDateTime(u.last_login_at)}</span>
+                              </p>
                               {isCurrent && (
-                                <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600 font-medium">
-                                  You
+                                <span className="inline-block px-1.5 py-0.2 rounded text-[9px] bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                                  Active Current Session
                                 </span>
                               )}
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-medium">ID #{u.id}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-6 font-medium text-slate-700">
-                        <div className="flex items-center gap-1.5">
-                          <Mail className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{u.email}</span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-6">
-                        {isUserOwner ? (
-                          <div className="flex items-center gap-1.5">
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1">
-                              <ShieldCheck className="w-3.5 h-3.5" />
-                              <span>Store Owner</span>
-                            </span>
-                            <span className="text-[10px] text-slate-400 hidden sm:inline">
-                              Full Access &amp; Pay
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5">
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                              <UserCheck className="w-3.5 h-3.5" />
-                              <span>Store Staff</span>
-                            </span>
-                            <span className="text-[10px] text-slate-400 hidden sm:inline">
-                              Upload Only
-                            </span>
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-6">
-                        {u.last_login_at ? (
-                          <div className="space-y-0.5">
-                            <p className="font-bold text-slate-800 flex items-center gap-1.5">
-                              <Clock className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                              <span>{formatDateTime(u.last_login_at)}</span>
-                            </p>
-                            {isCurrent && (
-                              <span className="inline-block px-1.5 py-0.2 rounded text-[9px] bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                                Active Current Session
-                              </span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-slate-400 font-medium italic">Never logged in</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-6 text-slate-500 font-medium">
-                        {formatDate(u.created_at)}
-                      </td>
-                      <td className="py-3.5 px-6 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {isCurrent ? (
-                            <button
-                              type="button"
-                              onClick={() => setShowSelfChangePassword(true)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 text-slate-600 hover:text-indigo-700 bg-slate-100 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg text-xs font-semibold transition"
-                              title="Change Your Password"
-                            >
-                              <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
-                              <span>Password</span>
-                            </button>
+                            </div>
                           ) : (
-                            <>
+                            <span className="text-[11px] text-slate-400 font-medium italic">Never logged in</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-6 text-slate-500 font-medium">
+                          {formatDate(u.created_at)}
+                        </td>
+                        <td className="py-3.5 px-6 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {isCurrent ? (
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setResetPasswordTarget(u);
-                                  setNewResetPassword(u.role === 'owner' ? 'owner@123' : 'staff@123');
-                                  setShowResetEye(false);
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                                title={`Reset Password for ${u.name}`}
+                                onClick={() => setShowSelfChangePassword(true)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 text-slate-600 hover:text-indigo-700 bg-slate-100 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-200 rounded-lg text-xs font-semibold transition"
+                                title="Change Your Password"
                               >
-                                <KeyRound className="w-4 h-4" />
+                                <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
+                                <span>Password</span>
                               </button>
-                              {u.email?.toLowerCase() === 'developer@supermarket.com' ? (
-                                <span
-                                  className="p-1.5 text-slate-300 cursor-not-allowed inline-flex items-center"
-                                  title="Primary Developer Administrator cannot be deleted"
-                                >
-                                  <Lock className="w-3.5 h-3.5" />
-                                </span>
-                              ) : (
+                            ) : (
+                              <>
                                 <button
                                   type="button"
-                                  onClick={() => handleOpenDelete(u)}
-                                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                                  title={u.role === 'owner' ? `Delete Store Owner ${u.name}` : `Delete ${u.name}`}
+                                  onClick={() => {
+                                    setResetPasswordTarget(u);
+                                    setNewResetPassword(u.role === 'owner' ? 'owner@123' : 'staff@123');
+                                    setShowResetEye(false);
+                                  }}
+                                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                  title={`Reset Password for ${u.name}`}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <KeyRound className="w-4 h-4" />
                                 </button>
-                              )}
-                            </>
-                          )}
+                                {u.email?.toLowerCase() === 'developer@supermarket.com' ? (
+                                  <span
+                                    className="p-1.5 text-slate-300 cursor-not-allowed inline-flex items-center"
+                                    title="Primary Developer Administrator cannot be deleted"
+                                  >
+                                    <Lock className="w-3.5 h-3.5" />
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenDelete(u)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                    title={u.role === 'owner' ? `Delete Store Owner ${u.name}` : `Delete ${u.name}`}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View (< md) */}
+            <div className="md:hidden divide-y divide-slate-100 p-3 space-y-3.5">
+              {users.map((u) => {
+                const isUserOwner = u.role === 'owner';
+                const isCurrent = currentUser?.id === u.id;
+
+                return (
+                  <div
+                    key={u.id}
+                    className="pt-3.5 first:pt-0 space-y-3 rounded-2xl p-3 border border-slate-200/80 bg-white shadow-2xs"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
+                            isUserOwner ? 'bg-indigo-600' : 'bg-emerald-600'
+                          }`}
+                        >
+                          {isUserOwner ? 'OW' : 'ST'}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 text-sm flex items-center gap-1.5 truncate">
+                            <span>{u.name}</span>
+                            {isCurrent && (
+                              <span className="px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600 font-medium">
+                                You
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-[11px] text-slate-500 truncate">{u.email}</p>
+                        </div>
+                      </div>
+
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold border flex items-center gap-1 flex-shrink-0 ${
+                          isUserOwner
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        }`}
+                      >
+                        {isUserOwner ? <ShieldCheck className="w-3 h-3" /> : <UserCheck className="w-3 h-3" />}
+                        <span>{isUserOwner ? 'Owner' : 'Staff'}</span>
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 flex-wrap gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <span>
+                          {u.last_login_at ? formatDateTime(u.last_login_at) : 'Never logged in'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-slate-400">Created: {formatDate(u.created_at)}</span>
+                    </div>
+
+                    <div className="pt-1 flex items-center justify-end gap-2">
+                      {isCurrent ? (
+                        <button
+                          type="button"
+                          onClick={() => setShowSelfChangePassword(true)}
+                          className="w-full py-2 px-3 bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 min-touch-target"
+                        >
+                          <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>Change My Password</span>
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setResetPasswordTarget(u);
+                              setNewResetPassword(u.role === 'owner' ? 'owner@123' : 'staff@123');
+                              setShowResetEye(false);
+                            }}
+                            className="flex-1 py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 min-touch-target"
+                          >
+                            <KeyRound className="w-3.5 h-3.5" />
+                            <span>Reset Password</span>
+                          </button>
+                          {u.email?.toLowerCase() !== 'developer@supermarket.com' && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenDelete(u)}
+                              className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 min-touch-target"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Delete</span>
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 

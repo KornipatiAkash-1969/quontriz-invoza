@@ -39,14 +39,15 @@ export default function Modal({ isOpen, onClose, title, children, maxWidth = 'ma
           <h3 className="text-base sm:text-lg font-semibold text-slate-800">{title}</h3>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition"
+            aria-label="Close modal"
+            className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl transition"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-4 sm:p-6 max-h-[75vh] overflow-y-auto">{children}</div>
+        <div className="p-4 sm:p-6 max-h-[82vh] overflow-y-auto">{children}</div>
 
         {/* Footer */}
         {footer && (

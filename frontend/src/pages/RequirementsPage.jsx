@@ -497,117 +497,294 @@ export default function RequirementsPage() {
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs min-w-[900px]">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-3 px-4">#</th>
-                  <th className="py-3 px-4 min-w-[240px]">Required Item & Specification</th>
-                  <th className="py-3 px-4 text-center">Quantity & Packaging</th>
-                  <th className="py-3 px-3">Category</th>
-                  <th className="py-3 px-3">Priority</th>
-                  <th className="py-3 px-4">Preferred Vendor</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Requested By</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {requirements.map((item, idx) => {
-                  const fullDesc = `${item.item_name}${item.specification ? ` - ${item.specification}` : ''} - ${item.quantity} ${item.unit}`;
-                  const isFulfilled = item.status === 'Fulfilled';
-                  const isPending = item.status === 'Pending';
-                  const isUnviewed = isOwner
-                    ? (!item.viewed_by_owner || item.viewed_by_owner === 0)
-                    : (!item.viewed_by_staff || item.viewed_by_staff === 0);
+          <>
+            {/* Desktop / Tablet Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs min-w-[900px]">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-3 px-4">#</th>
+                    <th className="py-3 px-4 min-w-[240px]">Required Item & Specification</th>
+                    <th className="py-3 px-4 text-center">Quantity & Packaging</th>
+                    <th className="py-3 px-3">Category</th>
+                    <th className="py-3 px-3">Priority</th>
+                    <th className="py-3 px-4">Preferred Vendor</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4">Requested By</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {requirements.map((item, idx) => {
+                    const fullDesc = `${item.item_name}${item.specification ? ` - ${item.specification}` : ''} - ${item.quantity} ${item.unit}`;
+                    const isFulfilled = item.status === 'Fulfilled';
+                    const isPending = item.status === 'Pending';
+                    const isUnviewed = isOwner
+                      ? (!item.viewed_by_owner || item.viewed_by_owner === 0)
+                      : (!item.viewed_by_staff || item.viewed_by_staff === 0);
 
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`transition-colors ${
-                        isUnviewed
-                          ? 'bg-amber-50/40 hover:bg-amber-50/70 border-l-4 border-l-amber-500'
-                          : 'hover:bg-slate-50/60'
-                      }`}
-                    >
-                      <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">{idx + 1}</td>
+                    return (
+                      <tr
+                        key={item.id}
+                        className={`transition-colors ${
+                          isUnviewed
+                            ? 'bg-amber-50/40 hover:bg-amber-50/70 border-l-4 border-l-amber-500'
+                            : 'hover:bg-slate-50/60'
+                        }`}
+                      >
+                        <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">{idx + 1}</td>
 
-                      {/* Item & Specification */}
-                      <td className="py-3.5 px-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-extrabold text-slate-900 text-sm">{item.item_name}</span>
-                            {item.specification && (
-                              <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold text-[11px]">
-                                {item.specification}
+                        {/* Item & Specification */}
+                        <td className="py-3.5 px-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-extrabold text-slate-900 text-sm">{item.item_name}</span>
+                              {item.specification && (
+                                <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold text-[11px]">
+                                  {item.specification}
+                                </span>
+                              )}
+                              {isUnviewed && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                                  {isOwner ? '● Staff Update' : '● Update'}
+                                </span>
+                              )}
+                            </div>
+                            {/* User Example formatted demand representation */}
+                            <div className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
+                              <span className="text-slate-400">Demand:</span>
+                              <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
+                                {fullDesc}
                               </span>
-                            )}
-                            {isUnviewed && (
-                              <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
-                                {isOwner ? '● Staff Update' : '● Update'}
-                              </span>
+                            </div>
+                            {item.notes && (
+                              <p className="text-[11px] text-slate-400 italic">“{item.notes}”</p>
                             )}
                           </div>
-                          {/* User Example formatted demand representation */}
-                          <div className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
-                            <span className="text-slate-400">Demand:</span>
-                            <span className="font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
-                              {fullDesc}
+                        </td>
+
+                        {/* Quantity & Packaging */}
+                        <td className="py-3.5 px-4 text-center">
+                          <div className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
+                            <span className="font-black text-slate-900 text-sm font-mono">{item.quantity}</span>
+                            <span className="text-slate-600 font-bold text-xs">{item.unit || 'bags'}</span>
+                          </div>
+                        </td>
+
+                        {/* Category */}
+                        <td className="py-3.5 px-3">
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium text-[11px]">
+                            {item.category_name || 'General'}
+                          </span>
+                        </td>
+
+                        {/* Priority */}
+                        <td className="py-3.5 px-3">
+                          <span
+                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-block ${
+                              item.priority === 'Urgent'
+                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                : item.priority === 'High'
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : item.priority === 'Medium'
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                : 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {item.priority}
+                          </span>
+                        </td>
+
+                        {/* Preferred Vendor */}
+                        <td className="py-3.5 px-4">
+                          <span className="text-slate-700 font-medium text-xs">
+                            {item.preferred_vendor_name || '—'}
+                          </span>
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-3.5 px-4">
+                          {isOwner ? (
+                            /* Owner Quick Status Toggle Dropdown */
+                            <select
+                              value={item.status}
+                              onChange={(e) => handleStatusChange(item, e.target.value)}
+                              className={`text-xs font-bold rounded-lg px-2.5 py-1 border transition focus:outline-none ${
+                                item.status === 'Fulfilled'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                  : item.status === 'Ordered'
+                                  ? 'bg-blue-50 text-blue-800 border-blue-300'
+                                  : item.status === 'Approved'
+                                  ? 'bg-indigo-50 text-indigo-800 border-indigo-300'
+                                  : 'bg-amber-50 text-amber-800 border-amber-300'
+                              }`}
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Approved">Approved</option>
+                              <option value="Ordered">Ordered</option>
+                              <option value="Fulfilled">Fulfilled</option>
+                            </select>
+                          ) : (
+                            /* Staff read-only status badge */
+                            <span
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold border inline-block ${
+                                item.status === 'Fulfilled'
+                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                  : item.status === 'Ordered'
+                                  ? 'bg-blue-50 text-blue-800 border-blue-200'
+                                  : item.status === 'Approved'
+                                  ? 'bg-indigo-50 text-indigo-800 border-indigo-200'
+                                  : 'bg-amber-50 text-amber-800 border-amber-200'
+                              }`}
+                            >
+                              {item.status}
                             </span>
+                          )}
+                        </td>
+
+                        {/* Requested By */}
+                        <td className="py-3.5 px-4">
+                          <div>
+                            <p className="font-bold text-slate-800 text-xs">{item.requested_by_name || 'Staff'}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(item.created_at)}</p>
                           </div>
-                          {item.notes && (
-                            <p className="text-[11px] text-slate-400 italic">“{item.notes}”</p>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            {isUnviewed && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (markRequirementViewed) {
+                                    await markRequirementViewed(item.id);
+                                    fetchRequirements();
+                                  }
+                                }}
+                                className="p-1.5 text-amber-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
+                                title="Mark as viewed (dismiss indicator)"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+
+                            {isOwner ? (
+                              <>
+                                <button
+                                  onClick={() => handleOpenEdit(item)}
+                                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                  title="Edit Requirement"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+
+                                <button
+                                  onClick={() => handleDelete(item)}
+                                  className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                  title="Delete Requirement"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 font-medium px-2 py-0.5 rounded bg-slate-100">
+                                View Only
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View (< md) */}
+            <div className="md:hidden divide-y divide-slate-100 p-3 space-y-3.5">
+              {requirements.map((item, idx) => {
+                const fullDesc = `${item.item_name}${item.specification ? ` - ${item.specification}` : ''} - ${item.quantity} ${item.unit}`;
+                const isFulfilled = item.status === 'Fulfilled';
+                const isPending = item.status === 'Pending';
+                const isUnviewed = isOwner
+                  ? (!item.viewed_by_owner || item.viewed_by_owner === 0)
+                  : (!item.viewed_by_staff || item.viewed_by_staff === 0);
+
+                return (
+                  <div
+                    key={item.id}
+                    className={`pt-3.5 first:pt-0 space-y-3 rounded-2xl p-3 border transition-colors ${
+                      isUnviewed
+                        ? 'bg-amber-50/50 border-amber-300'
+                        : 'bg-white border-slate-200/80 shadow-2xs'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-extrabold text-slate-900 text-sm">
+                            {item.item_name}
+                          </span>
+                          {item.specification && (
+                            <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-bold text-[10px]">
+                              {item.specification}
+                            </span>
+                          )}
+                          {isUnviewed && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                              {isOwner ? '● Staff Update' : '● Update'}
+                            </span>
                           )}
                         </div>
-                      </td>
+                        <p className="text-[11px] font-mono text-slate-600 bg-slate-50 px-2 py-1 rounded-lg mt-1 border border-slate-100">
+                          {fullDesc}
+                        </p>
+                      </div>
 
-                      {/* Quantity & Packaging */}
-                      <td className="py-3.5 px-4 text-center">
-                        <div className="inline-flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-lg">
-                          <span className="font-black text-slate-900 text-sm font-mono">{item.quantity}</span>
-                          <span className="text-slate-600 font-bold text-xs">{item.unit || 'bags'}</span>
-                        </div>
-                      </td>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider flex-shrink-0 ${
+                          item.priority === 'Urgent'
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            : item.priority === 'High'
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : item.priority === 'Medium'
+                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                      >
+                        {item.priority}
+                      </span>
+                    </div>
 
-                      {/* Category */}
-                      <td className="py-3.5 px-3">
-                        <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium text-[11px]">
-                          {item.category_name || 'General'}
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-lg bg-indigo-50 font-black text-indigo-900 font-mono text-xs border border-indigo-200/60">
+                          {item.quantity} {item.unit || 'bags'}
                         </span>
-                      </td>
-
-                      {/* Priority */}
-                      <td className="py-3.5 px-3">
-                        <span
-                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider inline-block ${
-                            item.priority === 'Urgent'
-                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                              : item.priority === 'High'
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                              : item.priority === 'Medium'
-                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                              : 'bg-slate-100 text-slate-600'
-                          }`}
-                        >
-                          {item.priority}
+                        <span className="text-slate-400">•</span>
+                        <span>{item.category_name || 'General'}</span>
+                      </div>
+                      {item.preferred_vendor_name && (
+                        <span className="text-slate-600 font-medium text-[10px] bg-slate-100 px-2 py-0.5 rounded">
+                          Vendor: {item.preferred_vendor_name}
                         </span>
-                      </td>
+                      )}
+                    </div>
 
-                      {/* Preferred Vendor */}
-                      <td className="py-3.5 px-4">
-                        <span className="text-slate-700 font-medium text-xs">
-                          {item.preferred_vendor_name || '—'}
-                        </span>
-                      </td>
+                    {item.notes && (
+                      <p className="text-[11px] text-slate-400 italic bg-slate-50/70 p-2 rounded-lg">
+                        “{item.notes}”
+                      </p>
+                    )}
 
-                      {/* Status */}
-                      <td className="py-3.5 px-4">
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2 flex-wrap">
+                      <div className="flex-1 min-w-[140px]">
                         {isOwner ? (
-                          /* Owner Quick Status Toggle Dropdown */
                           <select
                             value={item.status}
                             onChange={(e) => handleStatusChange(item, e.target.value)}
-                            className={`text-xs font-bold rounded-lg px-2.5 py-1 border transition focus:outline-none ${
+                            className={`w-full text-xs font-bold rounded-xl px-2.5 py-1.5 border transition focus:outline-none min-touch-target ${
                               item.status === 'Fulfilled'
                                 ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                                 : item.status === 'Ordered'
@@ -623,7 +800,6 @@ export default function RequirementsPage() {
                             <option value="Fulfilled">Fulfilled</option>
                           </select>
                         ) : (
-                          /* Staff read-only status badge */
                           <span
                             className={`px-2.5 py-1 rounded-lg text-xs font-bold border inline-block ${
                               item.status === 'Fulfilled'
@@ -638,66 +814,51 @@ export default function RequirementsPage() {
                             {item.status}
                           </span>
                         )}
-                      </td>
+                      </div>
 
-                      {/* Requested By */}
-                      <td className="py-3.5 px-4">
-                        <div>
-                          <p className="font-bold text-slate-800 text-xs">{item.requested_by_name || 'Staff'}</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(item.created_at)}</p>
-                        </div>
-                      </td>
+                      <div className="flex items-center gap-1.5">
+                        {isUnviewed && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (markRequirementViewed) {
+                                await markRequirementViewed(item.id);
+                                fetchRequirements();
+                              }
+                            }}
+                            className="p-2 text-amber-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition min-touch-target flex items-center justify-center"
+                            title="Mark as viewed"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                        )}
 
-                      {/* Actions */}
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          {isUnviewed && (
+                        {isOwner && (
+                          <>
                             <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (markRequirementViewed) {
-                                  await markRequirementViewed(item.id);
-                                  fetchRequirements();
-                                }
-                              }}
-                              className="p-1.5 text-amber-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
-                              title="Mark as viewed (dismiss indicator)"
+                              onClick={() => handleOpenEdit(item)}
+                              className="p-2 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition min-touch-target flex items-center justify-center"
+                              title="Edit Requirement"
                             >
-                              <Check className="w-3.5 h-3.5" />
+                              <Edit2 className="w-4 h-4" />
                             </button>
-                          )}
 
-                          {isOwner ? (
-                            <>
-                              <button
-                                onClick={() => handleOpenEdit(item)}
-                                className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                                title="Edit Requirement"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-
-                              <button
-                                onClick={() => handleDelete(item)}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                                title="Delete Requirement"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </>
-                          ) : (
-                            <span className="text-[11px] text-slate-400 font-medium px-2 py-0.5 rounded bg-slate-100">
-                              View Only
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                            <button
+                              onClick={() => handleDelete(item)}
+                              className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition min-touch-target flex items-center justify-center"
+                              title="Delete Requirement"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 

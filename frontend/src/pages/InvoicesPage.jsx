@@ -62,6 +62,7 @@ export default function InvoicesPage() {
   const [sortOrder, setSortOrder] = useState('DESC');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 10 });
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Delete modal state
   const [deleteId, setDeleteId] = useState(null);
@@ -226,9 +227,44 @@ export default function InvoicesPage() {
 
       {/* Filter and Search Bar */}
       <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {/* Search Input */}
-          <div className="relative">
+        {/* Mobile Search & Filter Header (< sm) */}
+        <div className="flex sm:hidden items-center justify-between gap-2">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search invoice #, vendor..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowMobileFilters((prev) => !prev)}
+            className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition ${
+              showMobileFilters || [vendorId, categoryId, status, startDate, endDate, filterStaffOnly].filter(Boolean).length > 0
+                ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                : 'bg-white border-slate-300 text-slate-700'
+            }`}
+          >
+            <Filter className="w-3.5 h-3.5" />
+            <span>Filters</span>
+            {[vendorId, categoryId, status, startDate, endDate, filterStaffOnly].filter(Boolean).length > 0 && (
+              <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] flex items-center justify-center font-bold">
+                {[vendorId, categoryId, status, startDate, endDate, filterStaffOnly].filter(Boolean).length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Filters Grid: Always visible on sm+, toggled on mobile */}
+        <div className={`${showMobileFilters ? 'grid' : 'hidden sm:grid'} grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3`}>
+          {/* Search Input (visible on sm+) */}
+          <div className="hidden sm:block relative">
             <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
             <input
               type="text"
@@ -321,7 +357,7 @@ export default function InvoicesPage() {
         </div>
 
         {/* Date Range & Reset Filters */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+        <div className={`${showMobileFilters ? 'flex' : 'hidden sm:flex'} flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs`}>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-slate-500 font-medium">Date Range:</span>
             <input
@@ -377,225 +413,386 @@ export default function InvoicesPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/70">
-                  <th className="py-2.5 px-3 sm:px-4">Invoice #</th>
-                  <th className="py-2.5 px-3 sm:px-4">Vendor</th>
-                  <th className="py-2.5 px-3 sm:px-4">Invoice & Upload Date</th>
-                  <th className="py-2.5 px-3 sm:px-4">Items</th>
-                  <th className="py-2.5 px-3 sm:px-4">Total & GST</th>
-                  <th className="py-2.5 px-3 sm:px-4">Status</th>
-                  <th className="py-2.5 px-3 sm:px-4">Uploaded By</th>
-                  <th className="py-2.5 px-3 sm:px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {displayedInvoices.map((inv) => {
-                  const isPaid =
-                    inv.status === 'Paid' ||
-                    (Number(inv.amount_paid || inv.paid || 0) >= Number(inv.total) && Number(inv.total) > 0);
-                  const isPending = !isPaid && inv.status !== 'Rejected';
-                  const isStaffUpload =
-                    inv.created_by_role === 'staff' ||
-                    inv.created_by_role === 'employee' ||
-                    (inv.created_by_user_id && inv.created_by_user_id !== 1) ||
-                    (!inv.created_by_user_id) ||
-                    inv.viewed_by_owner === 0;
-                  const isUnviewed = isOwner
-                    ? (!inv.viewed_by_owner || inv.viewed_by_owner === 0)
-                    : (!inv.viewed_by_staff || inv.viewed_by_staff === 0);
-                  const ext = (inv.pdf_path || '').split('.').pop().toLowerCase();
-                  const isPdf = ext === 'pdf';
-                  const isImage = ['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext);
+          <>
+            {/* Desktop / Tablet Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider bg-slate-50/70">
+                    <th className="py-2.5 px-3 sm:px-4">Invoice #</th>
+                    <th className="py-2.5 px-3 sm:px-4">Vendor</th>
+                    <th className="py-2.5 px-3 sm:px-4">Invoice & Upload Date</th>
+                    <th className="py-2.5 px-3 sm:px-4">Items</th>
+                    <th className="py-2.5 px-3 sm:px-4">Total & GST</th>
+                    <th className="py-2.5 px-3 sm:px-4">Status</th>
+                    <th className="py-2.5 px-3 sm:px-4">Uploaded By</th>
+                    <th className="py-2.5 px-3 sm:px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {displayedInvoices.map((inv) => {
+                    const isPaid =
+                      inv.status === 'Paid' ||
+                      (Number(inv.amount_paid || inv.paid || 0) >= Number(inv.total) && Number(inv.total) > 0);
+                    const isPending = !isPaid && inv.status !== 'Rejected';
+                    const isStaffUpload =
+                      inv.created_by_role === 'staff' ||
+                      inv.created_by_role === 'employee' ||
+                      (inv.created_by_user_id && inv.created_by_user_id !== 1) ||
+                      (!inv.created_by_user_id) ||
+                      inv.viewed_by_owner === 0;
+                    const isUnviewed = isOwner
+                      ? (!inv.viewed_by_owner || inv.viewed_by_owner === 0)
+                      : (!inv.viewed_by_staff || inv.viewed_by_staff === 0);
+                    const ext = (inv.pdf_path || '').split('.').pop().toLowerCase();
+                    const isPdf = ext === 'pdf';
+                    const isImage = ['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext);
 
-                  return (
-                    <tr
-                      key={inv.id}
-                      className={`transition-colors ${
-                        isUnviewed
-                          ? 'bg-amber-50/40 hover:bg-amber-50/70 border-l-4 border-l-amber-500'
-                          : 'hover:bg-slate-50/80'
-                      }`}
-                    >
-                      <td className="py-2.5 px-3 sm:px-4">
+                    return (
+                      <tr
+                        key={inv.id}
+                        className={`transition-colors ${
+                          isUnviewed
+                            ? 'bg-amber-50/40 hover:bg-amber-50/70 border-l-4 border-l-amber-500'
+                            : 'hover:bg-slate-50/80'
+                        }`}
+                      >
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-extrabold text-slate-900">{inv.invoice_number}</span>
+                            {isUnviewed && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
+                                {isOwner ? '● Staff Update' : '● Status Update'}
+                              </span>
+                            )}
+                          </div>
+                          {isStaffUpload && (
+                            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                              {isPdf ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                  <FileText className="w-3 h-3 text-rose-600" />
+                                  <span>Staff PDF Upload</span>
+                                </span>
+                              ) : isImage ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                  <ImageIcon className="w-3 h-3 text-indigo-600" />
+                                  <span>Staff Image Upload</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                  <span>Staff Manual Entry</span>
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <p className="font-semibold text-slate-800">{inv.vendor_name || '—'}</p>
+                          <p className="text-[10px] text-slate-400">{inv.vendor_type || 'General'}</p>
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <p className="font-bold text-slate-800">{formatDate(inv.invoice_date)}</p>
+                          {inv.created_at && (
+                            <div
+                              className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5"
+                              title="Uploaded timestamp"
+                            >
+                              <UploadCloud className="w-3 h-3 text-indigo-500 flex-shrink-0" />
+                              <span>Uploaded: {formatDateTime(inv.created_at)}</span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                            {inv.items_count || 0} items
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3.5 sm:px-6 font-extrabold text-slate-900">
+                          <div>{formatCurrency(inv.total)}</div>
+                          {Number(inv.total_gst || inv.tax) > 0 ? (
+                            <div className="flex items-center gap-1 mt-0.5">
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 font-mono text-[10px] font-bold">
+                                GST: +{formatCurrency(inv.total_gst || inv.tax)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 font-medium">No GST</span>
+                          )}
+                          {Number(inv.advance_paid) > 0 && (
+                            <div className="text-[10px] text-slate-500 font-mono mt-0.5">
+                              Adv: {formatCurrency(inv.advance_paid)}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1 ${
+                              isPaid
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : inv.status === 'Rejected'
+                                ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                : isStaffUpload
+                                ? 'bg-amber-100 text-amber-900 border-amber-300 font-extrabold shadow-xs'
+                                : 'bg-amber-50 text-amber-700 border-amber-200'
+                            }`}
+                          >
+                            {isPaid ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                <span>Approved & Paid</span>
+                              </>
+                            ) : inv.status === 'Rejected' ? (
+                              <span>Rejected</span>
+                            ) : isStaffUpload ? (
+                              <>
+                                <Clock className="w-3 h-3 text-amber-700" />
+                                <span>Pending Owner Approval</span>
+                              </>
+                            ) : (
+                              <span>Pending Approval & Payment</span>
+                            )}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50/80 border border-indigo-200 text-indigo-900 text-xs font-bold w-fit">
+                              <UserCheck className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                              <span>{inv.created_by_name || 'Staff Member'}</span>
+                            </span>
+                            <span className="text-[10px] text-slate-400 capitalize pl-1">
+                              Role: {inv.created_by_role || 'Staff'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {/* Quick Dismiss/Mark Viewed Action */}
+                            {isUnviewed && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (markInvoiceViewed) {
+                                    await markInvoiceViewed(inv.id);
+                                    fetchInvoices();
+                                  }
+                                }}
+                                className="p-1.5 text-amber-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
+                                title="Mark as viewed (dismiss notification number)"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                            )}
+
+                            {/* Owner Approve & Pay Action */}
+                            {isOwner && isPending && (
+                              <button
+                                onClick={() => setApprovingInvoice(inv)}
+                                className="flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-xs transition"
+                                title="Approve invoice and make payment"
+                              >
+                                <CreditCard className="w-3.5 h-3.5" />
+                                <span>Approve & Pay</span>
+                              </button>
+                            )}
+
+                            <button
+                              onClick={async () => {
+                                if (isUnviewed && markInvoiceViewed) {
+                                  await markInvoiceViewed(inv.id);
+                                }
+                                navigate(`/invoices/${inv.id}`);
+                              }}
+                              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                              title="View Invoice Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={(e) => handleDownloadInvoicePdf(e, inv)}
+                              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                              title="Download Invoice PDF"
+                            >
+                              <Download className="w-4 h-4" />
+                            </button>
+
+                            {/* Owner Only Delete Action */}
+                            {isOwner && (
+                              <button
+                                onClick={() => setDeleteId(inv.id)}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                title="Delete Invoice (Owner Only)"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View (< md) */}
+            <div className="md:hidden divide-y divide-slate-100 p-3 space-y-3.5">
+              {displayedInvoices.map((inv) => {
+                const isPaid =
+                  inv.status === 'Paid' ||
+                  (Number(inv.amount_paid || inv.paid || 0) >= Number(inv.total) && Number(inv.total) > 0);
+                const isPending = !isPaid && inv.status !== 'Rejected';
+                const isStaffUpload =
+                  inv.created_by_role === 'staff' ||
+                  inv.created_by_role === 'employee' ||
+                  (inv.created_by_user_id && inv.created_by_user_id !== 1) ||
+                  (!inv.created_by_user_id) ||
+                  inv.viewed_by_owner === 0;
+                const isUnviewed = isOwner
+                  ? (!inv.viewed_by_owner || inv.viewed_by_owner === 0)
+                  : (!inv.viewed_by_staff || inv.viewed_by_staff === 0);
+                const ext = (inv.pdf_path || '').split('.').pop().toLowerCase();
+                const isPdf = ext === 'pdf';
+                const isImage = ['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext);
+
+                return (
+                  <div
+                    key={inv.id}
+                    className={`pt-3.5 first:pt-0 space-y-3 rounded-2xl p-3 border transition-colors ${
+                      isUnviewed
+                        ? 'bg-amber-50/50 border-amber-300'
+                        : 'bg-white border-slate-200/80 shadow-2xs'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-extrabold text-slate-900">{inv.invoice_number}</span>
+                          <span className="font-extrabold text-slate-900 text-sm">
+                            {inv.invoice_number}
+                          </span>
                           {isUnviewed && (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white shadow-xs">
                               {isOwner ? '● Staff Update' : '● Status Update'}
                             </span>
                           )}
                         </div>
-                        {isStaffUpload && (
-                          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                            {isPdf ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                                <FileText className="w-3 h-3 text-rose-600" />
-                                <span>Staff PDF Upload</span>
-                              </span>
-                            ) : isImage ? (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                <ImageIcon className="w-3 h-3 text-indigo-600" />
-                                <span>Staff Image Upload</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                <span>Staff Manual Entry</span>
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
-                        <p className="font-semibold text-slate-800">{inv.vendor_name || '—'}</p>
-                        <p className="text-[10px] text-slate-400">{inv.vendor_type || 'General'}</p>
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
-                        <p className="font-bold text-slate-800">{formatDate(inv.invoice_date)}</p>
-                        {inv.created_at && (
-                          <div
-                            className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5"
-                            title="Uploaded timestamp"
-                          >
-                            <UploadCloud className="w-3 h-3 text-indigo-500 flex-shrink-0" />
-                            <span>Uploaded: {formatDateTime(inv.created_at)}</span>
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">
-                          {inv.items_count || 0} items
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-3.5 sm:px-6 font-extrabold text-slate-900">
-                        <div>{formatCurrency(inv.total)}</div>
-                        {Number(inv.total_gst || inv.tax) > 0 ? (
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 font-mono text-[10px] font-bold">
-                              GST: +{formatCurrency(inv.total_gst || inv.tax)}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-slate-400 font-medium">No GST</span>
-                        )}
-                        {Number(inv.advance_paid) > 0 && (
-                          <div className="text-[10px] text-slate-500 font-mono mt-0.5">
-                            Adv: {formatCurrency(inv.advance_paid)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
+                        <p className="font-semibold text-slate-800 text-xs mt-1 truncate">
+                          {inv.vendor_name || '—'}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {inv.vendor_type || 'General'} • Date: {formatDate(inv.invoice_date)}
+                        </p>
+                      </div>
+
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-black text-slate-950 text-base">
+                          {formatCurrency(inv.total)}
+                        </p>
                         <span
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-bold border inline-flex items-center gap-1 ${
+                          className={`mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                             isPaid
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                               : inv.status === 'Rejected'
                               ? 'bg-rose-50 text-rose-700 border-rose-200'
                               : isStaffUpload
-                              ? 'bg-amber-100 text-amber-900 border-amber-300 font-extrabold shadow-xs'
+                              ? 'bg-amber-100 text-amber-900 border-amber-300'
                               : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}
                         >
                           {isPaid ? (
                             <>
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                              <span>Approved & Paid</span>
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              <span>Paid</span>
                             </>
                           ) : inv.status === 'Rejected' ? (
                             <span>Rejected</span>
                           ) : isStaffUpload ? (
                             <>
-                              <Clock className="w-3 h-3 text-amber-700" />
-                              <span>Pending Owner Approval</span>
+                              <Clock className="w-2.5 h-2.5" />
+                              <span>Pending Pay</span>
                             </>
                           ) : (
-                            <span>Pending Approval & Payment</span>
+                            <span>Pending</span>
                           )}
                         </span>
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50/80 border border-indigo-200 text-indigo-900 text-xs font-bold w-fit">
-                            <UserCheck className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                            <span>{inv.created_by_name || 'Staff Member'}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100/80 flex-wrap gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 font-medium text-slate-700">
+                          {inv.items_count || 0} items
+                        </span>
+                        {Number(inv.total_gst || inv.tax) > 0 ? (
+                          <span className="px-1.5 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-[10px]">
+                            GST: +{formatCurrency(inv.total_gst || inv.tax)}
                           </span>
-                          <span className="text-[10px] text-slate-400 capitalize pl-1">
-                            Role: {inv.created_by_role || 'Staff'}
+                        ) : (
+                          <span className="text-slate-400 text-[10px]">No GST</span>
+                        )}
+                        {Number(inv.advance_paid) > 0 && (
+                          <span className="text-[10px] text-slate-500 font-mono">
+                            Adv: {formatCurrency(inv.advance_paid)}
                           </span>
-                        </div>
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Quick Dismiss/Mark Viewed Action */}
-                          {isUnviewed && (
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (markInvoiceViewed) {
-                                  await markInvoiceViewed(inv.id);
-                                  fetchInvoices();
-                                }
-                              }}
-                              className="p-1.5 text-amber-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
-                              title="Mark as viewed (dismiss notification number)"
-                            >
-                              <Check className="w-4 h-4" />
-                            </button>
-                          )}
+                        )}
+                      </div>
 
-                          {/* Owner Approve & Pay Action */}
-                          {isOwner && isPending && (
-                            <button
-                              onClick={() => setApprovingInvoice(inv)}
-                              className="flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow-xs transition"
-                              title="Approve invoice and make payment"
-                            >
-                              <CreditCard className="w-3.5 h-3.5" />
-                              <span>Approve & Pay</span>
-                            </button>
-                          )}
+                      <div className="text-[10px] text-slate-400">
+                        By <span className="font-semibold text-slate-700">{inv.created_by_name || 'Staff'}</span>
+                      </div>
+                    </div>
 
-                          <button
-                            onClick={async () => {
-                              if (isUnviewed && markInvoiceViewed) {
-                                await markInvoiceViewed(inv.id);
-                              }
-                              navigate(`/invoices/${inv.id}`);
-                            }}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                            title="View Invoice Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      {isOwner && isPending && (
+                        <button
+                          type="button"
+                          onClick={() => setApprovingInvoice(inv)}
+                          className="col-span-2 py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs transition flex items-center justify-center gap-1.5 min-touch-target"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          <span>Approve & Pay</span>
+                        </button>
+                      )}
 
-                          <button
-                            onClick={(e) => handleDownloadInvoicePdf(e, inv)}
-                            className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                            title="Download Invoice PDF"
-                          >
-                            <Download className="w-4 h-4" />
-                          </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (isUnviewed && markInvoiceViewed) {
+                            await markInvoiceViewed(inv.id);
+                          }
+                          navigate(`/invoices/${inv.id}`);
+                        }}
+                        className="py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 min-touch-target"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Details</span>
+                      </button>
 
-                          {/* Owner Only Delete Action */}
-                          {isOwner && (
-                            <button
-                              onClick={() => setDeleteId(inv.id)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                              title="Delete Invoice (Owner Only)"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDownloadInvoicePdf(e, inv)}
+                        className="py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition flex items-center justify-center gap-1 min-touch-target"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Download PDF</span>
+                      </button>
+
+                      {isOwner && (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteId(inv.id)}
+                          className="col-span-2 py-1.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete Invoice</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* Pagination */}

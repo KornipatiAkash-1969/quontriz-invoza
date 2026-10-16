@@ -362,77 +362,143 @@ export default function DashboardPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-amber-50/60 border-b border-amber-100 text-[11px] font-bold text-amber-900 uppercase tracking-wider">
-                    <th className="py-3 px-5">Invoice #</th>
-                    <th className="py-3 px-5">Vendor</th>
-                    <th className="py-3 px-5">Submitted By</th>
-                    <th className="py-3 px-5">Invoice Date</th>
-                    <th className="py-3 px-5">Items</th>
-                    <th className="py-3 px-5">Amount Due</th>
-                    <th className="py-3 px-5 text-right">Approval Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {pendingInvoicesList.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3.5 px-5 font-bold text-slate-900">
-                        {inv.invoice_number}
-                      </td>
-                      <td className="py-3.5 px-5">
-                        <p className="font-semibold text-slate-800">{inv.vendor_name || 'Vendor'}</p>
-                        <p className="text-[10px] text-slate-400">{inv.vendor_type || 'General'}</p>
-                      </td>
-                      <td className="py-3.5 px-5 text-slate-600 font-medium">
-                        {inv.created_by_name || 'Store Staff'}
-                      </td>
-                      <td className="py-3.5 px-5 text-slate-600">
-                        {formatDate(inv.invoice_date || inv.created_at)}
-                      </td>
-                      <td className="py-3.5 px-5">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">
-                          {inv.items_count || 0} items
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-5">
-                        <p className="font-black text-slate-950 text-sm">
-                          {formatCurrency(inv.total)}
-                        </p>
-                        {Number(inv.total_gst || inv.tax) > 0 ? (
-                          <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                            GST: +{formatCurrency(inv.total_gst || inv.tax)}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] text-slate-400 block mt-0.5">No GST</span>
-                        )}
-                      </td>
-                      <td className="py-3.5 px-5 text-right space-x-2">
-                        <button
-                          onClick={() => navigate(`/invoices/${inv.id}`)}
-                          className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
-                        >
-                          Review
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedInvoiceForApproval(inv);
-                            setApprovalModalOpen(true);
-                          }}
-                          className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition active:scale-[0.98] inline-flex items-center gap-1.5"
-                        >
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Approve & Pay</span>
-                        </button>
-                      </td>
+          <>
+            {/* Desktop / Tablet Table View */}
+            <div className="hidden md:block bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-amber-50/60 border-b border-amber-100 text-[11px] font-bold text-amber-900 uppercase tracking-wider">
+                      <th className="py-3 px-5">Invoice #</th>
+                      <th className="py-3 px-5">Vendor</th>
+                      <th className="py-3 px-5">Submitted By</th>
+                      <th className="py-3 px-5">Invoice Date</th>
+                      <th className="py-3 px-5">Items</th>
+                      <th className="py-3 px-5">Amount Due</th>
+                      <th className="py-3 px-5 text-right">Approval Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {pendingInvoicesList.map((inv) => (
+                      <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-5 font-bold text-slate-900">
+                          {inv.invoice_number}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <p className="font-semibold text-slate-800">{inv.vendor_name || 'Vendor'}</p>
+                          <p className="text-[10px] text-slate-400">{inv.vendor_type || 'General'}</p>
+                        </td>
+                        <td className="py-3.5 px-5 text-slate-600 font-medium">
+                          {inv.created_by_name || 'Store Staff'}
+                        </td>
+                        <td className="py-3.5 px-5 text-slate-600">
+                          {formatDate(inv.invoice_date || inv.created_at)}
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                            {inv.items_count || 0} items
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-5">
+                          <p className="font-black text-slate-950 text-sm">
+                            {formatCurrency(inv.total)}
+                          </p>
+                          {Number(inv.total_gst || inv.tax) > 0 ? (
+                            <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              GST: +{formatCurrency(inv.total_gst || inv.tax)}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 block mt-0.5">No GST</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-5 text-right space-x-2">
+                          <button
+                            onClick={() => navigate(`/invoices/${inv.id}`)}
+                            className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition"
+                          >
+                            Review
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedInvoiceForApproval(inv);
+                              setApprovalModalOpen(true);
+                            }}
+                            className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition active:scale-[0.98] inline-flex items-center gap-1.5"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Approve & Pay</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+
+            {/* Mobile Card List View (< md) */}
+            <div className="md:hidden space-y-3">
+              {pendingInvoicesList.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="bg-white rounded-2xl border border-amber-200/90 p-4 shadow-2xs space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-900 text-sm">{inv.invoice_number}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[10px]">
+                          Pending Pay
+                        </span>
+                      </div>
+                      <p className="font-semibold text-slate-800 text-xs mt-1 truncate">{inv.vendor_name || 'Vendor'}</p>
+                      <p className="text-[11px] text-slate-400">
+                        {inv.vendor_type || 'General'} • By {inv.created_by_name || 'Store Staff'}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-black text-slate-950 text-base">{formatCurrency(inv.total)}</p>
+                      <p className="text-[10px] text-slate-400">{formatDate(inv.invoice_date || inv.created_at)}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold">
+                      {inv.items_count || 0} items
+                    </span>
+                    {Number(inv.total_gst || inv.tax) > 0 ? (
+                      <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold border border-indigo-200">
+                        GST: +{formatCurrency(inv.total_gst || inv.tax)}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 text-[10px]">No GST</span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/invoices/${inv.id}`)}
+                      className="w-full py-2 px-3 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition text-center min-touch-target flex items-center justify-center"
+                    >
+                      Review
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedInvoiceForApproval(inv);
+                        setApprovalModalOpen(true);
+                      }}
+                      className="w-full py-2 px-3 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs transition text-center min-touch-target flex items-center justify-center gap-1.5"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>Approve & Pay</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -596,100 +662,172 @@ export default function DashboardPage() {
             No invoices uploaded yet. Click "Upload / Entry" to get started.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
-                  <th className="py-2.5 px-3 sm:px-4">Invoice #</th>
-                  <th className="py-2.5 px-3 sm:px-4">Vendor</th>
-                  <th className="py-2.5 px-3 sm:px-4">Date</th>
-                  <th className="py-2.5 px-3 sm:px-4">Items</th>
-                  <th className="py-2.5 px-3 sm:px-4">Total Amount</th>
-                  <th className="py-2.5 px-3 sm:px-4">Status / Payment</th>
-                  <th className="py-2.5 px-3 sm:px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {recentInvoices.map((inv) => {
-                  const isPending = (inv.status || '').toLowerCase().includes('pending');
-                  return (
-                    <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-2.5 px-3 sm:px-4 font-bold text-slate-900">
-                        {inv.invoice_number}
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
-                        <p className="font-semibold text-slate-800">{inv.vendor_name || '—'}</p>
-                        <p className="text-[10px] text-slate-400">{inv.vendor_type || 'General'}</p>
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
-                        <p className="font-semibold text-slate-800">{formatDate(inv.invoice_date)}</p>
-                        {inv.created_at && (
-                          <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5" title="Uploaded timestamp">
-                            <UploadCloud className="w-3 h-3 text-indigo-500 flex-shrink-0" />
-                            <span>Uploaded: {formatDateTime(inv.created_at)}</span>
-                          </p>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">
-                          {inv.items_count || 0} items
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
-                        <p className="font-bold text-slate-900">{formatCurrency(inv.total)}</p>
-                        {Number(inv.total_gst || inv.tax) > 0 ? (
-                          <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                            GST: +{formatCurrency(inv.total_gst || inv.tax)}
+          <>
+            {/* Desktop / Tablet Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">
+                    <th className="py-2.5 px-3 sm:px-4">Invoice #</th>
+                    <th className="py-2.5 px-3 sm:px-4">Vendor</th>
+                    <th className="py-2.5 px-3 sm:px-4">Date</th>
+                    <th className="py-2.5 px-3 sm:px-4">Items</th>
+                    <th className="py-2.5 px-3 sm:px-4">Total Amount</th>
+                    <th className="py-2.5 px-3 sm:px-4">Status / Payment</th>
+                    <th className="py-2.5 px-3 sm:px-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {recentInvoices.map((inv) => {
+                    const isPending = (inv.status || '').toLowerCase().includes('pending');
+                    return (
+                      <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-2.5 px-3 sm:px-4 font-bold text-slate-900">
+                          {inv.invoice_number}
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <p className="font-semibold text-slate-800">{inv.vendor_name || '—'}</p>
+                          <p className="text-[10px] text-slate-400">{inv.vendor_type || 'General'}</p>
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <p className="font-semibold text-slate-800">{formatDate(inv.invoice_date)}</p>
+                          {inv.created_at && (
+                            <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-0.5" title="Uploaded timestamp">
+                              <UploadCloud className="w-3 h-3 text-indigo-500 flex-shrink-0" />
+                              <span>Uploaded: {formatDateTime(inv.created_at)}</span>
+                            </p>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[11px]">
+                            {inv.items_count || 0} items
                           </span>
-                        ) : (
-                          <span className="text-[10px] text-slate-400 block mt-0.5">No GST</span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4">
-                        {isPending ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                            <Clock className="w-3 h-3" />
-                            <span>Pending Owner Pay</span>
-                          </span>
-                        ) : (
-                          <div className="space-y-0.5">
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>Paid & Approved</span>
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          <p className="font-bold text-slate-900">{formatCurrency(inv.total)}</p>
+                          {Number(inv.total_gst || inv.tax) > 0 ? (
+                            <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                              GST: +{formatCurrency(inv.total_gst || inv.tax)}
                             </span>
-                            {inv.payment_method && (
-                              <p className="text-[10px] text-slate-400 font-mono">
-                                via {inv.payment_method}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-3 sm:px-4 text-right space-x-1.5">
-                        {isPending && (
+                          ) : (
+                            <span className="text-[10px] text-slate-400 block mt-0.5">No GST</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4">
+                          {isPending ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                              <Clock className="w-3 h-3" />
+                              <span>Pending Owner Pay</span>
+                            </span>
+                          ) : (
+                            <div className="space-y-0.5">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Paid & Approved</span>
+                              </span>
+                              {inv.payment_method && (
+                                <p className="text-[10px] text-slate-400 font-mono">
+                                  via {inv.payment_method}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 sm:px-4 text-right space-x-1.5">
+                          {isPending && (
+                            <button
+                              onClick={() => {
+                                setSelectedInvoiceForApproval(inv);
+                                setApprovalModalOpen(true);
+                              }}
+                              className="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition"
+                            >
+                              Pay
+                            </button>
+                          )}
                           <button
-                            onClick={() => {
-                              setSelectedInvoiceForApproval(inv);
-                              setApprovalModalOpen(true);
-                            }}
-                            className="px-2.5 py-1 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition"
+                            onClick={() => navigate(`/invoices/${inv.id}`)}
+                            className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition"
                           >
-                            Pay
+                            View
                           </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View (< md) */}
+            <div className="md:hidden divide-y divide-slate-100 p-3 space-y-3">
+              {recentInvoices.map((inv) => {
+                const isPending = (inv.status || '').toLowerCase().includes('pending');
+                return (
+                  <div key={inv.id} className="pt-3 first:pt-0 space-y-2.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-slate-900 text-sm">{inv.invoice_number}</span>
+                          {isPending ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              Pending Pay
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              Paid
+                            </span>
+                          )}
+                        </div>
+                        <p className="font-semibold text-slate-800 text-xs mt-0.5 truncate">{inv.vendor_name || '—'}</p>
+                        <p className="text-[10px] text-slate-400">{formatDate(inv.invoice_date)}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-black text-slate-900 text-sm">{formatCurrency(inv.total)}</p>
+                        {inv.payment_method && (
+                          <span className="text-[10px] text-slate-400 font-mono">via {inv.payment_method}</span>
                         )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                      <span>{inv.items_count || 0} items</span>
+                      {Number(inv.total_gst || inv.tax) > 0 && (
+                        <span className="text-indigo-600 font-semibold text-[10px]">
+                          GST: +{formatCurrency(inv.total_gst || inv.tax)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      {isPending && (
                         <button
-                          onClick={() => navigate(`/invoices/${inv.id}`)}
-                          className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition"
+                          type="button"
+                          onClick={() => {
+                            setSelectedInvoiceForApproval(inv);
+                            setApprovalModalOpen(true);
+                          }}
+                          className="flex-1 py-1.5 px-3 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition text-center min-touch-target flex items-center justify-center gap-1 shadow-2xs"
                         >
-                          View
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Approve & Pay</span>
                         </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/invoices/${inv.id}`)}
+                        className={`py-1.5 px-3 text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition text-center min-touch-target flex items-center justify-center ${
+                          isPending ? 'flex-1' : 'w-full'
+                        }`}
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 

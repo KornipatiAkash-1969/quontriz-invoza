@@ -64,7 +64,9 @@ export default function InvoiceReviewPage() {
   const [supportedUnitsList, setSupportedUnitsList] = useState([]);
 
   // Split-Screen Layout & Document Viewer controls
-  const [showDocumentViewer, setShowDocumentViewer] = useState(true);
+  const [showDocumentViewer, setShowDocumentViewer] = useState(
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : true
+  );
   const [documentZoom, setDocumentZoom] = useState(1.0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRecalculating, setIsRecalculating] = useState(false);
@@ -785,7 +787,7 @@ export default function InvoiceReviewPage() {
         
         {/* LEFT PANE: Interactive Document Viewer */}
         {showDocumentViewer && (
-          <div className="lg:col-span-5 xl:col-span-5 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden static lg:sticky lg:top-4 flex flex-col h-[420px] lg:h-[calc(100vh-140px)] min-h-[350px] lg:min-h-[600px]">
+          <div className="lg:col-span-5 xl:col-span-5 bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden static lg:sticky lg:top-4 flex flex-col h-80 sm:h-96 lg:h-[calc(100vh-140px)] min-h-[260px] lg:min-h-[600px]">
             {/* Viewer Controls Header */}
             <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between text-xs border-b border-slate-800">
               <div className="flex items-center gap-2 truncate max-w-[200px] sm:max-w-xs">

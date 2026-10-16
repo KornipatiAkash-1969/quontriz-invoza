@@ -705,7 +705,8 @@ export default function UploadPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto border border-slate-200/80 rounded-xl">
               <table className="w-full text-left border-collapse text-xs min-w-[780px]">
                 <thead>
                   <tr className="border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase bg-slate-50">
@@ -803,6 +804,116 @@ export default function UploadPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View (Zero horizontal scroll) */}
+            <div className="md:hidden space-y-3">
+              {manualItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="bg-slate-50/70 border border-slate-200 rounded-2xl p-4 space-y-3 relative"
+                >
+                  <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 pb-2.5">
+                    <span className="text-xs font-bold text-slate-600">Item #{idx + 1}</span>
+                    {manualItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeManualItemRow(idx)}
+                        className="text-rose-600 hover:text-rose-700 p-1 rounded-lg hover:bg-rose-50 transition flex items-center gap-1 text-[11px] font-semibold"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Product Description *</label>
+                    <input
+                      type="text"
+                      required
+                      value={item.itemName}
+                      onChange={(e) => handleManualItemChange(idx, 'itemName', e.target.value)}
+                      placeholder="e.g. Basmati Rice 5kg"
+                      className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Quantity</label>
+                      <input
+                        type="number"
+                        step="any"
+                        min="0.001"
+                        value={item.quantity !== undefined && item.quantity !== null ? item.quantity : ''}
+                        onChange={(e) => handleManualItemChange(idx, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
+                        className="w-full px-3 py-2 border border-indigo-300 rounded-xl text-xs font-mono font-bold text-center bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Unit</label>
+                      <input
+                        type="text"
+                        value={item.unit}
+                        onChange={(e) => handleManualItemChange(idx, 'unit', e.target.value)}
+                        placeholder="pcs / kg"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Category</label>
+                      <select
+                        value={item.category}
+                        onChange={(e) => handleManualItemChange(idx, 'category', e.target.value)}
+                        className="w-full px-2.5 py-2 border border-slate-300 rounded-xl text-xs bg-white font-medium"
+                      >
+                        {categoriesList.map((c) => (
+                          <option key={c.id || c.category_name} value={c.category_name}>
+                            {c.category_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">SKU / Code</label>
+                      <input
+                        type="text"
+                        value={item.sku}
+                        onChange={(e) => handleManualItemChange(idx, 'sku', e.target.value)}
+                        placeholder="SKU"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-mono uppercase bg-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5 pt-1">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Unit Price (₹)</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={item.unitPrice}
+                        onChange={(e) => handleManualItemChange(idx, 'unitPrice', e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-medium bg-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">Line Total (₹)</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={item.totalPrice}
+                        onChange={(e) => handleManualItemChange(idx, 'totalPrice', e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-900 bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

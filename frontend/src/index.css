@@ -4,33 +4,48 @@
 
 @layer base {
   html {
-    font-size: 85% !important;
-    -webkit-text-size-adjust: 85%;
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (max-width: 640px) {
+    html {
+      font-size: 14.5px;
+    }
   }
 
   body {
-    @apply bg-slate-50 text-slate-800 antialiased font-sans text-xs sm:text-sm selection:bg-indigo-500 selection:text-white;
+    @apply bg-slate-50 text-slate-800 antialiased font-sans text-xs sm:text-sm selection:bg-indigo-600 selection:text-white;
     line-height: 1.5;
+    overflow-x: hidden;
+    min-height: 100vh;
   }
 
   h1 {
-    @apply text-lg sm:text-xl font-bold text-slate-900 tracking-tight;
+    @apply text-lg sm:text-2xl font-black text-slate-900 tracking-tight;
   }
 
   h2 {
-    @apply text-base sm:text-lg font-bold text-slate-900 tracking-tight;
+    @apply text-base sm:text-xl font-extrabold text-slate-900 tracking-tight;
   }
 
   h3 {
-    @apply text-sm sm:text-base font-semibold text-slate-900;
+    @apply text-sm sm:text-base font-bold text-slate-900;
   }
 
   p {
-    @apply text-xs sm:text-sm leading-relaxed;
+    @apply text-xs sm:text-sm leading-relaxed text-slate-600;
   }
 
   input, select, textarea {
-    @apply text-xs sm:text-sm;
+    @apply text-xs sm:text-sm transition-all duration-150;
+  }
+
+  button, a {
+    @apply transition-colors duration-150;
+    touch-action: manipulation;
   }
 
   table {
@@ -141,3 +156,22 @@
     print-color-adjust: exact !important;
   }
 }
+
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  /* Accessible touch target */
+  .min-touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
