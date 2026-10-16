@@ -166,15 +166,19 @@ class AuthController {
       if (!email || !email.trim()) {
         return res.status(400).json({ success: false, error: 'Valid email is required.' });
       }
-      if (!password || password.length < 4) {
-        return res.status(400).json({ success: false, error: 'Password must be at least 4 characters.' });
-      }
-
       const requestedRole = (role || 'staff').toLowerCase().trim();
       if (!['owner', 'staff', 'employee'].includes(requestedRole)) {
         return res.status(400).json({ success: false, error: 'Role must be either "staff" or "owner".' });
       }
       const targetRole = requestedRole === 'employee' ? 'staff' : requestedRole;
+
+      // Default password: staff@123 for staff, owner@123 for owner
+      const defaultPassword = targetRole === 'owner' ? 'owner@123' : 'staff@123';
+      const finalPassword = (password && password.trim()) ? password.trim() : defaultPassword;
+
+      if (!finalPassword || finalPassword.length < 4) {
+        return res.status(400).json({ success: false, error: 'Password must be at least 4 characters.' });
+      }
 
       const trimmedName = name.trim();
       const trimmedEmail = email.trim().toLowerCase();
@@ -228,7 +232,7 @@ class AuthController {
         });
       }
 
-      const passwordHash = bcrypt.hashSync(password, 10);
+      const passwordHash = bcrypt.hashSync(finalPassword, 10);
       const result = await db.run(`
         INSERT INTO users (name, email, password_hash, role)
         VALUES (?, ?, ?, ?)

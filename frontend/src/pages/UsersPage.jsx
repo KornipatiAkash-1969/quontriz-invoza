@@ -45,11 +45,11 @@ export default function UsersPage() {
     message: '',
   });
 
-  // Form state - Password fields start clean and empty
+  // Form state - Default password based on role (staff@123 / owner@123)
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('staff');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('staff@123');
   const [showModalPassword, setShowModalPassword] = useState(false);
 
   // Password change state (Self only)
@@ -79,13 +79,16 @@ export default function UsersPage() {
     setRole(newRole);
     setFormError(null);
     setShowModalPassword(false);
+    if (password === 'staff@123' || password === 'owner@123' || !password) {
+      setPassword(newRole === 'owner' ? 'owner@123' : 'staff@123');
+    }
   };
 
   const openCreateModal = () => {
     setName('');
     setEmail('');
     setRole('staff');
-    setPassword('');
+    setPassword('staff@123');
     setShowModalPassword(false);
     setFormError(null);
     setDuplicatePopup({
@@ -104,8 +107,9 @@ export default function UsersPage() {
 
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
+    const finalPassword = password.trim() || (role === 'owner' ? 'owner@123' : 'staff@123');
 
-    if (!trimmedName || !trimmedEmail || !password) {
+    if (!trimmedName || !trimmedEmail) {
       toastError('Please fill in all required fields.');
       return;
     }
@@ -143,7 +147,7 @@ export default function UsersPage() {
       const res = await userApi.create({
         name: trimmedName,
         email: trimmedEmail,
-        password,
+        password: finalPassword,
         role,
       });
 
@@ -151,7 +155,7 @@ export default function UsersPage() {
       setShowCreateModal(false);
       setName('');
       setEmail('');
-      setPassword('');
+      setPassword('staff@123');
       setRole('staff');
       setShowModalPassword(false);
       setFormError(null);
@@ -670,9 +674,26 @@ export default function UsersPage() {
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Account Password <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Account Password <span className="text-rose-500">*</span>
+                </label>
+                <span
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${
+                    role === 'owner'
+                      ? 'text-indigo-700 bg-indigo-50 border-indigo-200'
+                      : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                  }`}
+                >
+                  <KeyRound className="w-3 h-3" />
+                  <span>
+                    Default:{' '}
+                    <strong className="font-mono">
+                      {role === 'owner' ? 'owner@123' : 'staff@123'}
+                    </strong>
+                  </span>
+                </span>
+              </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
@@ -682,8 +703,8 @@ export default function UsersPage() {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create password (min. 4 characters)"
-                  className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium"
+                  placeholder={role === 'owner' ? 'owner@123' : 'staff@123'}
+                  className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium font-mono"
                 />
                 <button
                   type="button"
@@ -702,7 +723,8 @@ export default function UsersPage() {
               <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
                 <span>
-                  Passwords are encrypted with bcrypt hashing and cannot be viewed by anyone after creation.
+                  Default password is set automatically to{' '}
+                  <strong className="font-mono">{role === 'owner' ? 'owner@123' : 'staff@123'}</strong>. The team member can change it after logging in.
                 </span>
               </p>
             </div>
@@ -718,7 +740,7 @@ export default function UsersPage() {
               </button>
               <button
                 type="submit"
-                disabled={submitting || !name.trim() || !email.trim() || !password}
+                disabled={submitting || !name.trim() || !email.trim()}
                 className={`px-5 py-2 text-white font-semibold text-xs rounded-xl shadow-xs transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 ${
                   role === 'staff' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'
                 }`}
