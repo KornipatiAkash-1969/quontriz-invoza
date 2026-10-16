@@ -15,7 +15,6 @@ router.post('/users', verifyToken, requireRole('owner'), (req, res) => authContr
 router.post('/users/create-staff', verifyToken, requireRole('owner'), (req, res) => authController.createStaff(req, res));
 router.post('/users/create-owner', verifyToken, requireRole('owner'), (req, res) => authController.createOwner(req, res));
 router.delete('/users/:id', verifyToken, requireRole('owner'), (req, res) => authController.deleteUser(req, res));
-router.put('/users/:id/password', verifyToken, requireRole('owner'), (req, res) => authController.resetUserPassword(req, res));
 
 // Password Change (Accessible to both Owner and Staff)
 router.post('/change-password', verifyToken, (req, res) => authController.changePassword(req, res));

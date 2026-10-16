@@ -385,47 +385,6 @@ class AuthController {
     }
   }
 
-  /**
-   * Reset Password for a Staff member (Owner only, Owner passwords protected)
-   */
-  async resetUserPassword(req, res) {
-    try {
-      const targetId = parseInt(req.params.id, 10);
-      const { newPassword } = req.body;
-
-      if (!targetId) {
-        return res.status(400).json({ success: false, error: 'Valid user ID is required.' });
-      }
-      if (!newPassword || newPassword.length < 4) {
-        return res.status(400).json({ success: false, error: 'New password must be at least 4 characters.' });
-      }
-
-      const user = await db.get('SELECT id, name, email, role FROM users WHERE id = ?', [targetId]);
-      if (!user) {
-        return res.status(404).json({ success: false, error: 'User not found.' });
-      }
-
-      // Block resetting Store Owner passwords - each Owner manages their own password
-      if (user.role === 'owner') {
-        return res.status(403).json({
-          success: false,
-          error: 'Store Owner passwords cannot be reset by other users. Each Store Owner must manage their own password via Profile Settings.'
-        });
-      }
-
-      const passwordHash = bcrypt.hashSync(newPassword, 10);
-      await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, targetId]);
-
-      return res.json({
-        success: true,
-        message: `Password for staff member ${user.name} (${user.email}) updated successfully.`
-      });
-    } catch (error) {
-      console.error('[AuthController] Reset password error:', error);
-      return res.status(500).json({ success: false, error: error.message });
-    }
-  }
-
   async getDemoUsers(req, res) {
     try {
       return res.json({

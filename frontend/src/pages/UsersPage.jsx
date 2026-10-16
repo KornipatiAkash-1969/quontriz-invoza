@@ -52,12 +52,8 @@ export default function UsersPage() {
   const [password, setPassword] = useState('');
   const [showModalPassword, setShowModalPassword] = useState(false);
 
-  // Password change & reset state
+  // Password change state (Self only)
   const [showSelfChangePassword, setShowSelfChangePassword] = useState(false);
-  const [resetPasswordTarget, setResetPasswordTarget] = useState(null);
-  const [newResetPassword, setNewResetPassword] = useState('');
-  const [showResetEye, setShowResetEye] = useState(false);
-  const [resettingPassword, setResettingPassword] = useState(false);
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -210,25 +206,6 @@ export default function UsersPage() {
       toastError(err.message || 'Failed to delete user.');
     } finally {
       setDeleting(false);
-    }
-  };
-
-  const handleAdminResetPassword = async (e) => {
-    if (e) e.preventDefault();
-    if (!resetPasswordTarget || !newResetPassword || newResetPassword.length < 4) {
-      toastError('Password must be at least 4 characters long.');
-      return;
-    }
-    setResettingPassword(true);
-    try {
-      const res = await userApi.resetPassword(resetPasswordTarget.id, newResetPassword);
-      toastSuccess(res.message || `Password for ${resetPasswordTarget.name} updated successfully!`);
-      setResetPasswordTarget(null);
-      setNewResetPassword('');
-    } catch (err) {
-      toastError(err.message || 'Failed to update user password.');
-    } finally {
-      setResettingPassword(false);
     }
   };
 
@@ -428,41 +405,22 @@ export default function UsersPage() {
                                 <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
                                 <span>Password</span>
                               </button>
+                            ) : u.email?.toLowerCase() === 'developer@supermarket.com' ? (
+                              <span
+                                className="p-1.5 text-slate-300 cursor-not-allowed inline-flex items-center"
+                                title="Primary Developer Administrator cannot be deleted"
+                              >
+                                <Lock className="w-3.5 h-3.5" />
+                              </span>
                             ) : (
-                              <>
-                                {/* Only Staff passwords can be reset by Store Owners. Owner passwords cannot be reset or viewed by other users. */}
-                                {!isUserOwner && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setResetPasswordTarget(u);
-                                      setNewResetPassword('');
-                                      setShowResetEye(false);
-                                    }}
-                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                                    title={`Reset Password for Staff Member ${u.name}`}
-                                  >
-                                    <KeyRound className="w-4 h-4" />
-                                  </button>
-                                )}
-                                {u.email?.toLowerCase() === 'developer@supermarket.com' ? (
-                                  <span
-                                    className="p-1.5 text-slate-300 cursor-not-allowed inline-flex items-center"
-                                    title="Primary Developer Administrator cannot be deleted"
-                                  >
-                                    <Lock className="w-3.5 h-3.5" />
-                                  </span>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleOpenDelete(u)}
-                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                                    title={u.role === 'owner' ? `Delete Store Owner ${u.name}` : `Delete ${u.name}`}
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                )}
-                              </>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenDelete(u)}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                                title={u.role === 'owner' ? `Delete Store Owner ${u.name}` : `Delete ${u.name}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             )}
                           </div>
                         </td>
@@ -539,33 +497,16 @@ export default function UsersPage() {
                           <span>Change My Password</span>
                         </button>
                       ) : (
-                        <>
-                          {/* Only Staff passwords can be reset by Store Owners */}
-                          {!isUserOwner && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setResetPasswordTarget(u);
-                                setNewResetPassword('');
-                                setShowResetEye(false);
-                              }}
-                              className="flex-1 py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 min-touch-target"
-                            >
-                              <KeyRound className="w-3.5 h-3.5" />
-                              <span>Reset Password</span>
-                            </button>
-                          )}
-                          {u.email?.toLowerCase() !== 'developer@supermarket.com' && (
-                            <button
-                              type="button"
-                              onClick={() => handleOpenDelete(u)}
-                              className={`${isUserOwner ? 'w-full' : 'py-2 px-3'} bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 min-touch-target`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                              <span>Delete</span>
-                            </button>
-                          )}
-                        </>
+                        u.email?.toLowerCase() !== 'developer@supermarket.com' && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenDelete(u)}
+                            className="w-full py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 min-touch-target"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Delete</span>
+                          </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -866,92 +807,6 @@ export default function UsersPage() {
         isOpen={showSelfChangePassword}
         onClose={() => setShowSelfChangePassword(false)}
       />
-
-      {/* Admin Reset Team Member Password Modal (Staff Only) */}
-      {resetPasswordTarget && (
-        <Modal
-          isOpen={!!resetPasswordTarget}
-          onClose={() => {
-            setResetPasswordTarget(null);
-            setNewResetPassword('');
-          }}
-          title="Reset Staff Password"
-          maxWidth="max-w-md"
-        >
-          <form onSubmit={handleAdminResetPassword} className="space-y-4">
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
-              <p className="font-bold text-slate-800">
-                Resetting password for: <span className="text-indigo-600">{resetPasswordTarget.name}</span>
-              </p>
-              <p className="text-slate-500 font-medium">Email: {resetPasswordTarget.email}</p>
-              <p className="text-slate-500 font-medium capitalize">Role: Store Staff</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                New Staff Password <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                <input
-                  type={showResetEye ? 'text' : 'password'}
-                  required
-                  minLength={4}
-                  value={newResetPassword}
-                  onChange={(e) => setNewResetPassword(e.target.value)}
-                  placeholder="Enter new password (min. 4 characters)"
-                  className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowResetEye(!showResetEye)}
-                  className="absolute right-3 top-2 text-slate-400 hover:text-slate-700 p-0.5 transition"
-                  title={showResetEye ? 'Hide password' : 'Show password'}
-                  aria-label={showResetEye ? 'Hide password' : 'Show password'}
-                >
-                  {showResetEye ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <p className="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                <span>
-                  Passwords are encrypted with bcrypt hashing. Passwords can never be viewed by anyone after saving.
-                </span>
-              </p>
-            </div>
-
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setResetPasswordTarget(null);
-                  setNewResetPassword('');
-                }}
-                className="px-4 py-2 border border-slate-200 text-slate-600 font-semibold text-xs rounded-xl hover:bg-slate-50 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={resettingPassword || !newResetPassword || newResetPassword.length < 4}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5"
-              >
-                {resettingPassword ? (
-                  <>
-                    <Spinner size="sm" />
-                    <span>Updating...</span>
-                  </>
-                ) : (
-                  <>
-                    <KeyRound className="w-3.5 h-3.5" />
-                    <span>Set New Password</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
 
       {/* Delete Confirmation Dialog (Unified for Staff and Owner) */}
       {deleteTarget && (
