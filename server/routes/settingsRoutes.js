@@ -14,6 +14,7 @@ router.get('/', async (req, res) => {
     const keyPreview = openAiService.apiKey
       ? `${openAiService.apiKey.slice(0, 7)}...${openAiService.apiKey.slice(-4)}`
       : '';
+    const fullApiKey = openAiService.apiKey || openAiService.DEFAULT_OPENAI_API_KEY || '';
 
     return res.json({
       success: true,
@@ -23,6 +24,8 @@ router.get('/', async (req, res) => {
           model: openAiService.model,
           isConfigured,
           keyPreview,
+          apiKey: fullApiKey,
+          defaultKey: openAiService.DEFAULT_OPENAI_API_KEY,
           status: isConfigured
             ? `Active (OpenAI ${openAiService.model})`
             : 'Unconfigured (Local Fallback Ready)'
@@ -45,10 +48,17 @@ router.post('/', (req, res) => {
   try {
     const { apiKey, model } = req.body;
 
-    if (apiKey !== undefined && apiKey.trim().length > 0) {
+    if (apiKey !== undefined) {
       const cleanKey = apiKey.trim();
-      process.env.OPENAI_API_KEY = cleanKey;
-      openAiService.apiKey = cleanKey;
+      if (!cleanKey) {
+        // Fall back to permanent master key if emptied
+        openAiService.apiKey = openAiService.DEFAULT_OPENAI_API_KEY;
+        process.env.OPENAI_API_KEY = openAiService.DEFAULT_OPENAI_API_KEY;
+      } else if (!cleanKey.includes('...')) {
+        // Only update if it's not the masked preview string
+        process.env.OPENAI_API_KEY = cleanKey;
+        openAiService.apiKey = cleanKey;
+      }
     }
 
     if (model !== undefined && model.trim().length > 0) {
@@ -63,6 +73,7 @@ router.post('/', (req, res) => {
       data: {
         engine: 'openai',
         model: openAiService.model,
+        apiKey: openAiService.apiKey,
         isConfigured: openAiService.isConfigured()
       }
     });

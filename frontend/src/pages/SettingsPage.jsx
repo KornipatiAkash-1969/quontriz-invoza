@@ -36,6 +36,7 @@ export default function SettingsPage() {
 
   // OpenAI Settings State
   const [apiKey, setApiKey] = useState('');
+  const [defaultMasterKey, setDefaultMasterKey] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [model, setModel] = useState('gpt-4o');
   const [openAiStatus, setOpenAiStatus] = useState('Active (OpenAI GPT-4o)');
@@ -58,8 +59,11 @@ export default function SettingsPage() {
           setModel(openai.model || 'gpt-4o');
           setIsOpenAiConfigured(Boolean(openai.isConfigured));
           setOpenAiStatus(openai.status || 'Active (OpenAI GPT-4o)');
-          if (openai.keyPreview) {
-            setApiKey(openai.keyPreview);
+          if (openai.apiKey || openai.keyPreview) {
+            setApiKey(openai.apiKey || openai.keyPreview);
+          }
+          if (openai.defaultKey) {
+            setDefaultMasterKey(openai.defaultKey);
           }
           if (res.data?.database) {
             setDbInfo(res.data.database);
@@ -252,7 +256,24 @@ export default function SettingsPage() {
                 {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <p className="text-[11px] text-slate-400">Standard OpenAI platform project key.</p>
+            <div className="flex items-center justify-between text-[11px] pt-1">
+              <span className="text-slate-400">Production master key pre-configured & editable.</span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (defaultMasterKey) {
+                    setApiKey(defaultMasterKey);
+                    toastSuccess('Loaded master production OpenAI key.');
+                  } else {
+                    setApiKey('');
+                    toastSuccess('Reset to system master key.');
+                  }
+                }}
+                className="text-emerald-600 hover:text-emerald-700 font-semibold transition hover:underline"
+              >
+                Reset to Master Key
+              </button>
+            </div>
           </div>
 
           {/* Model Name */}
