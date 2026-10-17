@@ -186,7 +186,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
       badge: '⚡ 1. Upload',
       title: 'Upload Supplier Invoices & Receipts',
       icon: UploadCloud,
-      iconBg: 'bg-indigo-600',
+      iconBg: 'bg-emerald-600',
       explanation: 'Upload vendor bills and delivery receipts (PDF or mobile photos) for automated OCR data extraction.',
       tip: 'Supports PDF, PNG, JPG, and WebP files up to 15 MB.',
       preferredPlacement: 'right'
@@ -198,7 +198,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
       badge: '📋 2. My Invoices',
       title: 'Track Verification & Owner Approval',
       icon: FileText,
-      iconBg: 'bg-emerald-600',
+      iconBg: 'bg-teal-600',
       explanation: 'Track the status of all invoices you have uploaded as the store owner reviews and approves payments.',
       tip: 'Quickly find past bills when delivery agents or suppliers ask for updates.',
       preferredPlacement: 'right'
@@ -210,7 +210,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
       badge: '📦 3. Stock Demand',
       title: 'Request Store Shelf Restocking',
       icon: ClipboardList,
-      iconBg: 'bg-purple-600',
+      iconBg: 'bg-emerald-700',
       explanation: 'Request urgent stock replenishments from the store owner when supermarket shelves run low on items.',
       tip: 'Set priority levels (Urgent, High, Normal) so the owner orders critical stock first.',
       preferredPlacement: 'right'
@@ -222,12 +222,44 @@ export default function ProductTourModal({ isOpen, onClose }) {
       badge: '🤖 4. Helpdesk',
       title: 'AI Assistant & Ticket Escalation',
       icon: Bot,
-      iconBg: 'bg-indigo-700',
+      iconBg: 'bg-teal-700',
       explanation: 'Ask questions about uploading invoices or stock requisitions. Unresolved questions can be escalated to support@supermarket.com.',
       tip: 'Click the AI Support button in the bottom right corner whenever you need assistance.',
       preferredPlacement: 'left'
     }
   ];
+
+  const theme = isOwner
+    ? {
+        primary: 'indigo',
+        hex: '#4f46e5',
+        spotlightShadow: '0 0 0 4px rgba(99, 102, 241, 0.35), 0 10px 25px -4px rgba(79, 70, 229, 0.25)',
+        spotlightBg: 'rgba(99, 102, 241, 0.03)',
+        beaconPing: 'bg-indigo-400',
+        beaconBadge: 'bg-indigo-600',
+        badgeText: 'text-indigo-600',
+        activeDot: 'bg-indigo-600',
+        progressBar: 'from-indigo-600 to-indigo-500',
+        tipBoxBg: 'bg-indigo-50/70 border-indigo-100/80',
+        tipIcon: 'text-indigo-600',
+        tipText: 'text-indigo-950',
+        nextBtn: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200',
+      }
+    : {
+        primary: 'emerald',
+        hex: '#059669',
+        spotlightShadow: '0 0 0 4px rgba(16, 185, 129, 0.35), 0 10px 25px -4px rgba(5, 150, 105, 0.25)',
+        spotlightBg: 'rgba(16, 185, 129, 0.03)',
+        beaconPing: 'bg-emerald-400',
+        beaconBadge: 'bg-emerald-600',
+        badgeText: 'text-emerald-600',
+        activeDot: 'bg-emerald-600',
+        progressBar: 'from-emerald-600 to-emerald-500',
+        tipBoxBg: 'bg-emerald-50/70 border-emerald-100/80',
+        tipIcon: 'text-emerald-600',
+        tipText: 'text-emerald-950',
+        nextBtn: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200',
+      };
 
   const steps = isOwner ? ownerSteps : staffSteps;
   const step = steps[currentStep] || steps[0];
@@ -479,7 +511,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
         onClick={handleClose}
       />
 
-      {/* 2. Spotlight Highlight Frame around Target Element (Crisp, High-Contrast Indigo Focus Ring, Zero Darkness) */}
+      {/* 2. Spotlight Highlight Frame around Target Element (Crisp, High-Contrast Focus Ring, Zero Darkness) */}
       {targetRect && isTargetFound && (
         <div
           className="fixed pointer-events-none transition-all duration-300 ease-out z-[9992]"
@@ -489,15 +521,15 @@ export default function ProductTourModal({ isOpen, onClose }) {
             width: `${targetRect.width + padding * 2}px`,
             height: `${targetRect.height + padding * 2}px`,
             borderRadius: '14px',
-            border: '2.5px solid #4f46e5',
-            boxShadow: '0 0 0 4px rgba(99, 102, 241, 0.35), 0 10px 25px -4px rgba(79, 70, 229, 0.25)',
-            backgroundColor: 'rgba(99, 102, 241, 0.03)'
+            border: `2.5px solid ${theme.hex}`,
+            boxShadow: theme.spotlightShadow,
+            backgroundColor: theme.spotlightBg
           }}
         >
           {/* Pulsing Animated Step Beacon Badge */}
           <div className="absolute -top-3.5 -right-3.5 flex items-center justify-center">
-            <span className="animate-ping absolute inline-flex h-7 w-7 rounded-full bg-indigo-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-6 w-6 bg-indigo-600 text-white font-extrabold text-[11px] items-center justify-center shadow-lg border-2 border-white">
+            <span className={`animate-ping absolute inline-flex h-7 w-7 rounded-full ${theme.beaconPing} opacity-75`}></span>
+            <span className={`relative inline-flex rounded-full h-6 w-6 ${theme.beaconBadge} text-white font-extrabold text-[11px] items-center justify-center shadow-lg border-2 border-white`}>
               {currentStep + 1}
             </span>
           </div>
@@ -551,7 +583,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
                 <StepIcon className="w-3.5 h-3.5" />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 block leading-tight">
+                <span className={`text-[10px] font-black uppercase tracking-wider ${theme.badgeText} block leading-tight`}>
                   {step.badge}
                 </span>
                 <span className="text-[10px] text-slate-400 font-medium">
@@ -569,7 +601,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
                     type="button"
                     onClick={() => setCurrentStep(idx)}
                     className={`h-1.5 rounded-full transition-all ${
-                      idx === currentStep ? 'w-3.5 bg-indigo-600' : 'w-1.5 bg-slate-200 hover:bg-slate-300'
+                      idx === currentStep ? `w-3.5 ${theme.activeDot}` : 'w-1.5 bg-slate-200 hover:bg-slate-300'
                     }`}
                     title={`Jump to step ${idx + 1}`}
                   />
@@ -590,7 +622,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
           {/* Progress Line */}
           <div className="w-full bg-slate-100 h-0.5 flex-shrink-0">
             <div
-              className="h-0.5 bg-gradient-to-r from-indigo-600 to-indigo-500 transition-all duration-300"
+              className={`h-0.5 bg-gradient-to-r ${theme.progressBar} transition-all duration-300`}
               style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
             />
           </div>
@@ -608,9 +640,9 @@ export default function ProductTourModal({ isOpen, onClose }) {
 
             {/* Pro Tip Box */}
             {step.tip && (
-              <div className="p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-100/80 flex items-start gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0 mt-0.5" />
-                <p className="text-[11px] text-indigo-950 font-medium leading-snug">
+              <div className={`p-2.5 rounded-xl ${theme.tipBoxBg} flex items-start gap-2`}>
+                <Sparkles className={`w-3.5 h-3.5 ${theme.tipIcon} flex-shrink-0 mt-0.5`} />
+                <p className={`text-[11px] ${theme.tipText} font-medium leading-snug`}>
                   {step.tip}
                 </p>
               </div>
@@ -645,7 +677,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 text-white font-bold text-xs rounded-xl shadow-xs transition active:scale-95 ${
                   isLast
                     ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
-                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                    : theme.nextBtn
                 }`}
               >
                 <span>{isLast ? 'Finish Tour' : 'Next Item'}</span>
