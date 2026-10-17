@@ -11,7 +11,7 @@ import {
   Mail
 } from 'lucide-react';
 import { vendorTypeApi } from '../services/api';
-import { Spinner, CardSkeleton } from '../components/ui';
+import { Spinner, CardSkeleton, RotatingLoader } from '../components/ui';
 import Modal from '../components/ui/Modal';
 import { useToast } from '../context/ToastContext';
 import { formatCurrency } from '../utils/formatters';
@@ -232,9 +232,8 @@ export default function VendorTypesPage() {
             )}
 
             {loadingVendors ? (
-              <div className="py-12 flex flex-col items-center justify-center gap-2">
-                <Spinner />
-                <p className="text-xs text-slate-500">Loading suppliers...</p>
+              <div className="py-12 flex flex-col items-center justify-center">
+                <RotatingLoader size="md" text="Loading suppliers..." subtitle="Retrieving supplier accounts for this tier" />
               </div>
             ) : filteredVendors.length === 0 ? (
               <div className="py-12 text-center space-y-3">

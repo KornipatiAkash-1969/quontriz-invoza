@@ -31,6 +31,8 @@ export function Badge({ children, variant = 'default', role, className = '' }) {
 
 export {
   Spinner,
+  RotatingLoader,
+  FullscreenRotatingLoader,
   Skeleton,
   TableSkeleton,
   CardSkeleton,

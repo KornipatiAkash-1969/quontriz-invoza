@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { ScanText, Sparkles } from 'lucide-react';
+import { ScanText, Sparkles, Crown, ClipboardList } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 
 /**
@@ -166,7 +166,147 @@ export function CardSkeleton({ count = 5, role, className = '' }) {
 }
 
 /**
- * Full Page / Main Content Branded Loader with Dynamic Theme Styling
+ * High-Precision Multi-Ring Orbital Rotating Loader themed dynamically for Owner (Indigo/Violet) vs Staff (Emerald/Teal)
+ */
+export function RotatingLoader({
+  size = 'md',
+  role,
+  variant = 'theme',
+  text,
+  subtitle,
+  showBadge = false,
+  showIcon,
+  className = '',
+}) {
+  const isOwner = variant === 'owner' ? true : variant === 'staff' ? false : useThemeRole(role);
+  const shouldShowIcon = showIcon !== undefined ? showIcon : size !== 'xs';
+
+  // Size specifications
+  const sizeMap = {
+    xs: {
+      wrapper: 'w-4 h-4',
+      outer: 'border-1.5',
+      inner: 'border',
+      core: 'w-1.5 h-1.5',
+      iconSize: 'w-1.5 h-1.5',
+      gap: 'mt-1',
+    },
+    sm: {
+      wrapper: 'w-7 h-7',
+      outer: 'border-2',
+      inner: 'border-1.5',
+      core: 'w-3.5 h-3.5',
+      iconSize: 'w-2 h-2',
+      gap: 'mt-1.5',
+    },
+    md: {
+      wrapper: 'w-12 h-12',
+      outer: 'border-2.5',
+      inner: 'border-2',
+      core: 'w-6 h-6',
+      iconSize: 'w-3.5 h-3.5',
+      gap: 'mt-3',
+    },
+    lg: {
+      wrapper: 'w-16 h-16',
+      outer: 'border-3',
+      inner: 'border-2',
+      core: 'w-8 h-8',
+      iconSize: 'w-4.5 h-4.5',
+      gap: 'mt-3.5',
+    },
+    xl: {
+      wrapper: 'w-24 h-24',
+      outer: 'border-4',
+      inner: 'border-2.5',
+      core: 'w-12 h-12',
+      iconSize: 'w-6 h-6',
+      gap: 'mt-4',
+    },
+  };
+
+  const s = sizeMap[size] || sizeMap.md;
+
+  // Themed rings
+  const outerBorder = isOwner
+    ? 'border-indigo-600 border-r-indigo-400 border-b-violet-500 border-l-transparent'
+    : 'border-emerald-600 border-r-emerald-400 border-b-teal-500 border-l-transparent';
+
+  const innerBorder = isOwner
+    ? 'border-indigo-300 border-t-violet-400 border-b-transparent border-r-transparent'
+    : 'border-emerald-300 border-t-teal-400 border-b-transparent border-r-transparent';
+
+  const glowBg = isOwner ? 'bg-indigo-400/25' : 'bg-emerald-400/25';
+
+  const coreBg = isOwner
+    ? 'bg-gradient-to-tr from-indigo-50 to-indigo-100 border-indigo-200 text-indigo-600 shadow-indigo-100'
+    : 'bg-gradient-to-tr from-emerald-50 to-emerald-100 border-emerald-200 text-emerald-600 shadow-emerald-100';
+
+  return (
+    <div className={`flex flex-col items-center justify-center text-center ${className}`}>
+      <div className={`relative flex items-center justify-center ${s.wrapper}`}>
+        {/* Ambient Pulsing Glow Halo */}
+        <div className={`absolute -inset-1.5 rounded-full blur-sm opacity-60 animate-pulse ${glowBg}`} />
+
+        {/* Outer Orbital Rotating Ring (Clockwise) */}
+        <div
+          className={`absolute inset-0 rounded-full animate-spin ${s.outer} ${outerBorder}`}
+          style={{ animationDuration: '1.1s' }}
+        />
+
+        {/* Middle Counter-Rotating Orbital Ring (Counter-Clockwise) */}
+        <div
+          className={`absolute inset-1.5 rounded-full ${s.inner} ${innerBorder}`}
+          style={{ animation: 'counterSpinRing 1.6s linear infinite' }}
+        />
+
+        {/* Core Emblem / Icon */}
+        {shouldShowIcon && (
+          <div
+            className={`relative rounded-full border shadow-2xs flex items-center justify-center transition-all duration-300 ${s.core} ${coreBg}`}
+          >
+            {isOwner ? (
+              <Crown className={`${s.iconSize} text-indigo-600 animate-pulse`} />
+            ) : (
+              <ClipboardList className={`${s.iconSize} text-emerald-600 animate-pulse`} />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Optional Text / Subtitle */}
+      {(text || subtitle || showBadge) && (
+        <div className={`${s.gap} space-y-1 max-w-xs`}>
+          {text && <p className="text-xs sm:text-sm font-bold text-slate-800 tracking-tight leading-snug">{text}</p>}
+          {subtitle && <p className="text-[11px] sm:text-xs text-slate-400 font-medium leading-relaxed">{subtitle}</p>}
+          {showBadge && (
+            <div className="pt-0.5">
+              <span
+                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs ${
+                  isOwner
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}
+              >
+                {isOwner ? '👑 Owner Workspace' : '📋 Staff Workspace'}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes counterSpinRing {
+          from { transform: rotate(360deg); }
+          to { transform: rotate(0deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+/**
+ * Full Page / Main Content Branded Loader powered by RotatingLoader
  */
 export function PageLoader({
   message = 'Loading data...',
@@ -174,68 +314,40 @@ export function PageLoader({
   role,
   compact = false
 }) {
-  const isOwner = useThemeRole(role);
-
   return (
     <div
       className={`flex flex-col items-center justify-center p-8 gap-4 animate-in fade-in duration-200 ${
         compact ? 'min-h-[260px]' : 'min-h-[50vh]'
       }`}
     >
-      <div className="relative flex items-center justify-center">
-        {/* Ambient Pulsing Glow Backdrop */}
-        <div
-          className={`absolute -inset-4 rounded-full blur-xl opacity-60 animate-pulse ${
-            isOwner ? 'bg-indigo-400/20' : 'bg-emerald-400/20'
-          }`}
-        />
+      <RotatingLoader
+        size={compact ? 'md' : 'lg'}
+        role={role}
+        text={message}
+        subtitle={subtitle}
+        showBadge
+      />
+    </div>
+  );
+}
 
-        {/* Core Icon Box */}
-        <div
-          className={`relative w-14 h-14 rounded-2xl border flex items-center justify-center shadow-md transition-all duration-300 ${
-            isOwner
-              ? 'bg-gradient-to-tr from-indigo-50 to-indigo-100 border-indigo-200 text-indigo-600 shadow-indigo-100'
-              : 'bg-gradient-to-tr from-emerald-50 to-emerald-100 border-emerald-200 text-emerald-600 shadow-emerald-100'
-          }`}
-        >
-          <ScanText
-            className={`w-7 h-7 animate-pulse ${
-              isOwner ? 'text-indigo-600' : 'text-emerald-600'
-            }`}
-          />
-        </div>
-
-        {/* Outer Rotating Gradient Ring */}
-        <div
-          className={`absolute -inset-2.5 border-2.5 border-t-transparent rounded-3xl animate-spin transition-all duration-300 ${
-            isOwner
-              ? 'border-indigo-600 border-r-indigo-400'
-              : 'border-emerald-600 border-r-emerald-400'
-          }`}
-        />
-      </div>
-
-      <div className="text-center space-y-1.5 max-w-sm">
-        <h4 className="text-sm font-bold text-slate-800 tracking-tight leading-snug">
-          {message}
-        </h4>
-        {subtitle && (
-          <p className="text-xs text-slate-400 font-medium leading-relaxed">
-            {subtitle}
-          </p>
-        )}
-        <div className="pt-1">
-          <span
-            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs ${
-              isOwner
-                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-            }`}
-          >
-            {isOwner ? '👑 Owner Workspace' : '📋 Staff Workspace'}
-          </span>
-        </div>
-      </div>
+/**
+ * Full-screen Modal Backdrop Rotating Loader with glassmorphic blur
+ */
+export function FullscreenRotatingLoader({
+  message = 'Loading workspace...',
+  subtitle = 'Synchronizing real-time store records',
+  role,
+}) {
+  return (
+    <div className="fixed inset-0 z-[9999] bg-white/80 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in duration-200">
+      <RotatingLoader
+        size="xl"
+        role={role}
+        text={message}
+        subtitle={subtitle}
+        showBadge
+      />
     </div>
   );
 }

@@ -31,7 +31,7 @@ import {
 import { Pie, Bar, Line } from 'react-chartjs-2';
 import { dashboardApi } from '../services/api';
 import { formatCurrency, formatDate, formatDateTime } from '../utils/formatters';
-import { CardSkeleton } from '../components/ui';
+import { CardSkeleton, RotatingLoader } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { useUpdates } from '../context/UpdatesContext';
 import PaymentApprovalModal from '../components/review/PaymentApprovalModal';
@@ -101,6 +101,17 @@ export default function DashboardPage() {
             <div className="h-9 w-24 bg-slate-200 rounded-xl animate-pulse" />
             <div className="h-9 w-28 bg-slate-200 rounded-xl animate-pulse" />
           </div>
+        </div>
+
+        {/* Themed Rotating Loader Card */}
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-2xs flex items-center justify-center">
+          <RotatingLoader
+            size="md"
+            role="owner"
+            text="Calculating Store Dashboard & Analytics..."
+            subtitle="Fetching latest sales, supplier dues, and GST metrics"
+            showBadge
+          />
         </div>
 
         {/* Shimmering KPI Metric Cards */}
