@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Menu,
   UploadCloud,
-  Store,
   LogOut,
   LogIn,
   Bell,
@@ -90,11 +89,6 @@ export default function TopNav({ onToggleSidebar }) {
         >
           <Menu className="w-5 h-5" />
         </button>
-
-        <div data-tour="branch-info" className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-100/90 py-1.5 px-3 rounded-xl border border-slate-200/70">
-          <Store className="w-3.5 h-3.5 text-indigo-600" />
-          <span className="truncate max-w-[180px] md:max-w-none">Branch #01: City Supermarket Central</span>
-        </div>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
