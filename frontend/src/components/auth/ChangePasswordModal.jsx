@@ -155,7 +155,11 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                 if (errorMsg) setErrorMsg('');
               }}
               placeholder="Enter current password"
-              className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium"
+              className={`w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl outline-none text-slate-900 font-medium ${
+                isOwner
+                  ? 'focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
+                  : 'focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
+              }`}
             />
             <button
               type="button"
@@ -189,7 +193,11 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                 if (errorMsg) setErrorMsg('');
               }}
               placeholder="Enter new password"
-              className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium"
+              className={`w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl outline-none text-slate-900 font-medium ${
+                isOwner
+                  ? 'focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
+                  : 'focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
+              }`}
             />
             <button
               type="button"
@@ -237,7 +245,9 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
                   ? 'border-amber-400 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 bg-amber-50/20'
                   : passwordsMatch
                   ? 'border-emerald-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-emerald-50/20'
-                  : 'border-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
+                  : isOwner
+                  ? 'border-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
+                  : 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
               }`}
             />
             <button
@@ -254,7 +264,11 @@ export default function ChangePasswordModal({ isOpen, onClose }) {
 
         {/* Security Info */}
         <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-[11px] text-slate-600 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+          <ShieldCheck
+            className={`w-4 h-4 flex-shrink-0 ${
+              isOwner ? 'text-indigo-600' : 'text-emerald-600'
+            }`}
+          />
           <span>Your password is encrypted with enterprise-grade bcrypt hashing.</span>
         </div>
 

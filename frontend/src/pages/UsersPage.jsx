@@ -683,13 +683,15 @@ export default function UsersPage() {
                   className={`w-full pl-9 pr-3 py-2 text-xs border rounded-xl outline-none transition ${
                     isNameDuplicate
                       ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20 text-slate-900'
+                      : role === 'staff'
+                      ? 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
                       : 'border-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
                   }`}
                 />
               </div>
               {isNameDuplicate && (
                 <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>User name &ldquo;{name.trim()}&rdquo; is already taken by an existing team member.</span>
                 </p>
               )}
@@ -703,7 +705,7 @@ export default function UsersPage() {
                 </label>
                 {isEmailDuplicate && (
                   <span className="text-[11px] font-bold text-rose-600 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" /> Email Already Registered
+                    <AlertCircle className="w-3.5 h-3.5" /> Email Already Registered
                   </span>
                 )}
               </div>
@@ -721,13 +723,15 @@ export default function UsersPage() {
                   className={`w-full pl-9 pr-3 py-2 text-xs border rounded-xl outline-none transition ${
                     isEmailDuplicate
                       ? 'border-rose-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 bg-rose-50/20 text-slate-900'
+                      : role === 'staff'
+                      ? 'border-slate-300 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
                       : 'border-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
                   }`}
                 />
               </div>
               {isEmailDuplicate && (
                 <p className="text-[11px] text-rose-600 mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
                   <span>Email address &ldquo;{email.trim()}&rdquo; is already registered in the system.</span>
                 </p>
               )}
@@ -765,7 +769,11 @@ export default function UsersPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={role === 'owner' ? 'owner@123' : 'staff@123'}
-                  className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium font-mono"
+                  className={`w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl outline-none text-slate-900 font-medium font-mono ${
+                    role === 'staff'
+                      ? 'focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
+                      : 'focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
+                  }`}
                 />
                 <button
                   type="button"
@@ -782,7 +790,11 @@ export default function UsersPage() {
                 </button>
               </div>
               <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                <ShieldCheck
+                  className={`w-3.5 h-3.5 flex-shrink-0 ${
+                    role === 'staff' ? 'text-emerald-600' : 'text-indigo-600'
+                  }`}
+                />
                 <span>
                   Default password is set automatically to{' '}
                   <strong className="font-mono">{role === 'owner' ? 'owner@123' : 'staff@123'}</strong>. The team member can change it after logging in.
@@ -909,7 +921,14 @@ export default function UsersPage() {
           <form onSubmit={handleAdminResetPassword} className="space-y-4">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1.5">
               <p className="font-bold text-slate-800">
-                Resetting password for: <span className="text-indigo-600">{resetPasswordTarget.name}</span>
+                Resetting password for:{' '}
+                <span
+                  className={
+                    resetPasswordTarget.role === 'owner' ? 'text-indigo-600' : 'text-emerald-600'
+                  }
+                >
+                  {resetPasswordTarget.name}
+                </span>
               </p>
               <p className="text-slate-500 font-medium">Email: {resetPasswordTarget.email}</p>
               <div className="flex items-center gap-1.5 pt-0.5">
@@ -938,7 +957,11 @@ export default function UsersPage() {
                       resetPasswordTarget.role === 'owner' ? 'owner@123' : 'staff@123'
                     )
                   }
-                  className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 transition"
+                  className={`text-[11px] font-bold transition ${
+                    resetPasswordTarget.role === 'owner'
+                      ? 'text-indigo-600 hover:text-indigo-800'
+                      : 'text-emerald-600 hover:text-emerald-800'
+                  }`}
                   title="Fill with default password"
                 >
                   Fill Default ({resetPasswordTarget.role === 'owner' ? 'owner@123' : 'staff@123'})
@@ -954,7 +977,11 @@ export default function UsersPage() {
                   value={newResetPassword}
                   onChange={(e) => setNewResetPassword(e.target.value)}
                   placeholder="Enter new password (min. 4 characters)"
-                  className="w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none text-slate-900 font-medium"
+                  className={`w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl outline-none text-slate-900 font-medium ${
+                    resetPasswordTarget.role === 'owner'
+                      ? 'focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
+                      : 'focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
+                  }`}
                 />
                 <button
                   type="button"
@@ -967,7 +994,11 @@ export default function UsersPage() {
                 </button>
               </div>
               <p className="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                <ShieldCheck
+                  className={`w-3.5 h-3.5 flex-shrink-0 ${
+                    resetPasswordTarget.role === 'owner' ? 'text-indigo-600' : 'text-emerald-600'
+                  }`}
+                />
                 <span>
                   Passwords are encrypted with bcrypt hashing. Passwords cannot be viewed in plain text.
                 </span>
@@ -988,7 +1019,11 @@ export default function UsersPage() {
               <button
                 type="submit"
                 disabled={resettingPassword || !newResetPassword || newResetPassword.length < 4}
-                className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5"
+                className={`px-5 py-2 text-white font-semibold text-xs rounded-xl shadow-xs transition active:scale-[0.98] disabled:opacity-50 flex items-center gap-1.5 ${
+                  resetPasswordTarget.role === 'owner'
+                    ? 'bg-indigo-600 hover:bg-indigo-700'
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
               >
                 {resettingPassword ? (
                   <>

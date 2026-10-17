@@ -131,7 +131,9 @@ export default function InvoiceDetailPage() {
         <h3 className="text-lg font-bold text-slate-800">Invoice not found</h3>
         <button
           onClick={() => navigate('/invoices')}
-          className="text-xs font-semibold text-indigo-600 hover:underline"
+          className={`text-xs font-semibold hover:underline ${
+            isOwner ? 'text-indigo-600' : 'text-emerald-600'
+          }`}
         >
           ← Return to Invoices
         </button>
@@ -165,7 +167,11 @@ export default function InvoiceDetailPage() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => navigate('/upload')}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition active:scale-[0.98]"
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white rounded-xl shadow-xs transition active:scale-[0.98] ${
+              isOwner
+                ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
+            }`}
             title="Upload another supplier invoice PDF or image"
           >
             <UploadCloud className="w-3.5 h-3.5" />
@@ -189,7 +195,15 @@ export default function InvoiceDetailPage() {
             className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 shadow-2xs transition disabled:opacity-50"
             title="Download clean invoice document as PDF file"
           >
-            {downloadingPdf ? <Spinner size="xs" /> : <Download className="w-3.5 h-3.5 text-indigo-600" />}
+            {downloadingPdf ? (
+              <Spinner size="xs" />
+            ) : (
+              <Download
+                className={`w-3.5 h-3.5 ${
+                  isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                }`}
+              />
+            )}
             <span>{downloadingPdf ? 'Downloading PDF...' : 'Download PDF'}</span>
           </button>
 
@@ -230,14 +244,20 @@ export default function InvoiceDetailPage() {
                 isPdf
                   ? 'bg-rose-100 text-rose-700 border border-rose-200'
                   : isImage
-                  ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                  ? isOwner
+                    ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                    : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
                   : 'bg-slate-200 text-slate-700'
               }`}
             >
               {isPdf ? (
                 <FileText className="w-5 h-5 text-rose-600" />
               ) : isImage ? (
-                <ImageIcon className="w-5 h-5 text-indigo-600" />
+                <ImageIcon
+                  className={`w-5 h-5 ${
+                    isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                  }`}
+                />
               ) : (
                 <UploadCloud className="w-5 h-5 text-slate-600" />
               )}
@@ -353,7 +373,11 @@ export default function InvoiceDetailPage() {
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-wrap text-xs text-slate-400 mt-1.5">
               <span className="flex items-center gap-1">
-                <UploadCloud className="w-3.5 h-3.5 text-indigo-500" />
+                <UploadCloud
+                  className={`w-3.5 h-3.5 ${
+                    isOwner ? 'text-indigo-500' : 'text-emerald-500'
+                  }`}
+                />
                 <span>Uploaded on <strong className="text-slate-600">{formatDateTime(invoice.created_at)}</strong></span>
               </span>
               {invoice.created_by_name && (
@@ -369,11 +393,21 @@ export default function InvoiceDetailPage() {
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               {isPaid ? 'Total Paid' : 'Amount Due'}
             </p>
-            <p className="text-2xl sm:text-3xl font-black text-indigo-700 mt-0.5">
+            <p
+              className={`text-2xl sm:text-3xl font-black mt-0.5 ${
+                isOwner ? 'text-indigo-700' : 'text-emerald-700'
+              }`}
+            >
               {formatCurrency(invoice.total)}
             </p>
             {Number(invoice.total_gst || invoice.tax) > 0 && (
-              <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <span
+                className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-bold border ${
+                  isOwner
+                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                }`}
+              >
                 Includes GST: +{formatCurrency(invoice.total_gst || invoice.tax)}
               </span>
             )}
@@ -391,7 +425,9 @@ export default function InvoiceDetailPage() {
               {invoice.vendor_id && (
                 <Link
                   to={`/vendors/${invoice.vendor_id}`}
-                  className="text-[11px] font-semibold text-indigo-600 hover:underline flex items-center gap-1 no-print"
+                  className={`text-[11px] font-semibold hover:underline flex items-center gap-1 no-print ${
+                    isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                  }`}
                 >
                   <span>Vendor Profile</span>
                   <ExternalLink className="w-3 h-3" />
@@ -402,7 +438,11 @@ export default function InvoiceDetailPage() {
             <h3 className="font-bold text-slate-800 text-base">
               {invoice.vendor_name || 'Unassigned Vendor'}
             </h3>
-            <p className="text-xs text-indigo-600 font-medium">
+            <p
+              className={`text-xs font-medium ${
+                isOwner ? 'text-indigo-600' : 'text-emerald-600'
+              }`}
+            >
               {invoice.vendor_type || 'General Supplier'}
             </p>
             {invoice.vendor_address && (
@@ -427,7 +467,11 @@ export default function InvoiceDetailPage() {
             </div>
             <div>
               <p className="text-slate-400 font-medium">System Uploaded Time & Date</p>
-              <p className="font-bold text-indigo-700 text-xs mt-0.5">
+              <p
+                className={`font-bold text-xs mt-0.5 ${
+                  isOwner ? 'text-indigo-700' : 'text-emerald-700'
+                }`}
+              >
                 {formatDateTime(invoice.created_at)}
               </p>
             </div>
@@ -464,7 +508,15 @@ export default function InvoiceDetailPage() {
                 <tr className="border-b border-slate-200 bg-slate-50/70 text-[11px] font-bold text-slate-500 uppercase">
                   <th className="py-2.5 px-3">#</th>
                   <th className="py-2.5 px-4 min-w-[180px]">Item & Description</th>
-                  <th className="py-2.5 px-4 min-w-[130px] bg-indigo-50/60 text-indigo-950 font-black border-x border-indigo-200/50">Quantity & Unit</th>
+                  <th
+                    className={`py-2.5 px-4 min-w-[130px] font-black border-x ${
+                      isOwner
+                        ? 'bg-indigo-50/60 text-indigo-950 border-indigo-200/50'
+                        : 'bg-emerald-50/60 text-emerald-950 border-emerald-200/50'
+                    }`}
+                  >
+                    Quantity & Unit
+                  </th>
                   <th className="py-2.5 px-3">Category</th>
                   <th className="py-2.5 px-3">HSN / SKU</th>
                   <th className="py-2.5 px-4 text-right">Unit Price / Basis</th>
@@ -487,9 +539,21 @@ export default function InvoiceDetailPage() {
                           <div className="text-[11px] text-slate-500">{item.item_description}</div>
                         )}
                       </td>
-                      <td className="py-3 px-4 bg-indigo-50/20 border-x border-indigo-100/50">
+                      <td
+                        className={`py-3 px-4 border-x ${
+                          isOwner
+                            ? 'bg-indigo-50/20 border-indigo-100/50'
+                            : 'bg-emerald-50/20 border-emerald-100/50'
+                        }`}
+                      >
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-mono text-sm font-black text-indigo-900 bg-indigo-100/90 border border-indigo-200 px-2.5 py-0.5 rounded-md shadow-2xs">
+                          <span
+                            className={`font-mono text-sm font-black px-2.5 py-0.5 rounded-md shadow-2xs border ${
+                              isOwner
+                                ? 'text-indigo-900 bg-indigo-100/90 border-indigo-200'
+                                : 'text-emerald-900 bg-emerald-100/90 border-emerald-200'
+                            }`}
+                          >
                             {itemQty}
                           </span>
                           <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold">
@@ -513,7 +577,11 @@ export default function InvoiceDetailPage() {
                       <td className="py-3 px-4 text-right text-slate-700">
                         <div className="font-medium">{formatCurrency(item.unit_price)}</div>
                         {basisQty > 1 && (
-                          <div className="text-[10px] text-indigo-600 font-semibold">
+                          <div
+                            className={`text-[10px] font-semibold ${
+                              isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                            }`}
+                          >
                             per {basisQty} {displayUnit}
                           </div>
                         )}
@@ -523,7 +591,13 @@ export default function InvoiceDetailPage() {
                       </td>
                       <td className="py-3 px-3 text-right text-slate-600 font-mono">
                         {item.gst_rate > 0 ? (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                          <span
+                            className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-bold border ${
+                              isOwner
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}
+                          >
                             {item.gst_rate}%
                           </span>
                         ) : (
@@ -559,7 +633,13 @@ export default function InvoiceDetailPage() {
                         <p className="text-[11px] text-slate-500 mt-0.5">{item.item_description}</p>
                       )}
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                        <span className="font-mono text-xs font-bold text-indigo-900 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md">
+                        <span
+                          className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md border ${
+                            isOwner
+                              ? 'text-indigo-900 bg-indigo-50 border-indigo-200'
+                              : 'text-emerald-900 bg-emerald-50 border-emerald-200'
+                          }`}
+                        >
                           {itemQty} {displayUnit}
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-medium">
@@ -616,12 +696,30 @@ export default function InvoiceDetailPage() {
               </div>
             )}
             {Number(invoice.total_gst || invoice.tax) > 0 ? (
-              <div className="flex justify-between items-center bg-indigo-50/80 px-2.5 py-1.5 rounded-lg border border-indigo-200 text-indigo-900 font-semibold">
+              <div
+                className={`flex justify-between items-center px-2.5 py-1.5 rounded-lg border font-semibold ${
+                  isOwner
+                    ? 'bg-indigo-50/80 border-indigo-200 text-indigo-900'
+                    : 'bg-emerald-50/80 border-emerald-200 text-emerald-900'
+                }`}
+              >
                 <span className="flex items-center gap-1.5">
                   <span>Total GST (Tax)</span>
-                  <span className="text-[10px] font-bold px-1.5 py-0.2 bg-indigo-200 text-indigo-800 rounded">GST</span>
+                  <span
+                    className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                      isOwner
+                        ? 'bg-indigo-200 text-indigo-800'
+                        : 'bg-emerald-200 text-emerald-800'
+                    }`}
+                  >
+                    GST
+                  </span>
                 </span>
-                <span className="font-bold text-indigo-800 font-mono">
+                <span
+                  className={`font-bold font-mono ${
+                    isOwner ? 'text-indigo-800' : 'text-emerald-800'
+                  }`}
+                >
                   + {formatCurrency(invoice.total_gst || invoice.tax)}
                 </span>
               </div>
@@ -651,7 +749,13 @@ export default function InvoiceDetailPage() {
             )}
             <div className="pt-2 border-t border-slate-200 flex justify-between text-sm font-black text-slate-900">
               <span>Grand Total</span>
-              <span className="text-indigo-700 font-extrabold">{formatCurrency(invoice.total)}</span>
+              <span
+                className={`font-extrabold ${
+                  isOwner ? 'text-indigo-700' : 'text-emerald-700'
+                }`}
+              >
+                {formatCurrency(invoice.total)}
+              </span>
             </div>
 
             {/* Payment Settlement Breakdown */}

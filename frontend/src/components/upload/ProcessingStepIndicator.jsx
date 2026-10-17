@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Loader2, Circle } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const STEPS = [
   { id: 1, label: 'Uploading PDF...' },
@@ -12,11 +13,19 @@ const STEPS = [
 ];
 
 export default function ProcessingStepIndicator({ currentStep = 1 }) {
+  const { isOwner } = useAuth();
+
   return (
     <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm max-w-xl mx-auto w-full">
       <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
         <h4 className="font-semibold text-slate-800 text-sm">Processing Pipeline</h4>
-        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+        <span
+          className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+            isOwner
+              ? 'bg-indigo-50 text-indigo-700 border-indigo-100'
+              : 'bg-emerald-50 text-emerald-700 border-emerald-100'
+          }`}
+        >
           Step {Math.min(currentStep, 7)} of 7
         </span>
       </div>
@@ -32,7 +41,9 @@ export default function ProcessingStepIndicator({ currentStep = 1 }) {
               key={step.id}
               className={`flex items-center gap-3.5 p-2.5 rounded-xl transition-all duration-300 ${
                 isCurrent
-                  ? 'bg-indigo-50/70 border border-indigo-100 shadow-xs'
+                  ? isOwner
+                    ? 'bg-indigo-50/70 border border-indigo-100 shadow-xs'
+                    : 'bg-emerald-50/70 border border-emerald-100 shadow-xs'
                   : isFinished
                   ? 'bg-slate-50/50'
                   : 'opacity-50'
@@ -42,7 +53,11 @@ export default function ProcessingStepIndicator({ currentStep = 1 }) {
                 {isFinished ? (
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 animate-in fade-in" />
                 ) : isCurrent ? (
-                  <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
+                  <Loader2
+                    className={`w-5 h-5 animate-spin ${
+                      isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                    }`}
+                  />
                 ) : (
                   <Circle className="w-5 h-5 text-slate-300" />
                 )}
@@ -52,7 +67,9 @@ export default function ProcessingStepIndicator({ currentStep = 1 }) {
                 <p
                   className={`text-sm font-medium ${
                     isCurrent
-                      ? 'text-indigo-900 font-semibold'
+                      ? isOwner
+                        ? 'text-indigo-900 font-semibold'
+                        : 'text-emerald-900 font-semibold'
                       : isFinished
                       ? 'text-slate-700'
                       : 'text-slate-400'
@@ -66,7 +83,11 @@ export default function ProcessingStepIndicator({ currentStep = 1 }) {
                 <span className="text-[11px] font-medium text-emerald-600">Done</span>
               )}
               {isCurrent && (
-                <span className="text-[11px] font-semibold text-indigo-600 animate-pulse">
+                <span
+                  className={`text-[11px] font-semibold animate-pulse ${
+                    isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                  }`}
+                >
                   Processing...
                 </span>
               )}

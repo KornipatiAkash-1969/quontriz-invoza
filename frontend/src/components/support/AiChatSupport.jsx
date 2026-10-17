@@ -26,7 +26,7 @@ import { supportApi } from '../../services/api';
 import { Spinner } from '../ui';
 
 export default function AiChatSupport() {
-  const { user } = useAuth();
+  const { user, isOwner } = useAuth();
   const { success: toastSuccess, error: toastError } = useToast();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -235,7 +235,11 @@ export default function AiChatSupport() {
           type="button"
           onClick={() => setIsOpen(true)}
           data-tour="ai-support-btn"
-          className="fixed bottom-5 right-5 z-[9980] flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 hover:from-indigo-700 hover:to-indigo-900 text-white rounded-2xl shadow-xl shadow-indigo-600/30 hover:shadow-2xl hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 border border-indigo-400/30 group"
+          className={`fixed bottom-5 right-5 z-[9980] flex items-center gap-2.5 px-4 py-3 text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 border group ${
+            isOwner
+              ? 'bg-gradient-to-r from-indigo-600 via-indigo-700 to-indigo-800 hover:from-indigo-700 hover:to-indigo-900 shadow-indigo-600/30 border-indigo-400/30'
+              : 'bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 hover:from-emerald-700 hover:to-teal-900 shadow-emerald-600/30 border-emerald-400/30'
+          }`}
           title="Open Invoza AI Support"
           aria-label="Open Invoza AI Support"
         >
@@ -243,12 +247,22 @@ export default function AiChatSupport() {
             <div className="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white">
               <Bot className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
             </div>
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 border-indigo-800 rounded-full animate-pulse" />
+            <span
+              className={`absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 border-2 rounded-full animate-pulse ${
+                isOwner ? 'border-indigo-800' : 'border-emerald-800'
+              }`}
+            />
           </div>
 
           <div className="text-left">
             <p className="text-xs font-bold leading-tight tracking-tight text-white drop-shadow-xs">AI Support</p>
-            <p className="text-[10px] text-indigo-100 font-medium leading-tight mt-0.5 hidden sm:block">24/7 Supermarket Help</p>
+            <p
+              className={`text-[10px] font-medium leading-tight mt-0.5 hidden sm:block ${
+                isOwner ? 'text-indigo-100' : 'text-emerald-100'
+              }`}
+            >
+              24/7 Supermarket Help
+            </p>
           </div>
         </button>
       )}
@@ -257,10 +271,22 @@ export default function AiChatSupport() {
       {isOpen && (
         <div className="fixed bottom-3 right-3 left-3 sm:left-auto sm:bottom-5 sm:right-5 z-[9990] w-auto sm:w-[410px] h-[calc(100vh-28px)] max-h-[620px] bg-white rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           {/* Header Bar */}
-          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 pb-3 flex items-center justify-between flex-shrink-0 shadow-md border-b border-indigo-900/40">
+          <div
+            className={`text-white p-4 pb-3 flex items-center justify-between flex-shrink-0 shadow-md border-b ${
+              isOwner
+                ? 'bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-indigo-900/40'
+                : 'bg-gradient-to-r from-slate-900 via-emerald-950 to-slate-900 border-emerald-900/40'
+            }`}
+          >
             <div className="flex items-center gap-3 min-w-0">
               <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-indigo-500/25 border border-indigo-400/30">
+                <div
+                  className={`w-10 h-10 rounded-2xl text-white flex items-center justify-center shadow-md border ${
+                    isOwner
+                      ? 'bg-gradient-to-tr from-indigo-600 to-indigo-500 shadow-indigo-500/25 border-indigo-400/30'
+                      : 'bg-gradient-to-tr from-emerald-600 to-emerald-500 shadow-emerald-500/25 border-emerald-400/30'
+                  }`}
+                >
                   <Bot className="w-5 h-5" />
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-slate-900 rounded-full" />
@@ -277,7 +303,13 @@ export default function AiChatSupport() {
                 </div>
                 <p className="text-[11px] text-slate-300 truncate flex items-center gap-1 mt-0.5">
                   <span className="text-slate-400">Escalates to:</span>
-                  <span className="text-indigo-300 font-medium">support@supermarket.com</span>
+                  <span
+                    className={`font-medium ${
+                      isOwner ? 'text-indigo-300' : 'text-emerald-300'
+                    }`}
+                  >
+                    support@supermarket.com
+                  </span>
                 </p>
               </div>
             </div>
@@ -311,7 +343,9 @@ export default function AiChatSupport() {
               onClick={() => setActiveTab('chat')}
               className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
                 activeTab === 'chat'
-                  ? 'bg-white text-indigo-700 shadow-2xs border border-slate-200/60'
+                  ? isOwner
+                    ? 'bg-white text-indigo-700 shadow-2xs border border-slate-200/60'
+                    : 'bg-white text-emerald-700 shadow-2xs border border-slate-200/60'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -324,7 +358,9 @@ export default function AiChatSupport() {
               onClick={() => setActiveTab('ticket')}
               className={`flex-1 py-1.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition ${
                 activeTab === 'ticket'
-                  ? 'bg-white text-indigo-700 shadow-2xs border border-slate-200/60'
+                  ? isOwner
+                    ? 'bg-white text-indigo-700 shadow-2xs border border-slate-200/60'
+                    : 'bg-white text-emerald-700 shadow-2xs border border-slate-200/60'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -344,7 +380,11 @@ export default function AiChatSupport() {
                     className={`flex gap-2.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     {msg.role === 'assistant' && (
-                      <div className="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs">
+                      <div
+                        className={`w-7 h-7 rounded-xl text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-2xs ${
+                          isOwner ? 'bg-indigo-600' : 'bg-emerald-600'
+                        }`}
+                      >
                         <Bot className="w-4 h-4" />
                       </div>
                     )}
@@ -353,7 +393,9 @@ export default function AiChatSupport() {
                       <div
                         className={`p-3.5 rounded-2xl shadow-2xs leading-relaxed text-xs ${
                           msg.role === 'user'
-                            ? 'bg-indigo-600 text-white rounded-tr-xs font-medium'
+                            ? isOwner
+                              ? 'bg-indigo-600 text-white rounded-tr-xs font-medium'
+                              : 'bg-emerald-600 text-white rounded-tr-xs font-medium'
                             : 'bg-white text-slate-800 border border-slate-200/90 rounded-tl-xs space-y-1.5'
                         }`}
                       >
@@ -374,9 +416,17 @@ export default function AiChatSupport() {
 
                       {/* Resolution Check Card */}
                       {msg.role === 'assistant' && msg.showResolutionCheck && (
-                        <div className="p-3 bg-white border border-indigo-200 rounded-2xl space-y-2 shadow-2xs animate-in fade-in duration-200">
+                        <div
+                          className={`p-3 bg-white border rounded-2xl space-y-2 shadow-2xs animate-in fade-in duration-200 ${
+                            isOwner ? 'border-indigo-200' : 'border-emerald-200'
+                          }`}
+                        >
                           <p className="font-bold text-slate-900 text-[11px] flex items-center gap-1.5">
-                            <HelpCircle className="w-3.5 h-3.5 text-indigo-600" />
+                            <HelpCircle
+                              className={`w-3.5 h-3.5 ${
+                                isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                              }`}
+                            />
                             <span>Did this answer resolve your inquiry?</span>
                           </p>
 
@@ -407,9 +457,17 @@ export default function AiChatSupport() {
                                   )
                                 );
                               }}
-                              className="flex-1 py-1.5 px-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold rounded-xl transition text-[11px] flex items-center justify-center gap-1.5"
+                              className={`flex-1 py-1.5 px-2 font-bold rounded-xl transition text-[11px] flex items-center justify-center gap-1.5 border ${
+                                isOwner
+                                  ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border-indigo-200'
+                                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-200'
+                              }`}
                             >
-                              <Mail className="w-3.5 h-3.5 text-indigo-600" />
+                              <Mail
+                                className={`w-3.5 h-3.5 ${
+                                  isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                                }`}
+                              />
                               <span>No, Email Support</span>
                             </button>
                           </div>
@@ -428,13 +486,29 @@ export default function AiChatSupport() {
                 {/* Typing Indicator */}
                 {isLoading && (
                   <div className="flex items-center gap-2.5 text-slate-500 text-xs py-1">
-                    <div className="w-7 h-7 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
+                    <div
+                      className={`w-7 h-7 rounded-xl text-white flex items-center justify-center shadow-2xs ${
+                        isOwner ? 'bg-indigo-600' : 'bg-emerald-600'
+                      }`}
+                    >
                       <Bot className="w-4 h-4 animate-spin" />
                     </div>
                     <div className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-2xl rounded-tl-xs flex items-center gap-1.5 shadow-2xs">
-                      <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                      <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                      <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce" />
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:-0.3s] ${
+                          isOwner ? 'bg-indigo-600' : 'bg-emerald-600'
+                        }`}
+                      />
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full animate-bounce [animation-delay:-0.15s] ${
+                          isOwner ? 'bg-indigo-600' : 'bg-emerald-600'
+                        }`}
+                      />
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full animate-bounce ${
+                          isOwner ? 'bg-indigo-600' : 'bg-emerald-600'
+                        }`}
+                      />
                       <span className="text-[11px] text-slate-500 font-semibold ml-1.5">Thinking...</span>
                     </div>
                   </div>
@@ -455,7 +529,11 @@ export default function AiChatSupport() {
                         key={idx}
                         type="button"
                         onClick={() => handleSendMessage(p.text)}
-                        className="px-2.5 py-1 bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 border border-slate-200 text-slate-700 text-[11px] font-medium rounded-xl transition shadow-2xs text-left"
+                        className={`px-2.5 py-1 bg-white border border-slate-200 text-slate-700 text-[11px] font-medium rounded-xl transition shadow-2xs text-left ${
+                          isOwner
+                            ? 'hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300'
+                            : 'hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300'
+                        }`}
                       >
                         {p.label}
                       </button>
@@ -466,7 +544,13 @@ export default function AiChatSupport() {
 
               {/* Chat Input Bar */}
               <div className="p-3 bg-white border-t border-slate-200 flex-shrink-0 space-y-1.5">
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-300 focus-within:border-indigo-600 focus-within:bg-white rounded-2xl p-1.5 transition shadow-2xs">
+                <div
+                  className={`flex items-center gap-2 bg-slate-50 border border-slate-300 focus-within:bg-white rounded-2xl p-1.5 transition shadow-2xs ${
+                    isOwner
+                      ? 'focus-within:border-indigo-600'
+                      : 'focus-within:border-emerald-600'
+                  }`}
+                >
                   <input
                     ref={inputRef}
                     type="text"
@@ -482,7 +566,11 @@ export default function AiChatSupport() {
                     type="button"
                     onClick={() => handleSendMessage()}
                     disabled={isLoading || !inputMessage.trim()}
-                    className="w-8 h-8 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white flex items-center justify-center transition active:scale-95 shadow-2xs flex-shrink-0"
+                    className={`w-8 h-8 rounded-xl disabled:opacity-40 text-white flex items-center justify-center transition active:scale-95 shadow-2xs flex-shrink-0 ${
+                      isOwner
+                        ? 'bg-indigo-600 hover:bg-indigo-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
                     title="Send message"
                   >
                     <Send className="w-3.5 h-3.5" />
@@ -494,7 +582,11 @@ export default function AiChatSupport() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('ticket')}
-                    className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-0.5 transition"
+                    className={`font-bold flex items-center gap-0.5 transition ${
+                      isOwner
+                        ? 'text-indigo-600 hover:text-indigo-800'
+                        : 'text-emerald-600 hover:text-emerald-800'
+                    }`}
                   >
                     <span>Escalate to support@supermarket.com</span>
                     <ArrowRight className="w-2.5 h-2.5" />
@@ -513,7 +605,13 @@ export default function AiChatSupport() {
                 </h4>
                 <p className="text-slate-500 text-[11px] mt-0.5">
                   Submit an official support ticket directly to our management team at{' '}
-                  <strong className="text-indigo-700 font-semibold">support@supermarket.com</strong>.
+                  <strong
+                    className={`font-semibold ${
+                      isOwner ? 'text-indigo-700' : 'text-emerald-700'
+                    }`}
+                  >
+                    support@supermarket.com
+                  </strong>.
                 </p>
               </div>
 
@@ -521,7 +619,13 @@ export default function AiChatSupport() {
               <div className="bg-white p-3.5 rounded-2xl border border-slate-200 space-y-2 shadow-2xs text-[11px]">
                 <div className="flex justify-between items-center pb-1.5 border-b border-slate-100">
                   <span className="text-slate-400 font-medium">To (Recipient):</span>
-                  <span className="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200">
+                  <span
+                    className={`font-bold px-2 py-0.5 rounded-md border ${
+                      isOwner
+                        ? 'text-indigo-700 bg-indigo-50 border-indigo-200'
+                        : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                    }`}
+                  >
                     support@supermarket.com
                   </span>
                 </div>
@@ -549,16 +653,34 @@ export default function AiChatSupport() {
                     value={ticketIssue}
                     onChange={(e) => setTicketIssue(e.target.value)}
                     placeholder="Provide details about what you need human assistance with..."
-                    className="w-full p-3 text-xs bg-white text-slate-900 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none font-medium leading-relaxed placeholder:text-slate-400"
+                    className={`w-full p-3 text-xs bg-white text-slate-900 border border-slate-300 rounded-2xl outline-none font-medium leading-relaxed placeholder:text-slate-400 ${
+                      isOwner
+                        ? 'focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
+                        : 'focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
+                    }`}
                   />
                 </div>
 
-                <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl space-y-1 text-[11px] text-indigo-950">
-                  <span className="font-bold flex items-center gap-1 text-indigo-700">
+                <div
+                  className={`p-3 rounded-xl space-y-1 text-[11px] border ${
+                    isOwner
+                      ? 'bg-indigo-50/60 border-indigo-100 text-indigo-950'
+                      : 'bg-emerald-50/60 border-emerald-100 text-emerald-950'
+                  }`}
+                >
+                  <span
+                    className={`font-bold flex items-center gap-1 ${
+                      isOwner ? 'text-indigo-700' : 'text-emerald-700'
+                    }`}
+                  >
                     <Check className="w-3.5 h-3.5" />
                     <span>Includes Conversation Context</span>
                   </span>
-                  <p className="text-indigo-900/80 leading-snug">
+                  <p
+                    className={`leading-snug ${
+                      isOwner ? 'text-indigo-900/80' : 'text-emerald-900/80'
+                    }`}
+                  >
                     Your recent chat messages will be automatically packaged into the email ticket for quick resolution.
                   </p>
                 </div>
@@ -584,7 +706,11 @@ export default function AiChatSupport() {
                   <button
                     type="submit"
                     disabled={isEscalating}
-                    className="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs"
+                    className={`flex-1 py-2.5 px-4 disabled:opacity-50 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs ${
+                      isOwner
+                        ? 'bg-indigo-600 hover:bg-indigo-700'
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
                   >
                     {isEscalating ? <Spinner size="sm" /> : <Mail className="w-3.5 h-3.5" />}
                     <span>{isEscalating ? 'Dispatching...' : 'Send to support@supermarket.com'}</span>

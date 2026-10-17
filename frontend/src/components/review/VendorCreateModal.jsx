@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import Modal from '../ui/Modal';
 import { vendorApi } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function VendorCreateModal({ isOpen, onClose, initialData, vendorTypes = [], onVendorCreated }) {
+  const { isOwner } = useAuth();
   const { success, error: toastError } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -41,6 +43,10 @@ export default function VendorCreateModal({ isOpen, onClose, initialData, vendor
     }
   };
 
+  const focusClass = isOwner
+    ? 'focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
+    : 'focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600';
+
   return (
     <Modal
       isOpen={isOpen}
@@ -60,7 +66,11 @@ export default function VendorCreateModal({ isOpen, onClose, initialData, vendor
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition disabled:opacity-50"
+            className={`px-4 py-2 text-xs font-semibold text-white rounded-xl shadow-xs transition disabled:opacity-50 ${
+              isOwner
+                ? 'bg-indigo-600 hover:bg-indigo-700'
+                : 'bg-emerald-600 hover:bg-emerald-700'
+            }`}
           >
             {loading ? 'Creating...' : 'Create Vendor'}
           </button>
@@ -76,7 +86,7 @@ export default function VendorCreateModal({ isOpen, onClose, initialData, vendor
             required
             value={formData.vendor_name}
             onChange={handleChange}
-            className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+            className={`w-full text-xs px-3 py-2 border border-slate-300 rounded-lg outline-none ${focusClass}`}
             placeholder="e.g. ABC Electronics Pvt Ltd"
           />
         </div>
@@ -88,7 +98,7 @@ export default function VendorCreateModal({ isOpen, onClose, initialData, vendor
               name="vendor_type"
               value={formData.vendor_type}
               onChange={handleChange}
-              className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none bg-white"
+              className={`w-full text-xs px-3 py-2 border border-slate-300 rounded-lg outline-none bg-white ${focusClass}`}
             >
               {vendorTypes.map((vt) => (
                 <option key={vt.id || vt.type_name} value={vt.type_name}>
@@ -105,7 +115,7 @@ export default function VendorCreateModal({ isOpen, onClose, initialData, vendor
               name="gstin"
               value={formData.gstin}
               onChange={handleChange}
-              className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none uppercase"
+              className={`w-full text-xs px-3 py-2 border border-slate-300 rounded-lg outline-none uppercase ${focusClass}`}
               placeholder="15-character GSTIN"
             />
           </div>
@@ -119,7 +129,7 @@ export default function VendorCreateModal({ isOpen, onClose, initialData, vendor
               name="contact"
               value={formData.contact}
               onChange={handleChange}
-              className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+              className={`w-full text-xs px-3 py-2 border border-slate-300 rounded-lg outline-none ${focusClass}`}
               placeholder="+91..."
             />
           </div>
@@ -131,7 +141,7 @@ export default function VendorCreateModal({ isOpen, onClose, initialData, vendor
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+              className={`w-full text-xs px-3 py-2 border border-slate-300 rounded-lg outline-none ${focusClass}`}
               placeholder="orders@vendor.com"
             />
           </div>
@@ -144,7 +154,7 @@ export default function VendorCreateModal({ isOpen, onClose, initialData, vendor
             rows="2"
             value={formData.address}
             onChange={handleChange}
-            className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 outline-none"
+            className={`w-full text-xs px-3 py-2 border border-slate-300 rounded-lg outline-none ${focusClass}`}
             placeholder="Office / Warehouse address"
           />
         </div>
