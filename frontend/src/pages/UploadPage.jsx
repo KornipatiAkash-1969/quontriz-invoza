@@ -20,6 +20,7 @@ import { useAuth } from '../context/AuthContext';
 import { useUpdates } from '../context/UpdatesContext';
 import { formatFileSize, formatCurrency } from '../utils/formatters';
 import ProcessingStepIndicator from '../components/upload/ProcessingStepIndicator';
+import { Spinner, OcrScannerLoader } from '../components/ui';
 
 export default function UploadPage() {
   const navigate = useNavigate();
@@ -374,9 +375,25 @@ export default function UploadPage() {
       {activeTab === 'upload' && (
         <>
           {isProcessing ? (
-            <div className="py-8 space-y-4">
+            <div className="py-6 space-y-6">
+              {/* Role-Themed OCR Laser Scan Loader */}
+              <OcrScannerLoader
+                role={isOwner ? 'owner' : 'staff'}
+                title={currentStep <= 3 ? "Scanning & Reading Document..." : "Extracting Invoice Data..."}
+                subtitle={
+                  currentStep <= 2
+                    ? "Uploading document to secure server..."
+                    : currentStep === 3
+                    ? "Running high-accuracy Tesseract OCR on document pages..."
+                    : currentStep === 4
+                    ? "Extracting invoice number, dates, totals, and line items..."
+                    : "Finalizing verification and vendor classification..."
+                }
+              />
+
               <ProcessingStepIndicator currentStep={currentStep} />
-              <div className="text-center">
+
+              <div className="text-center pt-2">
                 <button
                   type="button"
                   onClick={resetUploadState}
@@ -989,17 +1006,22 @@ export default function UploadPage() {
                 <button
                   type="submit"
                   disabled={submittingManual}
-                  className={`w-full py-3 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition disabled:opacity-50 ${
+                  className={`w-full py-3 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 ${
                     isOwner
                       ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
                       : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
                   }`}
                 >
-                  {submittingManual
-                    ? 'Submitting...'
-                    : isEmployee
-                    ? 'Submit for Owner Approval & Payment'
-                    : 'Save & Approve Invoice'}
+                  {submittingManual ? (
+                    <>
+                      <Spinner size="xs" variant="white" />
+                      <span>Submitting Invoice...</span>
+                    </>
+                  ) : isEmployee ? (
+                    'Submit for Owner Approval & Payment'
+                  ) : (
+                    'Save & Approve Invoice'
+                  )}
                 </button>
               </div>
             </div>

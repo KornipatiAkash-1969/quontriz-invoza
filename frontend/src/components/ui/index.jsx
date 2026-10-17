@@ -1,9 +1,17 @@
-import React from 'react';
+import { useThemeRole } from './Loaders';
 
-export function Badge({ children, variant = 'default', className = '' }) {
+export function Badge({ children, variant = 'default', role, className = '' }) {
+  const isOwner = useThemeRole(role);
+  const themeClass = isOwner
+    ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+    : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
   const variants = {
     default: 'bg-slate-100 text-slate-800 border-slate-200',
-    primary: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    primary: themeClass,
+    theme: themeClass,
+    owner: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    staff: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     warning: 'bg-amber-50 text-amber-700 border-amber-200',
     danger: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -27,7 +35,12 @@ export {
   TableSkeleton,
   CardSkeleton,
   PageLoader,
-  TopProgressBar
+  TopProgressBar,
+  DotsLoader,
+  PulseDotsLoader,
+  OcrScannerLoader,
+  InlineLoader,
+  useThemeRole,
 } from './Loaders';
 
 export function Card({ title, subtitle, action, children, className = '', headerClassName = '' }) {
