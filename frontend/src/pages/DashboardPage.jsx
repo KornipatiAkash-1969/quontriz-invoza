@@ -540,10 +540,10 @@ export default function DashboardPage() {
       {/* ======================================================== */}
       <div data-tour="dashboard-charts" className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart 1: Purchases by Category */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
+              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                 <PieChartIcon className="w-4 h-4 text-indigo-600" />
                 <span>Purchases by Category</span>
               </h3>
@@ -553,7 +553,22 @@ export default function DashboardPage() {
             </div>
 
             {categoryBreakdown.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-12">No category data yet.</p>
+              <div className="py-8 sm:py-10 flex flex-col items-center justify-center text-center">
+                <div className="w-24 h-16 bg-indigo-50/70 rounded-2xl border border-indigo-100/70 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                  <svg className="w-12 h-9" viewBox="0 0 54 36" fill="none">
+                    <rect x="8" y="11" width="12" height="2.5" rx="1.25" fill="#a5b4fc" />
+                    <rect x="8" y="17" width="9" height="2.5" rx="1.25" fill="#c7d2fe" />
+                    <rect x="8" y="23" width="11" height="2.5" rx="1.25" fill="#c7d2fe" />
+                    <circle cx="36" cy="18" r="10" fill="#c7d2fe" />
+                    <path d="M36,18 L36,8 A10,10 0 0,1 46,18 Z" fill="#6366f1" />
+                    <circle cx="36" cy="18" r="4" fill="#e0e7ff" />
+                  </svg>
+                </div>
+                <p className="font-bold text-slate-700 text-xs">No category data yet.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Invoices will appear here once data is available.
+                </p>
+              </div>
             ) : (
               <div className="h-60 flex items-center justify-center relative">
                 <Pie
@@ -571,10 +586,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Chart 2: Purchases by Vendor */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
+              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                 <BarChart3 className="w-4 h-4 text-indigo-600" />
                 <span>Top Vendors by Spend</span>
               </h3>
@@ -582,7 +597,20 @@ export default function DashboardPage() {
             </div>
 
             {vendorBreakdown.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-12">No vendor data yet.</p>
+              <div className="py-8 sm:py-10 flex flex-col items-center justify-center text-center">
+                <div className="w-24 h-16 bg-indigo-50/70 rounded-2xl border border-indigo-100/70 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                  <svg className="w-12 h-9" viewBox="0 0 48 36" fill="none">
+                    <rect x="10" y="18" width="5" height="12" rx="2.5" fill="#c7d2fe" />
+                    <rect x="18" y="11" width="5" height="19" rx="2.5" fill="#818cf8" />
+                    <rect x="26" y="6" width="5" height="24" rx="2.5" fill="#6366f1" />
+                    <rect x="34" y="14" width="5" height="16" rx="2.5" fill="#a5b4fc" />
+                  </svg>
+                </div>
+                <p className="font-bold text-slate-700 text-xs">No vendor data yet.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Vendor spend details will appear here.
+                </p>
+              </div>
             ) : (
               <div className="h-60">
                 <Bar
@@ -603,10 +631,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Chart 3: Monthly Purchases Trend */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
+              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-emerald-600" />
                 <span>Monthly Purchases Trend</span>
               </h3>
@@ -614,7 +642,27 @@ export default function DashboardPage() {
             </div>
 
             {monthlyPurchases.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-12">No trend data yet.</p>
+              <div className="py-8 sm:py-10 flex flex-col items-center justify-center text-center">
+                <div className="w-24 h-16 bg-indigo-50/70 rounded-2xl border border-indigo-100/70 flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                  <svg className="w-12 h-9" viewBox="0 0 48 36" fill="none">
+                    <path
+                      d="M10,24 L20,16 L30,22 L40,8"
+                      stroke="#6366f1"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <circle cx="10" cy="24" r="3" fill="#6366f1" />
+                    <circle cx="20" cy="16" r="3" fill="#6366f1" />
+                    <circle cx="30" cy="22" r="3" fill="#6366f1" />
+                    <circle cx="40" cy="8" r="3.5" fill="#4f46e5" stroke="#e0e7ff" strokeWidth="1.5" />
+                  </svg>
+                </div>
+                <p className="font-bold text-slate-700 text-xs">No trend data yet.</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Monthly purchase trends will appear here.
+                </p>
+              </div>
             ) : (
               <div className="h-60">
                 <Line
