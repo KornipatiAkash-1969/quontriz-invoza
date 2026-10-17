@@ -72,7 +72,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
       badge: '🧾 2. Invoices',
       title: 'Invoices Audit Directory & Vouchers',
       icon: FileText,
-      iconBg: 'bg-emerald-600',
+      iconBg: 'bg-indigo-600',
       explanation: 'Search, filter, audit, approve pending bills, and download PDF payment vouchers for all digitized supermarket invoices.',
       tip: 'Approve pending staff uploads with 1 tap via UPI, Bank Transfer, Card, or Cash.',
       preferredPlacement: 'right'
@@ -84,7 +84,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
       badge: '📦 3. Stock Control',
       title: 'Shelf Replenishment Requisitions',
       icon: ClipboardList,
-      iconBg: 'bg-teal-600',
+      iconBg: 'bg-indigo-700',
       explanation: 'Manage supermarket shelf restocking requests submitted by floor staff in real time. Update statuses to Ordered or Completed.',
       tip: 'Export open purchase demands directly to Excel for bulk distributor orders.',
       preferredPlacement: 'right'
@@ -244,6 +244,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
         tipIcon: 'text-indigo-600',
         tipText: 'text-indigo-950',
         nextBtn: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200',
+        finishBtn: 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200',
       }
     : {
         primary: 'emerald',
@@ -259,6 +260,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
         tipIcon: 'text-emerald-600',
         tipText: 'text-emerald-950',
         nextBtn: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200',
+        finishBtn: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200',
       };
 
   const steps = isOwner ? ownerSteps : staffSteps;
@@ -675,9 +677,7 @@ export default function ProductTourModal({ isOpen, onClose }) {
                 type="button"
                 onClick={handleNext}
                 className={`flex items-center gap-1.5 px-3.5 py-1.5 text-white font-bold text-xs rounded-xl shadow-xs transition active:scale-95 ${
-                  isLast
-                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
-                    : theme.nextBtn
+                  isLast ? theme.finishBtn : theme.nextBtn
                 }`}
               >
                 <span>{isLast ? 'Finish Tour' : 'Next Item'}</span>
