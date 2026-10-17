@@ -335,13 +335,25 @@ export default function RequirementsPage() {
       <div data-tour="requirements-header" className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-indigo-100">
+            <div
+              className={`w-10 h-10 rounded-xl text-white flex items-center justify-center shadow-md ${
+                isOwner
+                  ? 'bg-gradient-to-tr from-indigo-600 to-indigo-500 shadow-indigo-100'
+                  : 'bg-gradient-to-tr from-emerald-600 to-emerald-500 shadow-emerald-100'
+              }`}
+            >
               <ClipboardList className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">Store Requirements</h1>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                    isOwner
+                      ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  }`}
+                >
                   {counts.total} Demands
                 </span>
               </div>
@@ -368,7 +380,11 @@ export default function RequirementsPage() {
 
           <button
             onClick={handleOpenAdd}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition active:scale-[0.98]"
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-white shadow-sm transition active:scale-[0.98] ${
+              isOwner
+                ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
+            }`}
           >
             <Plus className="w-4 h-4" />
             <span>Add Required Item</span>
@@ -1197,7 +1213,11 @@ export default function RequirementsPage() {
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer active:scale-95"
+                    className={`flex items-center gap-2 px-5 py-2 text-xs font-bold text-white rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer active:scale-95 ${
+                      isOwner
+                        ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                        : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
+                    }`}
                   >
                     {submitting && <Spinner size="sm" />}
                     <span>{editingItem ? 'Save Changes' : 'Add to Requisition'}</span>

@@ -206,7 +206,11 @@ export default function InvoicesPage() {
 
         <button
           onClick={() => navigate('/upload')}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-sm transition active:scale-[0.98]"
+          className={`flex items-center gap-2 px-4 py-2.5 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-sm transition active:scale-[0.98] ${
+            isOwner
+              ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+              : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
+          }`}
         >
           <Plus className="w-4 h-4" />
           <span>Upload / Entry</span>

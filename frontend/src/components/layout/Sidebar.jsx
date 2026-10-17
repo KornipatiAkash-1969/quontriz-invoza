@@ -8,7 +8,6 @@ import {
   Tags,
   Layers,
   Settings,
-  ScanText,
   Clock,
   LogOut,
   Users,
@@ -115,15 +114,40 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         {/* Logo / Header */}
         <div data-tour="brand-logo" className="h-16 flex items-center justify-between px-5 border-b border-slate-100">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-indigo-100 flex-shrink-0">
-              <ScanText className="w-5 h-5" />
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md flex-shrink-0 transition-all duration-300 ${
+                isOwner
+                  ? 'bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 shadow-indigo-100'
+                  : 'bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 shadow-emerald-100'
+              }`}
+            >
+              <svg
+                className="w-5 h-5 text-white"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 8V6a2 2 0 0 1 2-2h2" />
+                <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+                <path d="M20 16v2a2 2 0 0 1-2 2h-2" />
+                <path d="M8 20H6a2 2 0 0 1-2-2v-2" />
+                <line x1="8" y1="9" x2="16" y2="9" />
+                <line x1="8" y1="12" x2="16" y2="12" />
+                <line x1="8" y1="15" x2="13" y2="15" />
+              </svg>
             </div>
             <div className="min-w-0">
               <h1 className="font-bold text-slate-900 text-base leading-tight tracking-tight truncate">
-                Quontriz Invoza
+                Quantriz{' '}
+                <span className={isOwner ? 'text-indigo-600' : 'text-emerald-600'}>
+                  Invoza
+                </span>
               </h1>
               <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider truncate">
-                Invoice Processing
+                {isOwner ? '👑 Owner Portal' : '📋 Staff Portal'}
               </p>
             </div>
           </div>
@@ -142,7 +166,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           <div className="px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider flex items-center justify-between">
             <span>Navigation</span>
             {user && (
-              <span className="text-[10px] text-indigo-600 font-bold uppercase">
+              <span
+                className={`text-[10px] font-bold uppercase ${
+                  isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                }`}
+              >
                 {user.role} mode
               </span>
             )}
@@ -160,16 +188,28 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-150 ${
                     isActive
-                      ? 'bg-indigo-50/90 text-indigo-700 font-semibold shadow-xs'
+                      ? isOwner
+                        ? 'bg-indigo-50/90 text-indigo-700 font-semibold shadow-xs'
+                        : 'bg-emerald-50/90 text-emerald-700 font-semibold shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  } ${item.highlight && !isActive ? 'text-indigo-600 bg-indigo-50/40 hover:bg-indigo-50' : ''}`
+                  } ${
+                    item.highlight && !isActive
+                      ? isOwner
+                        ? 'text-indigo-600 bg-indigo-50/40 hover:bg-indigo-50'
+                        : 'text-emerald-600 bg-emerald-50/40 hover:bg-emerald-50'
+                      : ''
+                  }`
                 }
               >
                 {({ isActive }) => (
                   <>
                     <Icon
                       className={`w-4 h-4 transition-colors ${
-                        isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'
+                        isActive
+                          ? isOwner
+                            ? 'text-indigo-600'
+                            : 'text-emerald-600'
+                          : 'text-slate-400 group-hover:text-slate-600'
                       }`}
                     />
                     <span>{item.label}</span>
@@ -180,7 +220,9 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                           item.badgeVariant === 'warning'
                             ? 'bg-amber-500 text-slate-950 animate-pulse ring-2 ring-amber-400/40'
                             : item.badgeVariant === 'primary'
-                            ? 'bg-indigo-600 text-white'
+                            ? isOwner
+                              ? 'bg-indigo-600 text-white'
+                              : 'bg-emerald-600 text-white'
                             : 'bg-emerald-100 text-emerald-700'
                         }`}
                       >
@@ -225,7 +267,9 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                   onClick={() => setShowTourBubble((prev) => !prev)}
                   className={`p-1.5 rounded-xl transition-all ${
                     showTourBubble
-                      ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-500/20 shadow-xs'
+                      ? isOwner
+                        ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-500/20 shadow-xs'
+                        : 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500/20 shadow-xs'
                       : 'text-slate-400 hover:text-slate-800 hover:bg-slate-200/70'
                   }`}
                   title="Click to view Product Tour"
@@ -233,7 +277,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 >
                   <ChevronRight
                     className={`w-4 h-4 transition-transform duration-200 ${
-                      showTourBubble ? 'rotate-90 text-indigo-600' : ''
+                      showTourBubble
+                        ? isOwner
+                          ? 'rotate-90 text-indigo-600'
+                          : 'rotate-90 text-emerald-600'
+                        : ''
                     }`}
                   />
                 </button>
@@ -251,13 +299,23 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                       openTour();
                       setShowTourBubble(false);
                     }}
-                    className="flex items-center gap-2.5 bg-white text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-200/90 hover:border-indigo-300 hover:shadow-indigo-100/50 hover:scale-105 transition-all duration-150 cursor-pointer group whitespace-nowrap"
+                    className={`flex items-center gap-2.5 bg-white text-slate-800 px-4 py-2.5 rounded-2xl shadow-xl border border-slate-200/90 transition-all duration-150 cursor-pointer group whitespace-nowrap hover:scale-105 ${
+                      isOwner
+                        ? 'hover:border-indigo-300 hover:shadow-indigo-100/50'
+                        : 'hover:border-emerald-300 hover:shadow-emerald-100/50'
+                    }`}
                     title="Launch Product Tour"
                   >
                     {/* Speech-bubble pointer arrow on the left pointing directly toward the arrow mark */}
                     <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-white drop-shadow-[-1px_0_1px_rgba(0,0,0,0.06)]" />
 
-                    <div className="w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-600 transition shadow-2xs">
+                    <div
+                      className={`w-5 h-5 rounded-md bg-slate-900 text-white flex items-center justify-center flex-shrink-0 transition shadow-2xs ${
+                        isOwner
+                          ? 'group-hover:bg-indigo-600'
+                          : 'group-hover:bg-emerald-600'
+                      }`}
+                    >
                       <svg
                         className="w-3 h-3 text-white"
                         viewBox="0 0 24 24"
@@ -271,7 +329,13 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                       </svg>
                     </div>
 
-                    <span className="text-xs font-bold text-slate-800 group-hover:text-indigo-600 transition tracking-tight">
+                    <span
+                      className={`text-xs font-bold text-slate-800 transition tracking-tight ${
+                        isOwner
+                          ? 'group-hover:text-indigo-600'
+                          : 'group-hover:text-emerald-600'
+                      }`}
+                    >
                       Product Tour
                     </span>
                   </button>
@@ -287,7 +351,11 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                       openTour();
                       setShowTourBubble(false);
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-white border border-indigo-200 rounded-xl text-xs font-bold text-slate-800 hover:text-indigo-600 shadow-xs transition"
+                    className={`w-full flex items-center justify-center gap-2 py-2 px-3 bg-white border rounded-xl text-xs font-bold text-slate-800 shadow-xs transition ${
+                      isOwner
+                        ? 'border-indigo-200 hover:text-indigo-600'
+                        : 'border-emerald-200 hover:text-emerald-600'
+                    }`}
                   >
                     <div className="w-4 h-4 rounded-md bg-slate-900 text-white flex items-center justify-center flex-shrink-0">
                       <svg
@@ -320,10 +388,18 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(true)}
-                  className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200 hover:border-indigo-200 text-xs font-bold transition shadow-2xs"
+                  className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-xl bg-white border border-slate-200 text-xs font-bold transition shadow-2xs ${
+                    isOwner
+                      ? 'hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 hover:border-indigo-200'
+                      : 'hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 hover:border-emerald-200'
+                  }`}
                   title="Change Password"
                 >
-                  <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
+                  <KeyRound
+                    className={`w-3.5 h-3.5 ${
+                      isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                    }`}
+                  />
                   <span>Password</span>
                 </button>
                 <button

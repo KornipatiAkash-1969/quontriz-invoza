@@ -698,7 +698,11 @@ export default function InvoiceReviewPage() {
             type="button"
             onClick={() => handleSaveInvoice(false)}
             disabled={isSubmitting}
-            className="flex items-center gap-2 px-5 py-2 text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition active:scale-[0.98] disabled:opacity-50"
+            className={`flex items-center gap-2 px-5 py-2 text-xs sm:text-sm font-bold text-white rounded-xl shadow-md transition active:scale-[0.98] disabled:opacity-50 ${
+              isOwner
+                ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
+            }`}
           >
             {isSubmitting ? <Spinner size="xs" variant="white" /> : <Save className="w-4 h-4" />}
             <span>{isSubmitting ? 'Saving...' : 'Confirm & Save'}</span>
@@ -1117,7 +1121,11 @@ export default function InvoiceReviewPage() {
               <button
                 type="button"
                 onClick={handleAddItemRow}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-semibold text-xs hover:bg-indigo-700 shadow-xs transition"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white font-semibold text-xs shadow-xs transition ${
+                  isOwner
+                    ? 'bg-indigo-600 hover:bg-indigo-700'
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+                }`}
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Item</span>
@@ -1576,7 +1584,11 @@ export default function InvoiceReviewPage() {
                 type="button"
                 onClick={() => handleSaveInvoice(false)}
                 disabled={isSubmitting}
-                className="flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md shadow-indigo-200 transition active:scale-[0.98] disabled:opacity-50"
+                className={`flex items-center gap-2 px-6 py-2.5 text-xs sm:text-sm font-bold text-white rounded-xl shadow-md transition active:scale-[0.98] disabled:opacity-50 ${
+                  isOwner
+                    ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                    : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
+                }`}
               >
                 {isSubmitting ? <Spinner size="xs" variant="white" /> : <Save className="w-4 h-4" />}
                 <span>{isSubmitting ? 'Saving Invoice...' : 'Confirm & Save Invoice'}</span>

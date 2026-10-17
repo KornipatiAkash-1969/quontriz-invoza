@@ -101,7 +101,9 @@ export default function TopNav({ onToggleSidebar }) {
               aria-label="Toggle notifications panel"
               className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition active:scale-95 ${
                 showNotifications
-                  ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500/20'
+                  ? isOwner
+                    ? 'bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500/20'
+                    : 'bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20'
                   : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
               }`}
               title={
@@ -124,7 +126,13 @@ export default function TopNav({ onToggleSidebar }) {
                 {/* Header */}
                 <div className="p-3.5 px-4 bg-white border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold ${
+                        isOwner
+                          ? 'bg-indigo-50 text-indigo-600'
+                          : 'bg-emerald-50 text-emerald-600'
+                      }`}
+                    >
                       <Bell className="w-4 h-4" />
                     </div>
                     <div>
@@ -147,10 +155,18 @@ export default function TopNav({ onToggleSidebar }) {
                             await markAllNotificationsAsRead();
                           }
                         }}
-                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-2 py-1 rounded-lg transition flex items-center gap-1"
+                        className={`text-[11px] font-bold px-2 py-1 rounded-lg transition flex items-center gap-1 ${
+                          isOwner
+                            ? 'text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50'
+                            : 'text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50'
+                        }`}
                         title="Mark all notifications as read"
                       >
-                        <Check className="w-3.5 h-3.5 text-indigo-600" />
+                        <Check
+                          className={`w-3.5 h-3.5 ${
+                            isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                          }`}
+                        />
                         <span>Mark all read</span>
                       </button>
                     )}
@@ -184,7 +200,9 @@ export default function TopNav({ onToggleSidebar }) {
                     onClick={() => setNotifFilter('all')}
                     className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
                       notifFilter === 'all'
-                        ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
+                        ? isOwner
+                          ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
+                          : 'bg-white text-emerald-700 shadow-xs border border-slate-200/80 font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -194,7 +212,9 @@ export default function TopNav({ onToggleSidebar }) {
                     onClick={() => setNotifFilter('unread')}
                     className={`px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap ${
                       notifFilter === 'unread'
-                        ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
+                        ? isOwner
+                          ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
+                          : 'bg-white text-emerald-700 shadow-xs border border-slate-200/80 font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -209,7 +229,9 @@ export default function TopNav({ onToggleSidebar }) {
                     onClick={() => setNotifFilter('invoices')}
                     className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
                       notifFilter === 'invoices'
-                        ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
+                        ? isOwner
+                          ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
+                          : 'bg-white text-emerald-700 shadow-xs border border-slate-200/80 font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -219,7 +241,9 @@ export default function TopNav({ onToggleSidebar }) {
                     onClick={() => setNotifFilter('requirements')}
                     className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
                       notifFilter === 'requirements'
-                        ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
+                        ? isOwner
+                          ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
+                          : 'bg-white text-emerald-700 shadow-xs border border-slate-200/80 font-bold'
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
@@ -261,7 +285,9 @@ export default function TopNav({ onToggleSidebar }) {
                           onClick={() => handleNotificationClick(notif)}
                           className={`p-3 transition cursor-pointer flex items-start gap-3 group border-l-2 ${
                             isUnread
-                              ? 'bg-indigo-50/40 hover:bg-indigo-50/80 border-l-indigo-600'
+                              ? isOwner
+                                ? 'bg-indigo-50/40 hover:bg-indigo-50/80 border-l-indigo-600'
+                                : 'bg-emerald-50/40 hover:bg-emerald-50/80 border-l-emerald-600'
                               : 'bg-white hover:bg-slate-50 border-l-transparent'
                           }`}
                         >
@@ -276,7 +302,9 @@ export default function TopNav({ onToggleSidebar }) {
                                 : isRejected
                                 ? 'bg-rose-100 text-rose-700'
                                 : isInv
-                                ? 'bg-indigo-100 text-indigo-700'
+                                ? isOwner
+                                  ? 'bg-indigo-100 text-indigo-700'
+                                  : 'bg-emerald-100 text-emerald-700'
                                 : 'bg-amber-100 text-amber-800'
                             }`}
                           >
@@ -297,12 +325,26 @@ export default function TopNav({ onToggleSidebar }) {
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
-                              <p className={`truncate text-xs group-hover:text-indigo-600 transition ${isUnread ? 'font-bold text-slate-900' : 'font-semibold text-slate-700'}`}>
+                              <p
+                                className={`truncate text-xs transition ${
+                                  isUnread
+                                    ? 'font-bold text-slate-900'
+                                    : 'font-semibold text-slate-700'
+                                } ${
+                                  isOwner
+                                    ? 'group-hover:text-indigo-600'
+                                    : 'group-hover:text-emerald-600'
+                                }`}
+                              >
                                 {notif.title}
                               </p>
                               <div className="flex items-center gap-1.5 flex-shrink-0">
                                 {isUnread && (
-                                  <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                                  <span
+                                    className={`w-2 h-2 rounded-full ${
+                                      isOwner ? 'bg-indigo-600' : 'bg-emerald-600'
+                                    }`}
+                                  />
                                 )}
                                 <button
                                   type="button"
@@ -331,7 +373,11 @@ export default function TopNav({ onToggleSidebar }) {
                                   <span>• {formatDateTime(notif.created_at)}</span>
                                 )}
                               </div>
-                              <span className="text-[10px] font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition whitespace-nowrap flex items-center gap-0.5">
+                              <span
+                                className={`text-[10px] font-bold opacity-0 group-hover:opacity-100 transition whitespace-nowrap flex items-center gap-0.5 ${
+                                  isOwner ? 'text-indigo-600' : 'text-emerald-600'
+                                }`}
+                              >
                                 {isInv ? 'Open Invoice →' : 'View →'}
                               </span>
                             </div>
@@ -349,7 +395,11 @@ export default function TopNav({ onToggleSidebar }) {
                       setShowNotifications(false);
                       navigate('/invoices');
                     }}
-                    className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition"
+                    className={`flex items-center gap-1 transition ${
+                      isOwner
+                        ? 'text-indigo-600 hover:text-indigo-800'
+                        : 'text-emerald-600 hover:text-emerald-800'
+                    }`}
                   >
                     <span>Invoice History</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -359,7 +409,11 @@ export default function TopNav({ onToggleSidebar }) {
                       setShowNotifications(false);
                       navigate('/requirements');
                     }}
-                    className="text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition"
+                    className={`flex items-center gap-1 transition ${
+                      isOwner
+                        ? 'text-indigo-600 hover:text-indigo-800'
+                        : 'text-emerald-600 hover:text-emerald-800'
+                    }`}
                   >
                     <span>Store Requirements</span>
                     <ChevronRight className="w-3.5 h-3.5" />
@@ -367,7 +421,7 @@ export default function TopNav({ onToggleSidebar }) {
                 </div>
               </div>
             )}
-            </div>
+          </div>
         )}
 
         {/* User Account / Role Badge */}
@@ -429,7 +483,11 @@ export default function TopNav({ onToggleSidebar }) {
         {/* Upload Button */}
         <button
           onClick={() => navigate('/upload')}
-          className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm shadow-indigo-200 transition-all active:scale-[0.98] flex-shrink-0"
+          className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2 text-xs sm:text-sm font-semibold text-white rounded-xl shadow-sm transition-all active:scale-[0.98] flex-shrink-0 ${
+            isOwner
+              ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+              : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'
+          }`}
         >
           <UploadCloud className="w-4 h-4" />
           <span className="hidden sm:inline">Upload / Entry</span>
