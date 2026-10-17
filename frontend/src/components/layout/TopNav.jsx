@@ -10,7 +10,6 @@ import {
   FileText,
   ClipboardList,
   ChevronRight,
-  Sparkles,
   Check,
   CheckCircle2,
   AlertCircle,
@@ -20,13 +19,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUpdates } from '../../context/UpdatesContext';
-import { useProductTour } from '../../context/ProductTourContext';
 import { formatDateTime } from '../../utils/formatters';
 
 export default function TopNav({ onToggleSidebar }) {
   const navigate = useNavigate();
   const { user, isOwner, logout, isAuthenticated } = useAuth();
-  const { openTour } = useProductTour();
   const {
     notifications = [],
     unreadCount = 0,
@@ -103,20 +100,7 @@ export default function TopNav({ onToggleSidebar }) {
       <div className="flex items-center gap-2 sm:gap-3">
         {/* Real-Time Notifications Bell */}
         {isAuthenticated && (
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Quick Tour Button */}
-            <button
-              type="button"
-              onClick={openTour}
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition active:scale-95 shadow-2xs"
-              title="Launch Interactive Product Tour"
-              aria-label="Launch Interactive Product Tour"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="hidden sm:inline">Tour</span>
-            </button>
-
-            <div ref={notifRef} data-tour="notifications-bell" className="relative">
+          <div ref={notifRef} data-tour="notifications-bell" className="relative">
             <button
               type="button"
               onClick={() => setShowNotifications(!showNotifications)}
@@ -390,7 +374,6 @@ export default function TopNav({ onToggleSidebar }) {
               </div>
             )}
             </div>
-          </div>
         )}
 
         {/* User Account / Role Badge */}
@@ -426,13 +409,15 @@ export default function TopNav({ onToggleSidebar }) {
               </span>
             </div>
 
+            {/* Logout button (Mobile only; hidden on large width devices where sidebar has Sign Out) */}
             <button
               onClick={() => {
                 logout();
                 navigate('/login');
               }}
-              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
-              title="Logout"
+              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition lg:hidden"
+              title="Sign Out"
+              aria-label="Sign Out"
             >
               <LogOut className="w-4 h-4" />
             </button>
