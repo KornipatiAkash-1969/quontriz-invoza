@@ -389,6 +389,40 @@ class AuthController {
     }
   }
 
+  /**
+   * Reset Password for any Staff or Owner account (Owner only)
+   */
+  async resetUserPassword(req, res) {
+    try {
+      const targetId = parseInt(req.params.id, 10);
+      const { newPassword } = req.body;
+
+      if (!targetId) {
+        return res.status(400).json({ success: false, error: 'Valid user ID is required.' });
+      }
+      if (!newPassword || newPassword.length < 4) {
+        return res.status(400).json({ success: false, error: 'New password must be at least 4 characters.' });
+      }
+
+      const user = await db.get('SELECT id, name, email, role FROM users WHERE id = ?', [targetId]);
+      if (!user) {
+        return res.status(404).json({ success: false, error: 'User not found.' });
+      }
+
+      const passwordHash = bcrypt.hashSync(newPassword, 10);
+      await db.run('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, targetId]);
+
+      const roleLabel = user.role === 'owner' ? 'Store Owner' : 'Store Staff';
+      return res.json({
+        success: true,
+        message: `Password for ${roleLabel} "${user.name}" (${user.email}) has been reset successfully.`
+      });
+    } catch (error) {
+      console.error('[AuthController] Reset password error:', error);
+      return res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
   async getDemoUsers(req, res) {
     try {
       return res.json({

@@ -91,6 +91,7 @@ export const userApi = {
   createStaff: (data) => api.post('/auth/users/create-staff', data),
   createOwner: (data) => api.post('/auth/users/create-owner', data),
   delete: (id) => api.delete(`/auth/users/${id}`),
+  resetPassword: (id, newPassword) => api.put(`/auth/users/${id}/password`, { newPassword }),
 };
 
 export const invoiceApi = {
