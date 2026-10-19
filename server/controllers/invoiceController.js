@@ -237,6 +237,12 @@ class InvoiceController {
       if (body.invoice && Array.isArray(body.items)) {
         // Modern review payload
         const grandTot = body.invoice.total || body.invoice.grand_total || 0;
+        const advanceVal = Number(body.invoice.advance_paid || body.invoice.advancePaid || 0);
+        const paidVal = Number(body.invoice.amount_paid || body.invoice.paid || body.invoice.amountPaid || 0);
+        const balanceVal = body.invoice.outstanding_balance !== undefined
+          ? Number(body.invoice.outstanding_balance)
+          : Math.max(0, parseFloat((grandTot - advanceVal - paidVal).toFixed(2)));
+
         const invObj = {
           ...body.invoice,
           invoice_number: body.invoice.invoice_number || body.invoice.invoiceNumber,
@@ -245,9 +251,11 @@ class InvoiceController {
           po_number: body.invoice.po_number || body.invoice.poNumber,
           total: grandTot,
           grand_total: grandTot,
-          paid: Number(body.invoice.paid || body.invoice.amount_paid || 0),
-          amount_paid: Number(body.invoice.amount_paid || body.invoice.paid || 0),
-          outstanding_balance: body.invoice.outstanding_balance !== undefined ? Number(body.invoice.outstanding_balance) : grandTot,
+          advance_paid: advanceVal,
+          paid: paidVal,
+          amount_paid: paidVal,
+          outstanding_balance: balanceVal,
+          is_tax_inclusive: Boolean(body.invoice.is_tax_inclusive || body.invoice.isTaxInclusive),
           status: (req.user?.role === 'staff' || req.user?.role === 'employee')
             ? 'Pending Approval'
             : (body.invoice.status || 'Pending Approval')

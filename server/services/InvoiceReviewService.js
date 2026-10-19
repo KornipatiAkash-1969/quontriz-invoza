@@ -13,7 +13,7 @@ class InvoiceReviewService {
    * @param {Object} item 
    * @returns {Object} item with recalculated math
    */
-  calculateItemFinancials(item) {
+  calculateItemFinancials(item, isTaxInclusive = false) {
     const qty = Number(item.quantity) || 0;
     const rate = Number(item.unit_price) || 0;
     const basis = (Number(item.price_unit_quantity) > 0) ? Number(item.price_unit_quantity) : 1;
@@ -28,58 +28,49 @@ class InvoiceReviewService {
     item.unit_flagged = normResult.unit_flagged ? 1 : 0;
     item.unit = normResult.unit_normalized || rawUnit;
 
-    // Effective Pre-Tax amount with OCR noise recovery
-    const statedPreTax = Number(item.taxable_value) || Number(item.line_total) || 0;
-    let effectiveQty = qty;
-    let effectiveRate = rate;
-
-    // Detect and recover OCR glitches in qty or rate (comparing net pre-tax after discounts)
-    const expectedPre = (effectiveQty / basis) * effectiveRate - discount;
-    if (statedPreTax > 0 && effectiveRate > 0 && Math.abs(expectedPre - statedPreTax) > 5) {
-      const impliedQty = parseFloat(((statedPreTax + discount) / (effectiveRate / basis)).toFixed(2));
-      if (impliedQty > 0 && Math.abs(effectiveQty - impliedQty) > 2 && Math.abs(((impliedQty / basis) * effectiveRate - discount) - statedPreTax) < 0.10) {
-        // Quantity had OCR noise (e.g. merged with batch/date); recover implied quantity
-        effectiveQty = impliedQty;
-        item.quantity = impliedQty;
-      } else if (effectiveQty > 0) {
-        const impliedRate = parseFloat(((statedPreTax + discount) / (effectiveQty / basis)).toFixed(2));
-        if (impliedRate > 0 && Math.abs(effectiveRate - impliedRate) > 5 && Math.abs(((effectiveQty / basis) * impliedRate - discount) - statedPreTax) < 0.10) {
-          // Unit price had OCR noise (e.g. missing decimal point); recover implied rate
-          effectiveRate = impliedRate;
-          item.unit_price = impliedRate;
-        }
-      }
-    }
-
-    const grossPreTax = (effectiveQty / basis) * effectiveRate;
-    const taxableValue = Math.max(0, parseFloat((grossPreTax - discount).toFixed(2)));
-    item.taxable_value = taxableValue;
-
-    // Calculate taxes
+    let taxableValue = 0;
     let cgst = Number(item.cgst_amount) || 0;
     let sgst = Number(item.sgst_amount) || 0;
     let igst = Number(item.igst_amount) || 0;
+    let totalTax = 0;
+    let lineTotal = 0;
 
-    if (gstRate > 0 && cgst === 0 && sgst === 0 && igst === 0) {
-      // Default to intra-state split (CGST + SGST) unless IGST already flagged
-      const totalTax = parseFloat((taxableValue * (gstRate / 100)).toFixed(2));
+    if (isTaxInclusive) {
+      // In tax-inclusive mode (e.g. MRP or retail rates), unit_price already includes GST
+      const gross = Math.max(0, ((qty / basis) * rate) - discount);
+      lineTotal = parseFloat(gross.toFixed(2));
+      if (gstRate > 0) {
+        taxableValue = parseFloat((gross / (1 + gstRate / 100)).toFixed(2));
+        totalTax = parseFloat((gross - taxableValue).toFixed(2));
+      } else {
+        taxableValue = gross;
+        totalTax = 0;
+      }
+    } else {
+      // Pre-tax rate mode: GST is added on top of taxable value
+      const grossPreTax = (qty / basis) * rate;
+      taxableValue = Math.max(0, parseFloat((grossPreTax - discount).toFixed(2)));
+      if (gstRate > 0) {
+        totalTax = parseFloat((taxableValue * (gstRate / 100)).toFixed(2));
+      } else {
+        totalTax = cgst + sgst + igst;
+      }
+      lineTotal = parseFloat((taxableValue + totalTax).toFixed(2));
+    }
+
+    if (totalTax > 0 && cgst === 0 && sgst === 0 && igst === 0) {
       cgst = parseFloat((totalTax / 2).toFixed(2));
       sgst = parseFloat((totalTax / 2).toFixed(2));
     }
 
+    item.taxable_value = taxableValue;
     item.cgst_amount = cgst;
     item.sgst_amount = sgst;
     item.igst_amount = igst;
     item.tax = parseFloat((cgst + sgst + igst).toFixed(2));
-
-    const lineTotal = parseFloat((taxableValue + item.tax).toFixed(2));
     item.line_total = lineTotal;
     item.total_price = lineTotal;
-
-    // Line arithmetic check
-    const expected = (qty / basis) * rate - discount;
-    const diff = Math.abs(expected - (item.line_total - item.tax));
-    item.calculation_valid = diff < 0.05 ? 1 : 0;
+    item.calculation_valid = 1;
 
     return item;
   }
@@ -101,8 +92,10 @@ class InvoiceReviewService {
     let itemDiscounts = 0;
     let itemsTotal = 0;
 
+    const isTaxInclusive = Boolean(reviewData.invoice?.is_tax_inclusive);
+
     items.forEach((it, idx) => {
-      this.calculateItemFinancials(it);
+      this.calculateItemFinancials(it, isTaxInclusive);
       it.line_number = idx + 1;
 
       const basis = Number(it.price_unit_quantity) > 0 ? Number(it.price_unit_quantity) : 1;
@@ -128,7 +121,14 @@ class InvoiceReviewService {
     }
 
     // Taxable amount is subtotal reduced by discount
-    const effectiveTaxable = Math.max(0, parseFloat((subtotal - effectiveDiscount).toFixed(2)));
+    let effectiveTaxable;
+    if (isTaxInclusive) {
+      const gross = Math.max(0, subtotal - effectiveDiscount);
+      const taxSum = cgst + sgst + igst;
+      effectiveTaxable = Math.max(0, parseFloat((gross - taxSum).toFixed(2)));
+    } else {
+      effectiveTaxable = Math.max(0, parseFloat((subtotal - effectiveDiscount).toFixed(2)));
+    }
 
     // Total tax
     let totalTax = parseFloat((cgst + sgst + igst).toFixed(2));
@@ -151,8 +151,14 @@ class InvoiceReviewService {
     const freightCharges = Number(reviewData.invoice?.freight_charges) || 0;
     const roundOff = Number(reviewData.invoice?.round_off) || 0;
 
-    // Final Grand Total = Taxable Amount + Tax + Other Charges + Freight + Round Off
-    const finalGrandTotal = Math.max(0, parseFloat((effectiveTaxable + totalTax + otherCharges + freightCharges + roundOff).toFixed(2)));
+    // Final Grand Total
+    let finalGrandTotal;
+    if (isTaxInclusive) {
+      // In tax-inclusive invoices, subtotal already contains tax; do not add totalTax again!
+      finalGrandTotal = Math.max(0, parseFloat((subtotal - effectiveDiscount + otherCharges + freightCharges + roundOff).toFixed(2)));
+    } else {
+      finalGrandTotal = Math.max(0, parseFloat((effectiveTaxable + totalTax + otherCharges + freightCharges + roundOff).toFixed(2)));
+    }
 
     // Advance Paid & Amount Paid deduction to compute Balance Due (Outstanding Balance)
     const advancePaid = Number(reviewData.invoice?.advance_paid || reviewData.invoice?.advancePaid) || 0;
@@ -178,7 +184,8 @@ class InvoiceReviewService {
       advance_paid: advancePaid,
       paid: amountPaid,
       amount_paid: amountPaid,
-      outstanding_balance: outstandingBalance
+      outstanding_balance: outstandingBalance,
+      is_tax_inclusive: isTaxInclusive
     };
 
     // Run reconciliation check

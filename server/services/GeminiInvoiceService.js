@@ -97,13 +97,25 @@ SPECIALIZED CAPABILITY: HANDWRITTEN & MESSY WRITING INVOICE UNDERSTANDING:
 - If errors are crossed out, extract the corrected handwritten value.
 - Extract freeform column-less items: item_name, quantity, unit, unit_price, line_total.
 - Common units: kg, g, gm, ltr, lt, ml, pkt, pkts, tin, ctn, bag, bags, pcs, pc, nos, no, dz, box.
-- Synonyms: adv/jama = advance_paid, bal/baki = outstanding_balance, disc/chhoot = discount, bhada/hamali = freight/other charges.
+- Synonyms:
+  * Advance: adv, jama, deposit, advance_paid
+  * Amount Paid / Received: amount_paid, paid, payment received, cash, upi, card, neft, amount settled
+  * Outstanding Balance / Due: outstanding_balance, remaining amount, remaining, balance due, baki, baaki, bal, net payable, amount due
+  * Discount: disc, chhoot, less, scheme discount
+  * Freight / Charges: bhada, hamali, coolie, cartage, delivery, freight, other charges
 
-STRICT CALCULATION RULES:
-1. Identify whether invoice is tax-inclusive or tax-exclusive.
-2. If tax-inclusive: Taxable Subtotal + Applicable Taxes + Other Charges - Discounts = Invoice Total.
-3. NEVER deduct GST separately from tax-inclusive totals.
-4. Set currency to INR if ₹ or Rs or Indian vendor.
+STRICT CALCULATION & BALANCE RULES:
+1. Identify whether invoice is tax-inclusive or tax-exclusive (set "is_tax_inclusive": true or false).
+2. If tax-inclusive: item rates or subtotal already include GST. NEVER add GST twice to grand_total.
+3. Advance & Payment received:
+   * advance_paid = advance / deposit paid in advance.
+   * amount_paid = payment received / paid (e.g. UPI, cash, bank).
+   * total_paid = advance_paid + amount_paid.
+4. OUTSTANDING BALANCE RULE:
+   * outstanding_balance MUST EQUAL grand_total - advance_paid - amount_paid.
+   * If an invoice states Grand Total: 48,675 and Amount Paid: 30,000, outstanding_balance MUST be 18,675.
+   * If Remaining Amount / Balance Due is explicitly printed on the bill, extract that exact amount as outstanding_balance.
+5. Set currency to INR if ₹ or Rs or Indian vendor.
 
 Respond strictly with valid JSON following this exact schema:
 {

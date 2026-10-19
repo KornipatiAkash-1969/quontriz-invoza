@@ -73,6 +73,7 @@ const InvoiceDetailsSchema = z.object({
   paid: z.number().default(0),
   amount_paid: z.number().default(0),
   outstanding_balance: z.number().default(0),
+  is_tax_inclusive: z.boolean().default(false),
   total_amount_in_words: z.string().nullable().optional()
 });
 

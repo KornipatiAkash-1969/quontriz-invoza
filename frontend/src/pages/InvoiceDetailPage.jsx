@@ -761,25 +761,25 @@ export default function InvoiceDetailPage() {
             {/* Payment Settlement Breakdown */}
             {(invoice.amount_paid > 0 || invoice.outstanding_balance > 0 || invoice.advance_paid > 0) && (
               <div className="pt-2.5 mt-2 border-t border-dashed border-slate-200 space-y-1.5 text-xs">
-                {invoice.advance_paid > 0 && (
+                {Number(invoice.advance_paid) > 0 && (
                   <div className="flex justify-between text-slate-500">
                     <span>Advance Paid</span>
                     <span className="font-mono text-slate-700">{formatCurrency(invoice.advance_paid)}</span>
                   </div>
                 )}
-                {invoice.paid > 0 && (
+                {Number(invoice.paid || invoice.amount_paid) > 0 && (
                   <div className="flex justify-between text-slate-500">
-                    <span>Paid</span>
-                    <span className="font-mono text-slate-700">{formatCurrency(invoice.paid)}</span>
+                    <span>Amount Paid / Settled</span>
+                    <span className="font-mono text-slate-700">{formatCurrency(invoice.amount_paid || invoice.paid)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-emerald-700 font-semibold">
-                  <span>Total Paid to Date</span>
-                  <span className="font-mono">{formatCurrency(invoice.amount_paid)}</span>
+                  <span>Total Paid</span>
+                  <span className="font-mono">{formatCurrency(Number(invoice.advance_paid || 0) + Number(invoice.amount_paid || invoice.paid || 0))}</span>
                 </div>
                 <div className="flex justify-between bg-amber-50 p-2 rounded-lg border border-amber-200 font-bold text-amber-900">
                   <span>Balance Due / Pending</span>
-                  <span className="font-mono">{formatCurrency(invoice.outstanding_balance)}</span>
+                  <span className="font-mono">{formatCurrency(invoice.outstanding_balance !== undefined ? invoice.outstanding_balance : Math.max(0, Number(invoice.total || 0) - Number(invoice.advance_paid || 0) - Number(invoice.amount_paid || invoice.paid || 0)))}</span>
                 </div>
               </div>
             )}

@@ -91,6 +91,14 @@ export default function InvoiceReviewPage() {
   });
 
   // Form State - Invoice Header
+  const initialTotal = Number(extractedData?.invoice?.grand_total || extractedData?.invoice?.total || 0);
+  const initialAdvancePaid = Number(extractedData?.invoice?.advance_paid || 0);
+  const initialAmountPaid = Number(extractedData?.invoice?.amount_paid || extractedData?.invoice?.paid || 0);
+  const initialOutstanding = extractedData?.invoice?.outstanding_balance !== undefined
+    ? Number(extractedData.invoice.outstanding_balance)
+    : Math.max(0, parseFloat((initialTotal - initialAdvancePaid - initialAmountPaid).toFixed(2)));
+
+  // Form State - Invoice Header
   const [invoiceHeader, setInvoiceHeader] = useState({
     invoiceNumber: extractedData?.invoice?.invoice_number || extractedData?.invoice?.invoiceNumber || '',
     invoiceDate: extractedData?.invoice?.invoice_date || extractedData?.invoice?.invoiceDate || new Date().toISOString().split('T')[0],
@@ -111,12 +119,12 @@ export default function InvoiceReviewPage() {
     freightCharges: Number(extractedData?.invoice?.freight_charges || 0),
     otherCharges: Number(extractedData?.invoice?.other_charges || 0),
     roundOff: Number(extractedData?.invoice?.round_off || 0),
-    total: Number(extractedData?.invoice?.grand_total || extractedData?.invoice?.total || 0),
-    advancePaid: Number(extractedData?.invoice?.advance_paid || 0),
-    paid: 0,
-    outstandingBalance: extractedData?.invoice?.outstanding_balance !== undefined
-      ? Number(extractedData.invoice.outstanding_balance)
-      : Math.max(0, (Number(extractedData?.invoice?.grand_total || extractedData?.invoice?.total || 0) - Number(extractedData?.invoice?.advance_paid || 0) - Number(extractedData?.invoice?.amount_paid || extractedData?.invoice?.paid || 0))),
+    total: initialTotal,
+    advancePaid: initialAdvancePaid,
+    amountPaid: initialAmountPaid,
+    paid: initialAmountPaid,
+    outstandingBalance: initialOutstanding,
+    isTaxInclusive: Boolean(extractedData?.invoice?.is_tax_inclusive),
     status: 'Pending Approval'
   });
 
@@ -251,20 +259,38 @@ export default function InvoiceReviewPage() {
   };
 
   // Recalculate line arithmetic locally
-  const recalculateLineMath = (item) => {
+  const recalculateLineMath = (item, isTaxInclusive = false) => {
     const qty = Number(item.quantity) || 0;
     const rate = Number(item.unit_price) || 0;
     const basis = Number(item.price_unit_quantity) > 0 ? Number(item.price_unit_quantity) : 1;
     const disc = Number(item.discount_amount) || 0;
     const gstRate = Number(item.gst_rate) || 0;
 
-    const preTax = (qty / basis) * rate;
-    const taxable = Math.max(0, parseFloat((preTax - disc).toFixed(2)));
-    const taxAmt = parseFloat((taxable * (gstRate / 100)).toFixed(2));
+    let taxable = 0;
+    let taxAmt = 0;
+    let total = 0;
+
+    if (isTaxInclusive) {
+      // In tax-inclusive mode (e.g. MRP rates), rate already includes GST
+      const gross = Math.max(0, ((qty / basis) * rate) - disc);
+      total = parseFloat(gross.toFixed(2));
+      if (gstRate > 0) {
+        taxable = parseFloat((gross / (1 + gstRate / 100)).toFixed(2));
+        taxAmt = parseFloat((gross - taxable).toFixed(2));
+      } else {
+        taxable = gross;
+        taxAmt = 0;
+      }
+    } else {
+      // Pre-tax rate mode
+      const preTax = (qty / basis) * rate;
+      taxable = Math.max(0, parseFloat((preTax - disc).toFixed(2)));
+      taxAmt = parseFloat((taxable * (gstRate / 100)).toFixed(2));
+      total = parseFloat((taxable + taxAmt).toFixed(2));
+    }
+
     const cgst = parseFloat((taxAmt / 2).toFixed(2));
     const sgst = parseFloat((taxAmt / 2).toFixed(2));
-    const total = parseFloat((taxable + taxAmt).toFixed(2));
-
     const norm = getNormalizedUnitBadge(item.unit_original);
 
     return {
@@ -287,7 +313,7 @@ export default function InvoiceReviewPage() {
 
     // Auto-recalculate if math fields changed
     if (['quantity', 'unit_price', 'price_unit_quantity', 'discount_amount', 'gst_rate', 'unit_original'].includes(field)) {
-      it = recalculateLineMath(it);
+      it = recalculateLineMath(it, invoiceHeader.isTaxInclusive);
     }
 
     updated[index] = it;
@@ -321,7 +347,7 @@ export default function InvoiceReviewPage() {
       line_total: 0,
       calculation_valid: true,
       confidence: 1.0
-    });
+    }, invoiceHeader.isTaxInclusive);
 
     const updated = [...items, newItem];
     setItems(updated);
@@ -332,11 +358,11 @@ export default function InvoiceReviewPage() {
   // Duplicate Item Row
   const handleDuplicateRow = (index) => {
     const source = items[index];
-    const clone = {
+    const clone = recalculateLineMath({
       ...source,
       item_name: `${source.item_name} (Copy)`,
       line_number: items.length + 1
-    };
+    }, invoiceHeader.isTaxInclusive);
     const updated = [...items];
     updated.splice(index + 1, 0, clone);
     setItems(updated);
@@ -358,8 +384,21 @@ export default function InvoiceReviewPage() {
     recalculateDocumentTotals(updated);
   };
 
+  // Toggle Tax Inclusive / Exclusive mode
+  const handleToggleTaxMode = () => {
+    const newTaxInclusive = !invoiceHeader.isTaxInclusive;
+    const recomputedItems = items.map(it => recalculateLineMath(it, newTaxInclusive));
+    setItems(recomputedItems);
+    recalculateDocumentTotals(recomputedItems, { isTaxInclusive: newTaxInclusive });
+    toastSuccess(newTaxInclusive ? 'Switched to Tax-Inclusive pricing (MRP)' : 'Switched to Tax-Exclusive pricing (GST added)');
+  };
+
   // Recalculate document totals across items
   const recalculateDocumentTotals = (currentItems, headerOverrides = {}) => {
+    const isTaxInclusive = headerOverrides.isTaxInclusive !== undefined
+      ? Boolean(headerOverrides.isTaxInclusive)
+      : Boolean(invoiceHeader.isTaxInclusive);
+
     let subtotal = 0;
     let itemDiscounts = 0;
     let cgst = 0;
@@ -388,7 +427,16 @@ export default function InvoiceReviewPage() {
       : (Number(invoiceHeader.discount) || 0);
 
     const effectiveDiscount = itemDiscounts > 0 ? itemDiscounts : headerDisc;
-    const effectiveTaxable = Math.max(0, parseFloat((subtotal - effectiveDiscount).toFixed(2)));
+    
+    // Effective taxable
+    let effectiveTaxable;
+    if (isTaxInclusive) {
+      const gross = Math.max(0, subtotal - effectiveDiscount);
+      const taxSum = cgst + sgst + igst;
+      effectiveTaxable = Math.max(0, parseFloat((gross - taxSum).toFixed(2)));
+    } else {
+      effectiveTaxable = Math.max(0, parseFloat((subtotal - effectiveDiscount).toFixed(2)));
+    }
     
     // Tax calculation: line items tax, or header override / preset
     let totalTax = parseFloat((cgst + sgst + igst).toFixed(2));
@@ -423,7 +471,15 @@ export default function InvoiceReviewPage() {
       ? Number(headerOverrides.roundOff)
       : (Number(invoiceHeader.roundOff) || 0);
 
-    const finalTotal = Math.max(0, parseFloat((effectiveTaxable + totalTax + otherCharges + freightCharges + roundOff).toFixed(2)));
+    // Final Grand Total
+    let finalTotal;
+    if (headerOverrides.total !== undefined) {
+      finalTotal = Math.max(0, parseFloat(Number(headerOverrides.total).toFixed(2)));
+    } else if (isTaxInclusive) {
+      finalTotal = Math.max(0, parseFloat((subtotal - effectiveDiscount + otherCharges + freightCharges + roundOff).toFixed(2)));
+    } else {
+      finalTotal = Math.max(0, parseFloat((effectiveTaxable + totalTax + otherCharges + freightCharges + roundOff).toFixed(2)));
+    }
 
     const advancePaid = headerOverrides.advancePaid !== undefined
       ? Number(headerOverrides.advancePaid)
@@ -431,12 +487,18 @@ export default function InvoiceReviewPage() {
 
     const amountPaid = headerOverrides.amountPaid !== undefined
       ? Number(headerOverrides.amountPaid)
-      : (Number(invoiceHeader.amountPaid || invoiceHeader.paid) || 0);
+      : (invoiceHeader.amountPaid !== undefined ? Number(invoiceHeader.amountPaid) : Number(invoiceHeader.paid || 0));
 
-    const outstandingBalance = Math.max(0, parseFloat((finalTotal - advancePaid - amountPaid).toFixed(2)));
+    let outstandingBalance;
+    if (headerOverrides.outstandingBalance !== undefined) {
+      outstandingBalance = Math.max(0, parseFloat(Number(headerOverrides.outstandingBalance).toFixed(2)));
+    } else {
+      outstandingBalance = Math.max(0, parseFloat((finalTotal - advancePaid - amountPaid).toFixed(2)));
+    }
 
     setInvoiceHeader((prev) => ({
       ...prev,
+      isTaxInclusive,
       subtotal: parseFloat(subtotal.toFixed(2)),
       taxableAmount: effectiveTaxable,
       discount: parseFloat(effectiveDiscount.toFixed(2)),
@@ -469,7 +531,10 @@ export default function InvoiceReviewPage() {
           freight_charges: invoiceHeader.freightCharges,
           round_off: invoiceHeader.roundOff,
           advance_paid: invoiceHeader.advancePaid,
-          amount_paid: invoiceHeader.amountPaid
+          amount_paid: invoiceHeader.amountPaid,
+          paid: invoiceHeader.amountPaid,
+          outstanding_balance: invoiceHeader.outstandingBalance,
+          is_tax_inclusive: invoiceHeader.isTaxInclusive
         },
         items: items,
         vendor: vendorSelectionMode === 'existing' ? { id: selectedVendorId } : vendorData,
@@ -480,6 +545,12 @@ export default function InvoiceReviewPage() {
       if (res.data) {
         if (res.data.items) setItems(res.data.items);
         if (res.data.invoice) {
+          const adv = res.data.invoice.advance_paid !== undefined ? Number(res.data.invoice.advance_paid) : invoiceHeader.advancePaid;
+          const pmt = res.data.invoice.amount_paid !== undefined ? Number(res.data.invoice.amount_paid) : (res.data.invoice.paid !== undefined ? Number(res.data.invoice.paid) : invoiceHeader.amountPaid);
+          const bal = res.data.invoice.outstanding_balance !== undefined
+            ? Number(res.data.invoice.outstanding_balance)
+            : Math.max(0, parseFloat((res.data.invoice.grand_total - adv - pmt).toFixed(2)));
+
           setInvoiceHeader((prev) => ({
             ...prev,
             subtotal: res.data.invoice.subtotal,
@@ -490,9 +561,11 @@ export default function InvoiceReviewPage() {
             igst: res.data.invoice.igst,
             tax: res.data.invoice.total_gst,
             total: res.data.invoice.grand_total,
-            advancePaid: res.data.invoice.advance_paid !== undefined ? res.data.invoice.advance_paid : prev.advancePaid,
-            amountPaid: res.data.invoice.amount_paid !== undefined ? res.data.invoice.amount_paid : prev.amountPaid,
-            outstandingBalance: res.data.invoice.outstanding_balance !== undefined ? res.data.invoice.outstanding_balance : Math.max(0, res.data.invoice.grand_total - (res.data.invoice.advance_paid || 0))
+            advancePaid: adv,
+            amountPaid: pmt,
+            paid: pmt,
+            outstandingBalance: bal,
+            isTaxInclusive: res.data.invoice.is_tax_inclusive !== undefined ? Boolean(res.data.invoice.is_tax_inclusive) : prev.isTaxInclusive
           }));
         }
         if (res.data.reconciliation) setReconciliation(res.data.reconciliation);
@@ -578,9 +651,10 @@ export default function InvoiceReviewPage() {
           total: invoiceHeader.total,
           grand_total: invoiceHeader.total,
           advance_paid: invoiceHeader.advancePaid,
-          paid: invoiceHeader.paid,
+          paid: invoiceHeader.amountPaid,
           amount_paid: invoiceHeader.amountPaid,
           outstanding_balance: invoiceHeader.outstandingBalance,
+          is_tax_inclusive: invoiceHeader.isTaxInclusive,
           pdf_path: extractedData.file?.storedPath,
           ocr_text: extractedData.ocr?.rawText,
           status: invoiceHeader.status || 'Pending Approval'
@@ -1374,14 +1448,28 @@ export default function InvoiceReviewPage() {
 
           {/* Section 4: Document Financial Totals & Balance Reconciliation */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <Scale className="w-4 h-4 text-indigo-600" />
                 <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Financial Totals & Balance Reconciliation</h3>
               </div>
 
-              {/* Balance status pill */}
-              <div className="flex items-center gap-1.5">
+              {/* Tax Mode and Balance status pills */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleToggleTaxMode}
+                  className={`text-[11px] font-bold px-3 py-1 rounded-full border transition flex items-center gap-1.5 ${
+                    invoiceHeader.isTaxInclusive
+                      ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+                      : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                  }`}
+                  title="Toggle whether unit prices already include GST or GST is added on top"
+                >
+                  <span className="w-2 h-2 rounded-full bg-current"></span>
+                  <span>{invoiceHeader.isTaxInclusive ? 'Tax-Inclusive (MRP Rates)' : 'Tax-Exclusive (+ GST Added)'}</span>
+                </button>
+
                 {reconciliation?.isBalanced ? (
                   <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -1435,7 +1523,7 @@ export default function InvoiceReviewPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-indigo-700 font-bold text-xs">+ ₹</span>
+                  <span className="text-indigo-700 font-bold text-xs">{invoiceHeader.isTaxInclusive ? 'incl. ₹' : '+ ₹'}</span>
                   <input
                     type="number"
                     step="any"
@@ -1516,7 +1604,21 @@ export default function InvoiceReviewPage() {
 
               <div className="bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-200">
                 <span className="text-indigo-600 text-[10px] uppercase font-black block">Grand Total</span>
-                <span className="font-black text-indigo-700 text-base mt-0.5 block">{formatCurrency(invoiceHeader.total)}</span>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="font-bold text-indigo-700 text-xs">₹</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={invoiceHeader.total}
+                    onChange={(e) => {
+                      const tVal = parseFloat(e.target.value) || 0;
+                      recalculateDocumentTotals(items, { total: tVal });
+                    }}
+                    className="w-24 px-1 py-0.5 rounded border border-indigo-200 text-sm font-mono font-black text-indigo-700 bg-white"
+                    title="Edit Grand Total"
+                  />
+                </div>
               </div>
             </div>
 
@@ -1542,8 +1644,8 @@ export default function InvoiceReviewPage() {
               </div>
 
               <div className="flex items-center gap-4 text-xs flex-wrap">
-                <div className="flex items-center gap-1.5 text-slate-600">
-                  <span className="font-semibold">Advance Paid: ₹</span>
+                <div className="flex items-center gap-1.5 text-slate-600 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                  <span className="font-semibold text-slate-500">Advance Paid: ₹</span>
                   <input
                     type="number"
                     step="any"
@@ -1554,17 +1656,51 @@ export default function InvoiceReviewPage() {
                       recalculateDocumentTotals(items, { advancePaid: advVal });
                     }}
                     className="w-20 px-1.5 py-0.5 rounded border border-slate-300 text-xs font-mono font-bold text-slate-800"
+                    placeholder="0.00"
                   />
                 </div>
-                {invoiceHeader.amountPaid > 0 && (
-                  <div className="text-emerald-700 font-semibold">
-                    <span>Paid: </span>
-                    <strong className="font-mono">{formatCurrency(invoiceHeader.amountPaid)}</strong>
-                  </div>
-                )}
-                <div className="bg-amber-100 text-amber-900 px-3 py-1 rounded-lg border border-amber-300 font-bold flex items-center gap-1.5">
+
+                <div className="flex items-center gap-1.5 text-slate-600 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+                  <span className="font-semibold text-emerald-700">Amount Paid: ₹</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={invoiceHeader.amountPaid}
+                    onChange={(e) => {
+                      const paidVal = parseFloat(e.target.value) || 0;
+                      recalculateDocumentTotals(items, { amountPaid: paidVal });
+                    }}
+                    className="w-20 px-1.5 py-0.5 rounded border border-slate-300 text-xs font-mono font-bold text-emerald-700"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div className="text-slate-600 font-semibold px-2">
+                  <span>Total Paid: </span>
+                  <strong className="font-mono text-slate-800">{formatCurrency(Number(invoiceHeader.advancePaid || 0) + Number(invoiceHeader.amountPaid || 0))}</strong>
+                </div>
+
+                <div className={`px-3 py-1.5 rounded-lg border font-bold flex items-center gap-1.5 ${
+                  invoiceHeader.outstandingBalance === 0
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                    : 'bg-amber-100 text-amber-900 border-amber-300'
+                }`}>
                   <span>Balance Due: </span>
                   <span className="font-mono text-sm">{formatCurrency(invoiceHeader.outstandingBalance)}</span>
+                  {invoiceHeader.outstandingBalance > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const fullPay = Math.max(0, invoiceHeader.total - invoiceHeader.advancePaid);
+                        recalculateDocumentTotals(items, { amountPaid: fullPay, outstandingBalance: 0 });
+                      }}
+                      className="ml-1 text-[10px] px-1.5 py-0.5 bg-white text-amber-900 hover:bg-amber-200 rounded border border-amber-300 transition"
+                      title="Set Amount Paid to full balance"
+                    >
+                      Settle Full
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

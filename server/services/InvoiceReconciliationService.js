@@ -114,8 +114,8 @@ class InvoiceReconciliationService {
     const otherCharges = Number(invoice.other_charges) || 0;
     const freightCharges = Number(invoice.freight_charges) || 0;
     const roundOff = Number(invoice.round_off) || 0;
-    const advancePaid = Number(invoice.advance_paid) || 0;
-    const amountPaid = Number(invoice.amount_paid || invoice.paid) || 0;
+    let advancePaid = Number(invoice.advance_paid) || 0;
+    let amountPaid = Number(invoice.amount_paid || invoice.paid) || 0;
     const statedBalanceDue = Number(invoice.outstanding_balance) || 0;
 
     // Effective subtotal
@@ -179,6 +179,12 @@ class InvoiceReconciliationService {
 
     // Remaining Payable (Balance Due) = Grand Total - Advance Paid - Amount Already Paid
     const effectiveGrandTotal = statedGrandTotal > 0 ? statedGrandTotal : finalComputedGrandTotal;
+
+    // If document printed a balance due that is less than grand total, but didn't extract paid/advance:
+    if (statedBalanceDue > 0 && statedBalanceDue < effectiveGrandTotal && advancePaid === 0 && amountPaid === 0) {
+      amountPaid = parseFloat((effectiveGrandTotal - statedBalanceDue).toFixed(2));
+    }
+
     const calculatedRemaining = Math.max(0, parseFloat((effectiveGrandTotal - advancePaid - amountPaid).toFixed(2)));
 
     let finalRemaining = calculatedRemaining;
@@ -188,6 +194,9 @@ class InvoiceReconciliationService {
       } else if (Math.abs(statedBalanceDue - effectiveGrandTotal) < 1.0 && (advancePaid > 0 || amountPaid > 0)) {
         // Stated balance on document did not subtract advance payment; apply advance exactly once
         finalRemaining = calculatedRemaining;
+      } else {
+        // Explicit balance due printed on document takes precedence as ground truth
+        finalRemaining = statedBalanceDue;
       }
     }
 
@@ -225,6 +234,7 @@ class InvoiceReconciliationService {
       extractionData.invoice.amount_paid = parseFloat(amountPaid.toFixed(2));
       extractionData.invoice.paid = parseFloat(amountPaid.toFixed(2));
       extractionData.invoice.outstanding_balance = parseFloat(finalRemaining.toFixed(2));
+      extractionData.invoice.is_tax_inclusive = Boolean(invoice.is_tax_inclusive);
     }
 
     return {

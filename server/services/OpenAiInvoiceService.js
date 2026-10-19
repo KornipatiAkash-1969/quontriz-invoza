@@ -427,9 +427,14 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
     const computedGrandTotal = Math.max(0, parseFloat((taxableAmount + totalGst + freightCharges + otherCharges + roundOff).toFixed(2)));
     const grandTotal = parseFloat(invoice.grand_total) || computedGrandTotal;
 
-    const advancePaid = parseFloat(invoice.advance_paid) || 0;
-    const amountPaid = parseFloat(invoice.amount_paid) || parseFloat(invoice.paid) || 0;
+    let advancePaid = parseFloat(invoice.advance_paid) || 0;
+    let amountPaid = parseFloat(invoice.amount_paid) || parseFloat(invoice.paid) || 0;
     const statedOutstanding = parseFloat(invoice.outstanding_balance);
+
+    if (!isNaN(statedOutstanding) && statedOutstanding > 0 && statedOutstanding < grandTotal && advancePaid === 0 && amountPaid === 0) {
+      amountPaid = parseFloat((grandTotal - statedOutstanding).toFixed(2));
+    }
+
     const expectedRemaining = Math.max(0, parseFloat((grandTotal - advancePaid - amountPaid).toFixed(2)));
 
     let finalOutstanding = expectedRemaining;
@@ -439,6 +444,8 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
       } else if (Math.abs(statedOutstanding - grandTotal) < 1.0 && (advancePaid > 0 || amountPaid > 0)) {
         // Advance was not yet deducted from displayed balance, deduct it exactly once
         finalOutstanding = expectedRemaining;
+      } else {
+        finalOutstanding = statedOutstanding;
       }
     }
 
@@ -824,8 +831,8 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
                    extractMoney(new RegExp(`(?<!cost\\s*|cgst\\s*|sgst\\s*|igst\\s*|tax\\s*|gst\\s*|items?\\s*|merchandise\\s*|sub)\\btotal\\b\\s*(?:\\([^)]*\\))?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{1,2})?)`, 'i'));
     }
     const advancePaid = extractMoney(new RegExp(`(?:less:\\s*deposit|less:\\s*advance|deposit\\s*received|deposit|advance\\s*received|advance\\s*paid|advance|\\badv(?:\\.|\\b)|\\badvan\\b|\\bjama\\b|\\bbiyana\\b|\\bpeshgi\\b)\\s*(?:\\([^)]*\\))?\\s*(?:amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
-    const paid = extractMoney(new RegExp(`(?:less:\\s*payment\\s*received|payment\\s*received|additional\\s*payment|paid\\s*amount|amount\\s*paid|\\bpaid\\b|amount\\s*settled)\\s*(?:\\([^)]*\\))?\\s*(?:amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
-    const balanceDue = extractMoney(new RegExp(`(?:amount\\s*outstanding|balance\\s*to\\s*pay|balance\\s*due|pending\\s*amount|outstanding\\s*amount|amount\\s*due|net\\s*payable(?:\\s*balance)?|outstanding\\s*balance|balance\\s*payable|\\bbal(?:\\.|\\b)|\\bbaaki\\b|\\bbaki\\b|\\budhar\\b|\\budhari\\b|\\brehna\\b|net\\s*to\\s*pay)\\s*(?:\\([^)]*\\))?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const paid = extractMoney(new RegExp(`(?:less:\\s*payment\\s*received|payment\\s*received|additional\\s*payment|paid\\s*amount|amount\\s*paid|\\bpaid\\b|amount\\s*settled|cash\\s*received|upi\\s*received|payment\\s*made|total\\s*paid|received\\s*amount|\\breceived\\b)\\s*(?:\\([^)]*\\))?\\s*(?:amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const balanceDue = extractMoney(new RegExp(`(?:remaining\\s*amount|remaining\\s*balance|remaining\\s*payable|remaining\\s*due|\\bremaining\\b|amount\\s*outstanding|balance\\s*to\\s*pay|balance\\s*due|pending\\s*amount|outstanding\\s*amount|amount\\s*due|net\\s*payable(?:\\s*balance)?|outstanding\\s*balance|balance\\s*payable|\\bbal(?:\\.|\\b)|\\bbaaki\\b|\\bbaki\\b|\\budhar\\b|\\budhari\\b|\\brehna\\b|net\\s*to\\s*pay|due\\s*amount|net\\s*due|\\bdue\\b)\\s*(?:\\([^)]*\\))?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
 
     // Determine CGST, SGST, IGST distribution
     let finalCgst = cgstExplicit;
@@ -1728,15 +1735,23 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
     const computedGrandTotal = Math.max(0, parseFloat((effectiveTaxable + finalGst + freightCharges + finalOtherCharges + roundOff).toFixed(2)));
     const finalGrandTotal = grandTotal > 0 ? grandTotal : computedGrandTotal;
 
+    // If document printed a balance due that is less than grand total, but didn't extract paid/advance:
+    let effectivePaid = paid;
+    if (balanceDue > 0 && balanceDue < finalGrandTotal && advancePaid === 0 && effectivePaid === 0) {
+      effectivePaid = parseFloat((finalGrandTotal - balanceDue).toFixed(2));
+    }
+
     // Remaining Payable = Grand Total - Advance Paid - Amount Paid
-    const expectedRemaining = Math.max(0, parseFloat((finalGrandTotal - advancePaid - paid).toFixed(2)));
+    const expectedRemaining = Math.max(0, parseFloat((finalGrandTotal - advancePaid - effectivePaid).toFixed(2)));
     let finalOutstanding = expectedRemaining;
     if (balanceDue > 0) {
       if (Math.abs(balanceDue - expectedRemaining) < 1.0) {
         finalOutstanding = balanceDue;
-      } else if (Math.abs(balanceDue - finalGrandTotal) < 1.0 && (advancePaid > 0 || paid > 0)) {
+      } else if (Math.abs(balanceDue - finalGrandTotal) < 1.0 && (advancePaid > 0 || effectivePaid > 0)) {
         // Balance due printed on invoice did not subtract advance; deduct advance exactly once
         finalOutstanding = expectedRemaining;
+      } else {
+        finalOutstanding = balanceDue;
       }
     }
 
@@ -1795,8 +1810,8 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
         total_gst: parseFloat(finalGst.toFixed(2)),
         grand_total: parseFloat(finalGrandTotal.toFixed(2)),
         advance_paid: parseFloat(advancePaid.toFixed(2)),
-        paid: parseFloat(paid.toFixed(2)),
-        amount_paid: parseFloat(paid.toFixed(2)),
+        paid: parseFloat(effectivePaid.toFixed(2)),
+        amount_paid: parseFloat(effectivePaid.toFixed(2)),
         outstanding_balance: parseFloat(finalOutstanding.toFixed(2)),
         total_amount_in_words: null
       },
