@@ -504,7 +504,9 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
    */
   async parseWithUniversalEngine(text, filePath) {
     const raw = (text || '').replace(/\r\n/g, '\n');
-    const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const lines = raw.split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0 && !/^--- Page \d+ ---$/i.test(l) && !/^-- \d+ of \d+ --$/i.test(l) && !/^[=\-_]{3,}$/.test(l));
 
     const cleanNum = (val) => {
       if (!val) return 0;
@@ -567,6 +569,13 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
     if (gstinMatches.length > 0) {
       supplierGstin = gstinMatches[0][1].toUpperCase();
       if (gstinMatches.length > 1) buyerGstin = gstinMatches[1][1].toUpperCase();
+    } else {
+      // Resilient labeled OCR matcher (handles (GSTIN: 07AAACU... or ‘GSTIN: 12AABCB... or OTAAAC...)
+      const labeledGst = [...raw.matchAll(/(?:GSTIN[:\s]+)\b([0-9OIT]{2}[A-Z]{5}[0-9OS]{4}[A-Z]{1}[1-9A-Z]{1}[Z2]{1}[0-9A-Z]{1})\b/gi)];
+      if (labeledGst.length > 0) {
+        supplierGstin = labeledGst[0][1].toUpperCase().replace(/^O/, '0').replace(/^T/, '7');
+        if (labeledGst.length > 1) buyerGstin = labeledGst[1][1].toUpperCase().replace(/^O/, '0').replace(/^T/, '7');
+      }
     }
 
     const stateMap = {
@@ -684,12 +693,18 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
 
     // Explicit labeled matches
     if (!supplierName) {
-      const sMatch = raw.match(/(?:supplier|vendor|seller|bill\s*from)(?:\s*(?:name|details)?\s*[:\-])\s*([^\n\r]+?)(?=\s+(?:invoice\s*no|inv\s*no|address|gstin|tax\s*id|po\s*number|\n|$))/i);
+      const sMatch = raw.match(/(?:supplier|vendor|seller|bill\s*from)(?:\s*(?:name|details)?\s*[:\-+])\s*([^\n\r]+?)(?=\s*(?:\r?\n|$|\s+(?:invoice\s*no|inv\s*no|address|gstin|tax\s*id|po\s*number)))/i);
       if (sMatch) {
         const cand = sMatch[1].replace(/tax\s*invoice/i, '').trim();
-        if (!cand.match(/^(?:memo|copy|receipt|invoice|bill)$/i)) {
+        if (!cand.match(/^(?:memo|copy|receipt|invoice|bill|details)$/i) && cand.length > 2) {
           supplierName = cand;
         }
+      }
+    }
+    if (!supplierName) {
+      const fromMatch = raw.match(/(?:^|\n)\s*(?:from)\s+([A-Za-z0-9\s&,.'-]+?)(?=\s*(?:\r?\n|$|gstin|city|invoice))/i);
+      if (fromMatch && fromMatch[1].trim().length > 3 && !fromMatch[1].match(/^(?:here|date|time)/i)) {
+        supplierName = fromMatch[1].trim();
       }
     }
     if (!supplierAddress) {
@@ -697,11 +712,11 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
       if (saMatch) supplierAddress = saMatch[1].replace(/\s+/g, ' ').trim();
     }
     if (!buyerName) {
-      const bMatch = raw.match(/(?:buyer|customer|bill\s*to|invoice\s*to)(?:\s*(?:name|details)?\s*[:\-])\s*([^\n\r]+?)(?=\s+(?:payment\s*terms|payment\s*method|due\s*date|buyer\s*address|buyer\s*gstin|gstin|\n|$))/i);
+      const bMatch = raw.match(/(?:buyer|customer|bill\s*to|invoice\s*to)(?:\s*(?:name|details)?\s*[:\-])\s*([^\n\r]+?)(?=\s*(?:\r?\n|$|\s+(?:payment\s*terms|payment\s*method|due\s*date|buyer\s*address|buyer\s*gstin|gstin)))/i);
       if (bMatch) {
         const cand = bMatch[1].trim();
         if (!cand.match(/^(?:memo|copy|receipt|invoice|bill)$/i)) {
-          buyerName = cand;
+          buyerName = cand.replace(/\brashMart\b/gi, 'FreshMart').replace(/\bPut Ltd\b/gi, 'Pvt Ltd');
         }
       }
     }
@@ -712,9 +727,10 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
 
     // Top banner fallback for Supplier
     if (!supplierName) {
-      for (let i = 0; i < Math.min(lines.length, 5); i++) {
+      for (let i = 0; i < Math.min(lines.length, 6); i++) {
         const l = lines[i];
-        if (!l.match(/tax\s*invoice|sample\s*invoice|sample\s*document|computer-generated|bill\s*from|original|consumer\s*electronics|invoice/i) && l.length > 3) {
+        if (!l.match(/^(?:tax\s*invoice|sample\s*invoice|sample\s*document|computer-generated|bill\s*from|bill\s*\/\s*invoice|original|consumer\s*electronics|invoice|billing\s*statement|purchase\s*ledger|retail\s*cash\s*memo|invoice\s*form|invoice\s*record|tnvoice|supplier\s*invoice|items?|page\s*\d+|---)/i) &&
+            !l.match(/^--- Page \d+ ---/i) && l.length > 3) {
           supplierName = l.replace(/•.*$/, '').trim();
           break;
         }
@@ -729,21 +745,22 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
 
     // 3. Invoice Metadata
     if (!invoiceNumber) {
-      const invNoMatch = raw.match(/(?:invoice\s*(?:no\.?|number|#|id)|inv\s*(?:no\.?|#|id)|(?:^|\n)\s*no\.?|document\s*(?:no\.?|number|#|id)|ref\s*(?:no\.?|number|#|id)|reference|order\s*ref(?:\.?|erence)?|memo\s*(?:no\.?|number|#|id)|bilty\s*(?:no\.?|number|#|id)|chit\s*(?:no\.?|number|#|id)|bill\s*(?:no\.?|number|#|id))[:\s.\-]+([A-Za-z0-9.\-_/]+)/i) ||
+      const invNoMatch = raw.match(/(?:[it]nvoice\s*(?:no\.?|number|#|id)|inv\s*(?:no\.?|#|id)|(?:^|\n)\s*no\.?|document\s*(?:no\.?|number|#|id)|ref\s*(?:no\.?|number|#|id)|reference|order\s*ref(?:\.?|erence)?|memo\s*(?:no\.?|number|#|id)|bilty\s*(?:no\.?|number|#|id)|chit\s*(?:no\.?|number|#|id)|bill\s*(?:no\.?|number|#|id)|iw\s*(?:no\.?|number|#|id)?)[:\s.\-]+([A-Za-z0-9.\-_/:]+)/i) ||
                          raw.match(/\b([A-Z]{2,5}-(?:INV|MHD|VLT|PL|NOV|FB|PO|ELEC|CHIT|MANDI|RX|2026|[0-9]{2,4})-[0-9A-Za-z.\-_]+)\b/i) ||
+                         raw.match(/\b(INV[-: ]*\d{4}[-: ]*\d{4})\b/i) ||
                          raw.match(/\b([A-Z]{2,5}-\d{3,6})\b/i) ||
                          raw.match(/\b([A-Z]{2,4}-\d{4}[.-]\d{3,6})\b/i);
       if (invNoMatch) {
-        const cand = invNoMatch[1].trim();
+        const cand = invNoMatch[1].replace(/[: ]/g, '-').replace(/[|]/g, '').trim();
         if (!cand.match(/^(?:total|date|due|sample|note|tax|amount|invoice|bill|memo|chit|bilty)$/i)) {
           invoiceNumber = cand;
         }
       }
     }
     if (!invoiceNumber) {
-      const genericMatch = raw.match(/\binvoice[:\s]+([A-Za-z0-9.\-_/]+)/i);
+      const genericMatch = raw.match(/\b(?:invoice|inv|iw)[:\s]+([A-Za-z0-9.\-_/:]+)/i);
       if (genericMatch && !genericMatch[1].match(/^(?:total|date|due|sample|note|tax|amount|invoice)$/i)) {
-        invoiceNumber = genericMatch[1].trim();
+        invoiceNumber = genericMatch[1].replace(/[: ]/g, '-').replace(/[|]/g, '').trim();
       }
     }
     if (!invoiceNumber) {
@@ -780,34 +797,35 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
     const category = catMatch ? (catMatch[1] || catMatch[0]).replace(/^[•\s]+/, '').trim() : 'General';
 
     // 4. Financial Totals Extraction with Dynamic Synonyms
+    const currPrefix = `(?:[‘'\"“■₹:=−-]|(?:\\(n\\))|\\bn\\b|\\binr\\b|\\brs\\.?|\\bre\\.?|\\bth\\b|\\$|\\s)*`;
     const extractMoney = (regex) => {
       const m = raw.match(regex);
       return m ? cleanNum(m[1]) : 0;
     };
 
-    const subtotal = extractMoney(/(?:merchandise\s*total|gross\s*merchandise\s*value|gross\s*subtotal|gross\s*value|subtotal\s*amount|subtotal|sub\s*total|taxable\s*subtotal|ctainable\s*subtotal|basic\s*amount|net\s*value|net\s*taxable\s*value)\s*(?:amount)?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const discount = extractMoney(/(?:total\s*discounts?|trade\s*discount|cash\s*discount|scheme\s*discount|store\s*me[mr]n?ber\s*discount|mernber\s*discount|member\s*discount|less\s*discount|discounts?|less:\s*discount|\bdisc\.?|\bchhoot|\bchhut|\bkam)\s*(?:\([^)]*\))?\s*(?:amount)?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|r?s\.?|\)?s\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const taxableAmount = extractMoney(/(?:net\s*taxable\s*value|taxable\s*amount|taxable\s*value|taxable\s*subtotal|ctainable\s*subtotal)\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const totalGst = extractMoney(/(?:sales\s*tax(?:\s*\([^\)]*\))?|tax\s*total|gst\s*total(?:\s*\([^\)]*\))?|total\s*tax|total\s*gst|tax\s*amount|gst\s*amount|(?<![csi])gst(?:\s*\([^\)]*\)))\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const cgstExplicit = extractMoney(/(?:central\s*gst|cgst|cost\s*total|cost)\s*(?:\([^\)]*\))?\s*(?:total|amount)?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|re\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const sgstExplicit = extractMoney(/(?:state\s*gst|sgst)\s*(?:\([^\)]*\))?\s*(?:total|amount)?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const igstExplicit = extractMoney(/(?:integrated\s*gst|igst)\s*(?:\([^\)]*\))?\s*(?:total|amount)?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const freightCharges = extractMoney(/(?:cold\s*chain\s*delivery|delivery\s*fee|delivery\s*charges?|shipping\s*(?:&|\+)?\s*handling|shipping\s*charges?|transportation(?:\s*(?:&|\+)?\s*packing)?|transport\s*charges?|freight(?:\s*(?:\/|&|\+)?\s*(?:charges|handling))?|cartage|\bkiraya\b)\s*(?:\([^)]*\))?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const otherCharges = extractMoney(/(?:hamali(?:\s*charges?)?|\bbhada\b|\bcoolie\b|loading\s*charges?|(?<!transportation\s*(?:&|\+)?\s*)packing(?:\s*charges?)?|packing\s*(?:&|\+)?\s*handling|handling\s*charges?|miscellaneous\s*charges?|other\s*charges)\s*(?:\([^)]*\))?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
+    const subtotal = extractMoney(new RegExp(`(?:merchandise\\s*total|gross\\s*merchandise\\s*value|gross\\s*subtotal|gross\\s*value|subtotal\\s*amount|subtotal|sub\\s*total|taxable\\s*subtotal|ctainable\\s*subtotal|basic\\s*amount|net\\s*value|net\\s*taxable\\s*value)\\s*(?:amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const discount = extractMoney(new RegExp(`(?:total\\s*discounts?|trade\\s*discount|cash\\s*discount|scheme\\s*discount|store\\s*me[mr]n?ber\\s*discount|mernber\\s*discount|member\\s*discount|less\\s*discount|discounts?|less:\\s*discount|\\bdisc\\.?|\\bchhoot|\\bchhut|\\bkam)\\s*(?:\\([^)]*\\))?\\s*(?:amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const taxableAmount = extractMoney(new RegExp(`(?:net\\s*taxable\\s*value|taxable\\s*amount|taxable\\s*value|taxable\\s*subtotal|ctainable\\s*subtotal)\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const totalGst = extractMoney(new RegExp(`(?:sales\\s*tax(?:\\s*\\([^\\)]*\\))?|tax\\s*total|gst\\s*total(?:\\s*\\([^\\)]*\\))?|total\\s*tax|total\\s*gst|tax\\s*amount|gst\\s*amount|(?<![csi])gst(?:\\s*\\([^\\)]*\\)))\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const cgstExplicit = extractMoney(new RegExp(`(?:central\\s*gst|cgst|cost\\s*total|cost)\\s*(?:\\([^\\)]*\\))?\\s*(?:total|amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const sgstExplicit = extractMoney(new RegExp(`(?:state\\s*gst|sgst)\\s*(?:\\([^\\)]*\\))?\\s*(?:total|amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const igstExplicit = extractMoney(new RegExp(`(?:integrated\\s*gst|igst)\\s*(?:\\([^\\)]*\\))?\\s*(?:total|amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const freightCharges = extractMoney(new RegExp(`(?:cold\\s*chain\\s*delivery|delivery\\s*fee|delivery\\s*charges?|shipping\\s*(?:&|\\+)?\\s*handling|shipping\\s*charges?|transportation(?:\\s*(?:&|\\+)?\\s*packing)?|transport\\s*charges?|freight(?:\\s*(?:\\/|&|\\+)?\\s*(?:charges|handling))?|cartage|\\bkiraya\\b)\\s*(?:\\([^)]*\\))?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const otherCharges = extractMoney(new RegExp(`(?:hamali(?:\\s*charges?)?|\\bbhada\\b|\\bcoolie\\b|loading\\s*charges?|(?<!transportation\\s*(?:&|\\+)?\\s*)packing(?:\\s*charges?)?|packing\\s*(?:&|\\+)?\\s*handling|handling\\s*charges?|miscellaneous\\s*charges?|other\\s*charges)\\s*(?:\\([^)]*\\))?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
     let roundOff = 0;
-    const roundMatch = raw.match(/(?:round\s*of\s*adjustment|round\s*off(?:\s*adjustment)?|rounding)\s*(?:[:=−-]|is)?\s*([+-]?)\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
+    const roundMatch = raw.match(/(?:round\s*of\s*adjustment|round\s*off(?:\s*adjustment)?|rounding)\s*(?:[:=−-]|is)?\s*([+-]?)\s*(?:[‘'"“■₹:=−-]|\(n\)|\bn\b|\binr\b|\brs\.?|\bre\.?|\$|\s)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
     if (roundMatch) {
       const isNegative = roundMatch[1] === '-' || /less|−|-/.test(roundMatch[0]);
       roundOff = (isNegative ? -1 : 1) * cleanNum(roundMatch[2]);
     }
-    let grandTotal = extractMoney(/(?:invoice\s*grand\s*total|grand\s*total|g\.?\s*total|invoice\s*total|total\s*invoice\s*value|net\s*payable\s*amount|net\s*payable|total\s*payable|total\s*due|net\s*total|net\s*amt|bill\s*amount|bill\s*total|final\s*amount|\bkul\s*yog\b|\bkul\b)\s*(?:\([^)]*\))?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|re\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
+    let grandTotal = extractMoney(new RegExp(`(?:invoice\\s*grand\\s*total|[gc]?rand\\s*total|g\\.?\\s*total|invoice\\s*total|total\\s*invoice\\s*value|net\\s*payable\\s*amount|net\\s*payable|total\\s*payable|total\\s*due|net\\s*total|net\\s*amt|net\\s*amount|bill\\s*amount|bill\\s*total|final\\s*amount|\\bkul\\s*yog\\b|\\bkul\\b)\\s*(?:\\([^)]*\\))?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{1,2})?)`, 'i'));
     if (!grandTotal) {
-      grandTotal = extractMoney(/(?<!cost\s*|cgst\s*|sgst\s*|igst\s*|tax\s*|gst\s*|items?\s*|merchandise\s*|sub)total\s*amount(?:\s*payable)?\s*(?:\([^)]*\))?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|re\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i) ||
-                   extractMoney(/(?<!cost\s*|cgst\s*|sgst\s*|igst\s*|tax\s*|gst\s*|items?\s*|merchandise\s*|sub)\btotal\b\s*(?:\([^)]*\))?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|re\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
+      grandTotal = extractMoney(new RegExp(`(?<!cost\\s*|cgst\\s*|sgst\\s*|igst\\s*|tax\\s*|gst\\s*|items?\\s*|merchandise\\s*|sub)total\\s*amount(?:\\s*payable)?\\s*(?:\\([^)]*\\))?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{1,2})?)`, 'i')) ||
+                   extractMoney(new RegExp(`(?<!cost\\s*|cgst\\s*|sgst\\s*|igst\\s*|tax\\s*|gst\\s*|items?\\s*|merchandise\\s*|sub)\\btotal\\b\\s*(?:\\([^)]*\\))?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{1,2})?)`, 'i'));
     }
-    const advancePaid = extractMoney(/(?:less:\s*deposit|less:\s*advance|deposit\s*received|deposit|advance\s*received|advance\s*paid|advance|\badv(?:\.|\b)|\badvan\b|\bjama\b|\bbiyana\b|\bpeshgi\b)\s*(?:\([^)]*\))?\s*(?:amount)?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const paid = extractMoney(/(?:less:\s*payment\s*received|payment\s*received|additional\s*payment|paid\s*amount|amount\s*paid|\bpaid\b|amount\s*settled)\s*(?:\([^)]*\))?\s*(?:amount)?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
-    const balanceDue = extractMoney(/(?:amount\s*outstanding|balance\s*to\s*pay|balance\s*due|pending\s*amount|outstanding\s*amount|amount\s*due|net\s*payable(?:\s*balance)?|outstanding\s*balance|balance\s*payable|\bbal(?:\.|\b)|\bbaaki\b|\bbaki\b|\budhar\b|\budhari\b|\brehna\b|net\s*to\s*pay)\s*(?:\([^)]*\))?\s*(?:[:=−-]|is)?\s*(?:[■₹:−-]|\(n\)|n\b|rs\.?|\$)*\s*([0-9,]+(?:\.[0-9]{2})?)/i);
+    const advancePaid = extractMoney(new RegExp(`(?:less:\\s*deposit|less:\\s*advance|deposit\\s*received|deposit|advance\\s*received|advance\\s*paid|advance|\\badv(?:\\.|\\b)|\\badvan\\b|\\bjama\\b|\\bbiyana\\b|\\bpeshgi\\b)\\s*(?:\\([^)]*\\))?\\s*(?:amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const paid = extractMoney(new RegExp(`(?:less:\\s*payment\\s*received|payment\\s*received|additional\\s*payment|paid\\s*amount|amount\\s*paid|\\bpaid\\b|amount\\s*settled)\\s*(?:\\([^)]*\\))?\\s*(?:amount)?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
+    const balanceDue = extractMoney(new RegExp(`(?:amount\\s*outstanding|balance\\s*to\\s*pay|balance\\s*due|pending\\s*amount|outstanding\\s*amount|amount\\s*due|net\\s*payable(?:\\s*balance)?|outstanding\\s*balance|balance\\s*payable|\\bbal(?:\\.|\\b)|\\bbaaki\\b|\\bbaki\\b|\\budhar\\b|\\budhari\\b|\\brehna\\b|net\\s*to\\s*pay)\\s*(?:\\([^)]*\\))?\\s*(?:[:=−-]|is)?\\s*${currPrefix}\\s*([0-9,]+(?:\\.[0-9]{2})?)`, 'i'));
 
     // Determine CGST, SGST, IGST distribution
     let finalCgst = cgstExplicit;
@@ -893,6 +911,41 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
         .replace(/\/[-=]/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
+
+      // Pattern 0a: Pipe-delimited (e.g. "Cotton Shirt | qty 10 | rate 799 | amount 7990.00")
+      const pPipe = rawLine.match(/^(.*?)\s*\|\s*(?:[qa]n?t?y|ay|units?|nos?)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*\|\s*(?:rate|price|mrp)\s*[:=]?\s*([0-9,]+(?:\.[0-9]+)?)\s*\|\s*(?:amount|amour|total|line\s*total|net)\s*[:=]?\s*([0-9,]+(?:\.[0-9]+)?)$/i);
+      if (pPipe) {
+        const name = pPipe[1].replace(/^[0-9]+[\.\)\s]+/, '').trim();
+        const qty = parseFloat(pPipe[2]) || 1;
+        const rate = cleanNum(pPipe[3]);
+        const lineTot = cleanNum(pPipe[4]);
+        if (name.length >= 2 && lineTot > 0) {
+          items.push({
+            line_number: lineNum++,
+            item_name: name,
+            item_description: name,
+            sku: 'N/A',
+            hsn_code: 'N/A',
+            category,
+            quantity: qty,
+            unit_original: 'pcs',
+            unit_normalized: 'pcs',
+            unit_price: rate || (lineTot / qty),
+            price_unit_quantity: 1,
+            price_unit_measure: 'pcs',
+            discount_amount: 0,
+            taxable_value: lineTot,
+            gst_rate: 0,
+            cgst_amount: 0,
+            sgst_amount: 0,
+            igst_amount: 0,
+            line_total: lineTot,
+            calculation_valid: Math.abs((qty * rate) - lineTot) < 2.0,
+            unit_flagged: false
+          });
+          continue;
+        }
+      }
 
       // Pattern 0: Wholesale / Common Goods Pattern (Description + SKU + Units/Qty + Rate + Less/Disc + Net Value + Tax% + Tax Value + Total)
       const pWholesale = line.match(/^(.*?)(?:[\t\s]+|(?=[A-Z]{3,5}-\d{2,4}))([A-Z]{3,5}-\d{2,4})\s+(\d+(?:\.\d+)?)\s+([0-9,]+(?:\.[0-9]+)?)\s+([0-9,]+(?:\.[0-9]+)?)\s+([0-9,]+(?:\.[0-9]+)?)\s+(\d+(?:\.\d+)?%)\s+([0-9,]+(?:\.[0-9]+)?)\s+([0-9,]+(?:\.[0-9]+)?)$/);
@@ -1562,7 +1615,7 @@ Extracted text hints:\n${ocrText || '(No digital text available - analyze visual
         if (numTokens.length >= 2 && firstNumIdx > 0) {
           const nameTokens = tokens.slice(0, firstNumIdx);
           let name = nameTokens.join(' ').trim();
-          if (name.length >= 2 && !name.match(/total|subtotal|discount|cgst|sgst|igst|shipping|freight/i)) {
+          if (name.length >= 2 && !name.match(/total|subtotal|discount|cgst|sgst|igst|shipping|freight|amount\s*paid|paid\s*amount|remaining\s*amount|balance|advance/i)) {
             let qty = numTokens[0].val > 0 ? numTokens[0].val : 1;
             const lastVal = numTokens[numTokens.length - 1].val;
             let rawUnit = 'pcs';

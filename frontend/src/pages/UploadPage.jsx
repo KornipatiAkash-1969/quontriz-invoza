@@ -12,7 +12,10 @@ import {
   Building2,
   Calculator,
   RefreshCw,
-  RotateCcw
+  RotateCcw,
+  FlaskConical,
+  Sparkles,
+  CheckCircle2
 } from 'lucide-react';
 import { invoiceApi, vendorApi, categoryApi, vendorTypeApi } from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -39,6 +42,9 @@ export default function UploadPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [errorMessage, setErrorMessage] = useState('');
+  const [testSuiteCategories, setTestSuiteCategories] = useState([]);
+  const [selectedTestCategory, setSelectedTestCategory] = useState('sample');
+  const [processingTestFileName, setProcessingTestFileName] = useState('');
 
   // Reset upload state helper
   const resetUploadState = () => {
@@ -47,6 +53,7 @@ export default function UploadPage() {
     setUploadProgress(0);
     setCurrentStep(1);
     setErrorMessage('');
+    setProcessingTestFileName('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -93,14 +100,18 @@ export default function UploadPage() {
   useEffect(() => {
     async function loadMasterData() {
       try {
-        const [vRes, cRes, vtRes] = await Promise.all([
+        const [vRes, cRes, vtRes, tfRes] = await Promise.all([
           vendorApi.getAll(),
           categoryApi.getAll(),
-          vendorTypeApi.getAll()
+          vendorTypeApi.getAll(),
+          invoiceApi.getTestingFiles().catch(() => ({ success: false }))
         ]);
         setVendorsList(vRes.data || []);
         setCategoriesList(cRes.data || []);
         setVendorTypesList(vtRes.data || []);
+        if (tfRes?.success && Array.isArray(tfRes.categories)) {
+          setTestSuiteCategories(tfRes.categories);
+        }
       } catch (err) {
         console.error(err);
       }
@@ -204,6 +215,37 @@ export default function UploadPage() {
       setErrorMessage(err.message || 'Failed to process document.');
       toastError(err.message || 'Processing failed.');
       setIsProcessing(false);
+    }
+  };
+
+  const handleProcessTestFile = async (file) => {
+    if (!file || !file.relativePath) return;
+
+    setIsProcessing(true);
+    setProcessingTestFileName(file.displayName || file.filename);
+    setErrorMessage('');
+    setUploadProgress(15);
+
+    const stepPromise = advanceStepSequence();
+
+    try {
+      const response = await invoiceApi.processTestFile(file.relativePath);
+
+      await stepPromise;
+      setCurrentStep(7); // Completed
+
+      toastSuccess(`Processed "${file.displayName}" successfully! Redirecting to review...`);
+      setTimeout(() => {
+        const extracted = response.data;
+        resetUploadState();
+        navigate('/invoices/review', { state: { extractedData: extracted } });
+      }, 700);
+    } catch (err) {
+      console.error('Test file processing failed:', err);
+      setErrorMessage(err.message || 'Failed to process test document.');
+      toastError(err.message || 'Processing failed.');
+      setIsProcessing(false);
+      setProcessingTestFileName('');
     }
   };
 
@@ -379,9 +421,17 @@ export default function UploadPage() {
               {/* Role-Themed OCR Laser Scan Loader */}
               <OcrScannerLoader
                 role={isOwner ? 'owner' : 'staff'}
-                title={currentStep <= 3 ? "Scanning & Reading Document..." : "Extracting Invoice Data..."}
+                title={
+                  processingTestFileName
+                    ? `Testing: ${processingTestFileName}`
+                    : currentStep <= 3
+                    ? "Scanning & Reading Document..."
+                    : "Extracting Invoice Data..."
+                }
                 subtitle={
-                  currentStep <= 2
+                  processingTestFileName
+                    ? "Running multimodal AI vision and OCR extraction on selected test invoice..."
+                    : currentStep <= 2
                     ? "Uploading document to secure server..."
                     : currentStep === 3
                     ? "Running high-accuracy Tesseract OCR on document pages..."
@@ -536,6 +586,100 @@ export default function UploadPage() {
                   </div>
                 )}
               </div>
+
+              {/* Test Suite Invoices Section */}
+              {testSuiteCategories && testSuiteCategories.length > 0 && (
+                <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
+                        isOwner ? 'bg-indigo-50 text-indigo-600' : 'bg-emerald-50 text-emerald-600'
+                      }`}>
+                        <FlaskConical className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900">
+                          Invoice Test Suite
+                        </h4>
+                        <p className="text-xs text-slate-500">
+                          One-click testing with documents from <code className="text-slate-600 font-mono text-[11px] bg-slate-100 px-1 py-0.5 rounded">server/Testing files</code>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>OCR & AI Extraction Ready</span>
+                    </div>
+                  </div>
+
+                  {/* Categories Tabs */}
+                  <div className="flex flex-wrap gap-2">
+                    {testSuiteCategories.map(cat => (
+                      <button
+                        key={cat.key}
+                        type="button"
+                        onClick={() => setSelectedTestCategory(cat.key)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                          selectedTestCategory === cat.key
+                            ? isOwner
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'bg-emerald-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                        }`}
+                      >
+                        <span>{cat.name}</span>
+                        <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+                          selectedTestCategory === cat.key
+                            ? 'bg-white/20 text-white'
+                            : 'bg-slate-200 text-slate-700'
+                        }`}>
+                          {cat.files.length}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Grid of Test Files */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-72 overflow-y-auto pr-1">
+                    {(testSuiteCategories.find(c => c.key === selectedTestCategory)?.files || []).map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="group p-3 rounded-xl border border-slate-200/80 hover:border-indigo-300 hover:shadow-xs transition bg-slate-50/50 hover:bg-white flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0 flex items-center gap-2.5">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                            file.filename.endsWith('.pdf') ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'
+                          }`}>
+                            {file.filename.endsWith('.pdf') ? 'PDF' : 'IMG'}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-slate-800 truncate" title={file.displayName}>
+                              {file.displayName}
+                            </p>
+                            <p className="text-[10px] text-slate-400">
+                              {formatFileSize(file.size)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleProcessTestFile(file)}
+                          className={`flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-bold transition flex items-center gap-1 ${
+                            isOwner
+                              ? 'bg-indigo-50 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white'
+                              : 'bg-emerald-50 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white'
+                          }`}
+                        >
+                          <span>Test</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>

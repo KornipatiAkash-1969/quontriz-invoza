@@ -101,6 +101,8 @@ export const invoiceApi = {
       onUploadProgress,
     }),
   processSample: (sampleKey) => api.post(`/invoices/process-sample/${sampleKey}`),
+  getTestingFiles: () => api.get('/invoices/testing-files'),
+  processTestFile: (relativePath) => api.post('/invoices/process-test-file', { relativePath }),
   recalculateReview: (reviewData) => api.post('/invoices/review/recalculate', reviewData),
   checkDuplicate: (data) => api.post('/invoices/check-duplicate', data),
   getSupportedUnits: () => api.get('/invoices/units'),

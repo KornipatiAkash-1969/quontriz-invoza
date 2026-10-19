@@ -52,6 +52,85 @@ router.post('/process-sample/:sampleKey', async (req, res) => {
   }
 });
 
+const TESTING_FILES_ROOT = path.join(__dirname, '../Testing files');
+
+// 2b. Get all available test files from the Testing files directory
+router.get('/testing-files', (req, res) => {
+  try {
+    if (!fs.existsSync(TESTING_FILES_ROOT)) {
+      return res.json({ success: true, files: [] });
+    }
+
+    const categories = [
+      { key: 'sample', name: 'Sample & Handwritten Invoices', dir: 'Sample invoices' },
+      { key: 'digital', name: '20 Store Test PDFs', dir: 'freshmart_ocr_20_test_pdfs' },
+      { key: 'varied', name: 'Varied & Scanned Layouts (30 Invoices)', dir: 'freshmart_ocr_20_varied_formats' }
+    ];
+
+    const result = categories.map(cat => {
+      const catDir = path.join(TESTING_FILES_ROOT, cat.dir);
+      let fileList = [];
+      if (fs.existsSync(catDir)) {
+        fileList = fs.readdirSync(catDir)
+          .filter(f => f.endsWith('.pdf') || f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.jpeg'))
+          .map(f => {
+            const stats = fs.statSync(path.join(catDir, f));
+            return {
+              filename: f,
+              relativePath: path.posix.join(cat.dir, f),
+              size: stats.size,
+              displayName: f.replace(/\.pdf$/i, '').replace(/_/g, ' ')
+            };
+          });
+      }
+      return {
+        ...cat,
+        files: fileList
+      };
+    });
+
+    return res.json({ success: true, categories: result });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2c. Process a specific test file from the Testing files directory
+router.post('/process-test-file', async (req, res) => {
+  try {
+    const { relativePath } = req.body;
+    if (!relativePath || typeof relativePath !== 'string') {
+      return res.status(400).json({ success: false, error: 'relativePath is required.' });
+    }
+
+    // Security check to prevent directory traversal
+    const safePath = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, '');
+    const fullPath = path.join(TESTING_FILES_ROOT, safePath);
+
+    if (!fs.existsSync(fullPath) || !fullPath.startsWith(TESTING_FILES_ROOT)) {
+      return res.status(404).json({ success: false, error: `Test file not found: ${relativePath}` });
+    }
+
+    const ext = path.extname(fullPath).toLowerCase();
+    let mime = 'application/pdf';
+    if (ext === '.png') mime = 'image/png';
+    else if (ext === '.jpg' || ext === '.jpeg') mime = 'image/jpeg';
+    else if (ext === '.webp') mime = 'image/webp';
+
+    const stats = fs.statSync(fullPath);
+    req.file = {
+      path: fullPath,
+      originalname: path.basename(fullPath),
+      mimetype: mime,
+      size: stats.size
+    };
+
+    return invoiceController.uploadAndProcess(req, res);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 3. Dynamic review recalculation (Service 10)
 router.post('/review/recalculate', optionalToken, (req, res) => {
   invoiceController.recalculateReview(req, res);
