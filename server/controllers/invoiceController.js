@@ -130,6 +130,8 @@ class InvoiceController {
             rawText: rawText ? rawText.slice(0, 2000) : ''
           },
           aiEngine: aiExtraction.engine,
+          aiModel: aiExtraction.model,
+          aiNotice: aiExtraction.aiNotice,
           invoice: {
             ...validatedData.invoice,
             pdf_path: filePath.replace(/\\/g, '/'),
@@ -140,10 +142,15 @@ class InvoiceController {
           items: reconciliation.items || validatedData.items,
           reconciliation: reconciliation,
           duplicate: duplicateInfo,
-          warnings: reconciliation.warnings || [],
+          warnings: [
+            ...(aiExtraction.aiNotice ? [aiExtraction.aiNotice.message] : []),
+            ...(reconciliation.warnings || [])
+          ],
           aiLog: {
             engine: aiExtraction.engine,
+            model: aiExtraction.model,
             raw_text: rawText.slice(0, 4000),
+            ai_notice: aiExtraction.aiNotice,
             ai_response: aiExtraction.data,
             warnings: reconciliation.warnings,
             latency_ms: latencyMs

@@ -1,32 +1,81 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
 const openAiService = require('../services/OpenAiInvoiceService');
+const geminiService = require('../services/GeminiInvoiceService');
 const db = require('../database/db');
 
 /**
- * Settings Routes for OpenAI Engine & System Diagnostics
+ * Settings Routes for Multimodal Document AI Engines (OpenAI & Google Gemini)
  */
 
-const MASKED_PASSKEY = 'sk-proj-••••••••••••••••••••••••••••••••••••••••••••••••••••••••';
+const ENV_PATH = path.join(__dirname, '../.env');
 
-// 1. Get current OpenAI configuration, connection status & database engine
+function updateEnvFile(updates) {
+  try {
+    let content = '';
+    if (fs.existsSync(ENV_PATH)) {
+      content = fs.readFileSync(ENV_PATH, 'utf8');
+    }
+
+    let lines = content.split(/\r?\n/);
+    const updatedKeys = new Set();
+
+    lines = lines.map(line => {
+      const match = line.match(/^([A-Za-z0-9_]+)=(.*)$/);
+      if (match) {
+        const key = match[1];
+        if (updates[key] !== undefined) {
+          updatedKeys.add(key);
+          return `${key}=${updates[key]}`;
+        }
+      }
+      return line;
+    });
+
+    // Append any keys that weren't already present
+    for (const [k, v] of Object.entries(updates)) {
+      if (!updatedKeys.has(k) && v !== undefined) {
+        lines.push(`${k}=${v}`);
+      }
+    }
+
+    fs.writeFileSync(ENV_PATH, lines.join('\n'), 'utf8');
+  } catch (err) {
+    console.error('[Settings] Failed to persist to .env:', err.message);
+  }
+}
+
+function maskKey(key) {
+  if (!key || typeof key !== 'string' || key.length < 8) return '';
+  return key.slice(0, 7) + '••••••••••••••••••••••••••••••••' + key.slice(-4);
+}
+
+// 1. Get current AI provider configuration & system status
 router.get('/', async (req, res) => {
   try {
-    const isConfigured = openAiService.isConfigured();
+    const isAiConfigured = openAiService.isConfigured() || geminiService.isConfigured();
+    const activeProvider = process.env.AI_PROVIDER || (geminiService.isConfigured() && !openAiService.isConfigured() ? 'gemini' : 'openai');
 
     return res.json({
       success: true,
       data: {
-        engine: 'openai',
+        activeProvider,
         openai: {
           model: openAiService.model,
-          isConfigured,
-          keyPreview: MASKED_PASSKEY,
-          apiKey: MASKED_PASSKEY,
-          isLocked: true,
-          status: isConfigured
-            ? `Active & Protected (OpenAI ${openAiService.model})`
-            : 'Protected (Master Key Active)'
+          isConfigured: openAiService.isConfigured(),
+          keyPreview: maskKey(openAiService.apiKey),
+          apiKey: openAiService.apiKey ? maskKey(openAiService.apiKey) : '',
+          isCustomKey: Boolean(openAiService.apiKey && openAiService.apiKey !== openAiService.DEFAULT_OPENAI_API_KEY),
+          status: openAiService.isConfigured() ? `Active (OpenAI ${openAiService.model})` : 'API Key Required'
+        },
+        gemini: {
+          model: geminiService.model,
+          isConfigured: geminiService.isConfigured(),
+          keyPreview: maskKey(geminiService.apiKey),
+          apiKey: geminiService.apiKey ? maskKey(geminiService.apiKey) : '',
+          status: geminiService.isConfigured() ? `Active (Google Gemini ${geminiService.model})` : 'Free API Key Available'
         },
         database: {
           engine: 'PostgreSQL 16+ (Render Managed / Pure-JS pg)',
@@ -41,33 +90,71 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 2. Update OpenAI configuration (Model only; master key is permanently locked and read-only)
+// 2. Update AI Provider & API Passkeys (OpenAI & Google Gemini)
 router.post('/', (req, res) => {
   try {
-    const { model } = req.body;
+    const {
+      provider,
+      openaiApiKey,
+      openaiModel,
+      geminiApiKey,
+      geminiModel
+    } = req.body;
 
-    // The OpenAI passkey is permanently locked to the production master key for security.
-    // Client-side attempts to overwrite the passkey are ignored to maintain deployment integrity.
-    if (!openAiService.apiKey) {
-      openAiService.apiKey = openAiService.DEFAULT_OPENAI_API_KEY;
+    const envUpdates = {};
+
+    if (provider && ['openai', 'gemini'].includes(provider)) {
+      process.env.AI_PROVIDER = provider;
+      envUpdates.AI_PROVIDER = provider;
     }
 
-    if (model !== undefined && model.trim().length > 0) {
-      const cleanModel = model.trim();
+    // OpenAI updates
+    if (openaiApiKey && openaiApiKey.trim() && !openaiApiKey.includes('••••')) {
+      const cleanKey = openaiApiKey.trim();
+      process.env.OPENAI_API_KEY = cleanKey;
+      openAiService.apiKey = cleanKey;
+      envUpdates.OPENAI_API_KEY = cleanKey;
+    }
+
+    if (openaiModel && openaiModel.trim()) {
+      const cleanModel = openaiModel.trim();
       process.env.OPENAI_MODEL = cleanModel;
       openAiService.model = cleanModel;
+      envUpdates.OPENAI_MODEL = cleanModel;
     }
+
+    // Gemini updates
+    if (geminiApiKey !== undefined && !geminiApiKey.includes('••••')) {
+      const cleanKey = geminiApiKey.trim();
+      process.env.GEMINI_API_KEY = cleanKey;
+      geminiService.apiKey = cleanKey;
+      envUpdates.GEMINI_API_KEY = cleanKey;
+    }
+
+    if (geminiModel && geminiModel.trim()) {
+      const cleanModel = geminiModel.trim();
+      process.env.GEMINI_MODEL = cleanModel;
+      geminiService.model = cleanModel;
+      envUpdates.GEMINI_MODEL = cleanModel;
+    }
+
+    updateEnvFile(envUpdates);
 
     return res.json({
       success: true,
-      message: 'OpenAI settings updated successfully. Master passkey is locked and permanently protected.',
+      message: 'AI Provider configuration updated and saved successfully.',
       data: {
-        engine: 'openai',
-        model: openAiService.model,
-        apiKey: MASKED_PASSKEY,
-        keyPreview: MASKED_PASSKEY,
-        isLocked: true,
-        isConfigured: openAiService.isConfigured()
+        activeProvider: process.env.AI_PROVIDER || 'openai',
+        openai: {
+          model: openAiService.model,
+          isConfigured: openAiService.isConfigured(),
+          keyPreview: maskKey(openAiService.apiKey)
+        },
+        gemini: {
+          model: geminiService.model,
+          isConfigured: geminiService.isConfigured(),
+          keyPreview: maskKey(geminiService.apiKey)
+        }
       }
     });
   } catch (err) {
@@ -75,14 +162,12 @@ router.post('/', (req, res) => {
   }
 });
 
-// 3. Test OpenAI API connection (Uses locked master key)
+// 3. Test OpenAI API connection (Verifies live credits & quota)
 router.post('/test-openai', async (req, res) => {
   try {
-    const { model } = req.body;
-    
-    // Always use the production master key
-    if (!openAiService.apiKey) {
-      openAiService.apiKey = openAiService.DEFAULT_OPENAI_API_KEY;
+    const { apiKey, model } = req.body;
+    if (apiKey && apiKey.trim() && !apiKey.includes('••••')) {
+      openAiService.apiKey = apiKey.trim();
     }
     if (model && model.trim()) {
       openAiService.model = model.trim();
@@ -90,7 +175,34 @@ router.post('/test-openai', async (req, res) => {
 
     const health = await openAiService.checkHealth();
     return res.json({
-      success: true,
+      success: health.connected,
+      data: health
+    });
+  } catch (err) {
+    return res.json({
+      success: false,
+      data: {
+        connected: false,
+        message: `Connection attempt failed: ${err.message}`
+      }
+    });
+  }
+});
+
+// 4. Test Google Gemini API connection
+router.post('/test-gemini', async (req, res) => {
+  try {
+    const { apiKey, model } = req.body;
+    if (apiKey && apiKey.trim() && !apiKey.includes('••••')) {
+      geminiService.apiKey = apiKey.trim();
+    }
+    if (model && model.trim()) {
+      geminiService.model = model.trim();
+    }
+
+    const health = await geminiService.checkHealth();
+    return res.json({
+      success: health.connected,
       data: health
     });
   } catch (err) {

@@ -180,6 +180,7 @@ export const settingsApi = {
   get: () => api.get('/settings'),
   save: (data) => api.post('/settings', data),
   testOpenAI: (data) => api.post('/settings/test-openai', data),
+  testGemini: (data) => api.post('/settings/test-gemini', data),
 };
 
 export const supportApi = {

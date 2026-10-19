@@ -39,28 +39,62 @@ class OpenAiInvoiceService {
    */
   async checkHealth() {
     if (!this.apiKey || !this.apiKey.startsWith('sk-')) {
-      this.apiKey = DEFAULT_OPENAI_API_KEY;
-    }
-
-    try {
-      const res = await fetch('https://api.openai.com/v1/models', {
-        headers: { 'Authorization': `Bearer ${this.apiKey}` }
-      });
-
-      if (res.ok) {
-        return {
-          connected: true,
-          model: this.model,
-          message: `Connected to OpenAI API successfully! (Model: ${this.model})`
-        };
-      }
-
-      const err = await res.json().catch(() => ({}));
-      const errMsg = err?.error?.message || `HTTP ${res.status}`;
       return {
         connected: false,
         model: this.model,
-        message: `OpenAI returned: ${errMsg}`
+        message: 'OpenAI API key not configured. Enter an active key in Settings.'
+      };
+    }
+
+    try {
+      // 1. Validate key format and basic auth
+      const authRes = await fetch('https://api.openai.com/v1/models', {
+        headers: { 'Authorization': `Bearer ${this.apiKey}` }
+      });
+
+      if (!authRes.ok) {
+        const err = await authRes.json().catch(() => ({}));
+        const errMsg = err?.error?.message || `HTTP ${authRes.status}`;
+        return {
+          connected: false,
+          model: this.model,
+          message: `OpenAI authentication failed: ${errMsg}`
+        };
+      }
+
+      // 2. Perform minimal 1-token completion to verify billing credits & active quota
+      const testModel = ['gpt-4o', 'gpt-4o-mini'].includes(this.model) ? 'gpt-4o-mini' : this.model;
+      const compRes = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify({
+          model: testModel,
+          messages: [{ role: 'user', content: 'hi' }],
+          max_tokens: 1
+        })
+      });
+
+      if (compRes.ok) {
+        return {
+          connected: true,
+          model: this.model,
+          message: `Connected to OpenAI API successfully with active credits! (Model: ${this.model})`
+        };
+      }
+
+      const compErr = await compRes.json().catch(() => ({}));
+      const isQuota = compRes.status === 429 || compErr?.error?.code === 'insufficient_quota';
+
+      return {
+        connected: false,
+        quotaExhausted: isQuota,
+        model: this.model,
+        message: isQuota
+          ? 'OpenAI Quota Exhausted (HTTP 429): Your OpenAI account has 0 remaining credits. Please add billing credits at platform.openai.com or enter a new API key / Google Gemini key in Settings.'
+          : `OpenAI error (HTTP ${compRes.status}): ${compErr?.error?.message || 'Check key and permissions'}`
       };
     } catch (err) {
       return {

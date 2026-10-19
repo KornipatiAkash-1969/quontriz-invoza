@@ -24,5 +24,6 @@ server/database/*.db-shm
 # System and logs
 *.log
 *.traineddata
+server/Testing files/
 .DS_Store
 Thumbs.db

@@ -2,26 +2,111 @@ const path = require('path');
 const fs = require('fs');
 const unitNormalizationService = require('./UnitNormalizationService');
 const openAiService = require('./OpenAiInvoiceService');
+const geminiService = require('./GeminiInvoiceService');
 
 /**
  * Service 5: AiInvoiceExtractor
- * Multimodal Document AI Invoice Parser powered exclusively by OpenAI (GPT-4o).
- * 
- * Extracts comprehensive structured invoice metadata and line items from any
- * format of PDF or Image document.
+ * Unified Multimodal Document AI Invoice Parser.
+ * Seamlessly manages:
+ * 1. Google Gemini (1.5 Flash / 2.0 Flash) - Free-tier multimodal vision with handwriting OCR
+ * 2. OpenAI (GPT-4o / GPT-4o-mini) - Precision JSON multimodal vision
+ * 3. High-res resilient local fallback with transparent quota/credential notices
  */
 class AiInvoiceExtractor {
-  /**
-   * Extract structured invoice data from document
-   * @param {Object} params - { filePath, ocrText }
-   * @returns {Promise<Object>}
-   */
   async extract({ filePath, ocrText }) {
     const startTime = Date.now();
-    const result = await openAiService.analyzeInvoice(filePath, ocrText);
+    let result = null;
+    let engineUsed = 'local_fallback';
+    let modelUsed = 'rule_based_engine';
+    let aiNotice = null;
+
+    const preferredProvider = process.env.AI_PROVIDER || (geminiService.isConfigured() ? 'gemini' : 'openai');
+
+    // Strategy A: If Gemini is preferred and configured
+    if (preferredProvider === 'gemini' && geminiService.isConfigured()) {
+      try {
+        console.log(`[AiInvoiceExtractor] Running Google Gemini multimodal parser (${geminiService.model})...`);
+        const geminiRes = await geminiService.analyzeInvoice(filePath, ocrText);
+        if (geminiRes && Array.isArray(geminiRes.items) && geminiRes.items.length > 0) {
+          result = geminiRes;
+          engineUsed = 'gemini';
+          modelUsed = geminiService.model;
+        }
+      } catch (geminiErr) {
+        console.warn(`[AiInvoiceExtractor] Gemini error (${geminiErr.message}). Attempting secondary engine...`);
+        aiNotice = {
+          provider: 'gemini',
+          error: true,
+          message: `Google Gemini error: ${geminiErr.message}`
+        };
+      }
+    }
+
+    // Strategy B: If OpenAI is preferred or Gemini failed / not configured
+    if (!result && openAiService.isConfigured()) {
+      try {
+        console.log(`[AiInvoiceExtractor] Submitting invoice to OpenAI (${openAiService.model})...`);
+        const openAiRes = await openAiService.queryOpenAi(filePath, ocrText);
+        if (openAiRes && Array.isArray(openAiRes.items) && openAiRes.items.length > 0) {
+          result = openAiRes;
+          engineUsed = 'openai';
+          modelUsed = openAiService.model;
+          aiNotice = null; // Clear any earlier warning if OpenAI succeeded
+        }
+      } catch (openAiErr) {
+        const isQuota = openAiErr.message?.includes('429') || openAiErr.message?.includes('insufficient_quota');
+        console.warn(`[AiInvoiceExtractor] OpenAI error (${openAiErr.message}).`);
+
+        aiNotice = {
+          provider: 'openai',
+          error: true,
+          quotaExhausted: isQuota,
+          message: isQuota
+            ? 'OpenAI Quota Exhausted (HTTP 429): Your OpenAI account has no credits remaining. System used local fallback. Enter an active OpenAI key or a free Google Gemini key in Settings for full AI accuracy.'
+            : `OpenAI error: ${openAiErr.message}`
+        };
+
+        // If OpenAI failed with 429 quota exhausted, try Gemini as immediate automatic backup!
+        if (geminiService.isConfigured()) {
+          try {
+            console.log(`[AiInvoiceExtractor] Auto-failing over to Google Gemini (${geminiService.model})...`);
+            const geminiBackup = await geminiService.analyzeInvoice(filePath, ocrText);
+            if (geminiBackup && Array.isArray(geminiBackup.items) && geminiBackup.items.length > 0) {
+              result = geminiBackup;
+              engineUsed = 'gemini';
+              modelUsed = geminiService.model;
+              aiNotice = {
+                provider: 'gemini',
+                fallback: true,
+                message: 'Auto-switched to Google Gemini because OpenAI quota was exhausted.'
+              };
+            }
+          } catch (backupErr) {
+            console.warn(`[AiInvoiceExtractor] Backup Gemini attempt also failed: ${backupErr.message}`);
+          }
+        }
+      }
+    }
+
+    // Strategy C: If no AI result was obtained, execute universal local engine
+    if (!result) {
+      console.log(`[AiInvoiceExtractor] Executing high-precision universal document engine fallback...`);
+      const localResult = await openAiService.parseWithUniversalEngine(ocrText, filePath);
+      result = localResult;
+      engineUsed = 'local_fallback';
+      modelUsed = 'universal_rule_engine';
+
+      if (!aiNotice) {
+        aiNotice = {
+          provider: 'none',
+          message: 'No active AI API key found. Processed using local OCR parser. For handwritten bills and full AI accuracy, add an OpenAI or Google Gemini key in Settings.'
+        };
+      }
+    }
+
     const latencyMs = Date.now() - startTime;
 
-    // Apply unit normalization & unit flags on all items
+    // Apply unit normalization & flags on all items
     if (result && Array.isArray(result.items)) {
       result.items = result.items.map(it => {
         const rawUnit = it.unit_original || it.unit || it.unit_normalized;
@@ -38,16 +123,14 @@ class AiInvoiceExtractor {
     }
 
     return {
-      engine: 'openai',
-      model: openAiService.model,
+      engine: engineUsed,
+      model: modelUsed,
       latencyMs,
+      aiNotice,
       ...result
     };
   }
 
-  /**
-   * Helper alias accepting (ocrText, filePath, options)
-   */
   async extractInvoice(ocrText, filePath, options = {}) {
     const res = await this.extract({
       filePath,
@@ -55,7 +138,9 @@ class AiInvoiceExtractor {
     });
     return {
       engine: res.engine,
+      model: res.model,
       latencyMs: res.latencyMs,
+      aiNotice: res.aiNotice,
       data: res
     };
   }
