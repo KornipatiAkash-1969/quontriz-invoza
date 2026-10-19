@@ -18,7 +18,7 @@ import {
   Check
 } from 'lucide-react';
 import { requirementApi, vendorApi, categoryApi } from '../services/api';
-import { Spinner, TableSkeleton } from '../components/ui';
+import { Spinner, TableSkeleton, ConfirmDialog } from '../components/ui';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
 import { useUpdates } from '../context/UpdatesContext';
@@ -28,7 +28,7 @@ const COMMON_SPEC_SUGGESTIONS = ['25 KG', '50 KG', '10 KG', '5 KG', '1 KG', '15 
 const COMMON_UNITS = ['bags', 'boxes', 'kg', 'pcs', 'packets', 'tins', 'cartons', 'reams', 'litres', 'bundles'];
 
 export default function RequirementsPage() {
-  const { isOwner } = useAuth();
+  const { isOwner, user } = useAuth();
   const {
     refreshUpdates,
     broadcastUpdate,
@@ -53,6 +53,10 @@ export default function RequirementsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // In-app Delete Confirmation Dialog State
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -271,16 +275,26 @@ export default function RequirementsPage() {
     }
   };
 
-  // Handle Delete
-  const handleDelete = async (item) => {
-    if (!window.confirm(`Delete requirement "${item.item_name}"?`)) return;
+  // Handle Delete Click (opens sleek in-app ConfirmDialog)
+  const handleDeleteClick = (item) => {
+    setDeleteTarget(item);
+  };
+
+  // Handle Confirmed Delete
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await requirementApi.delete(item.id);
-      toastSuccess(`Requirement "${item.item_name}" deleted.`);
+      await requirementApi.delete(deleteTarget.id);
+      toastSuccess(`Requirement "${deleteTarget.item_name}" deleted.`);
+      setDeleteTarget(null);
       fetchRequirements();
-      if (refreshUpdates) refreshUpdates();
+      if (broadcastUpdate) broadcastUpdate();
+      else if (refreshUpdates) refreshUpdates();
     } catch (err) {
       toastError(err.message || 'Failed to delete requirement.');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -679,7 +693,7 @@ export default function RequirementsPage() {
                               </button>
                             )}
 
-                            {isOwner ? (
+                            {isOwner || (user && item.requested_by_user_id === user.id) || item.status === 'Pending' ? (
                               <>
                                 <button
                                   onClick={() => handleOpenEdit(item)}
@@ -690,7 +704,7 @@ export default function RequirementsPage() {
                                 </button>
 
                                 <button
-                                  onClick={() => handleDelete(item)}
+                                  onClick={() => handleDeleteClick(item)}
                                   className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                                   title="Delete Requirement"
                                 >
@@ -843,7 +857,7 @@ export default function RequirementsPage() {
                           </button>
                         )}
 
-                        {isOwner && (
+                        {(isOwner || (user && item.requested_by_user_id === user.id) || item.status === 'Pending') && (
                           <>
                             <button
                               onClick={() => handleOpenEdit(item)}
@@ -854,7 +868,7 @@ export default function RequirementsPage() {
                             </button>
 
                             <button
-                              onClick={() => handleDelete(item)}
+                              onClick={() => handleDeleteClick(item)}
                               className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition min-touch-target flex items-center justify-center"
                               title="Delete Requirement"
                             >
@@ -1228,6 +1242,17 @@ export default function RequirementsPage() {
           </div>
         </div>
       )}
+      {/* Sleek In-App Delete Confirmation Modal (Replaces browser window.confirm top pop) */}
+      <ConfirmDialog
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => !deleting && setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Required Item"
+        message={`Are you sure you want to delete requirement "${deleteTarget?.item_name}${deleteTarget?.specification ? ` (${deleteTarget.specification})` : ''}"? This will permanently remove it from the requisition list.`}
+        confirmText="Delete Item"
+        isDanger={true}
+        loading={deleting}
+      />
     </div>
   );
 }

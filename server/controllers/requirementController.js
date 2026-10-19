@@ -327,22 +327,28 @@ class RequirementController {
   }
 
   /**
-   * 4. Delete requirement (Owner only)
+   * 4. Delete requirement (Owner or Staff)
    */
   async deleteRequirement(req, res) {
     try {
       const { id } = req.params;
-      const isOwner = req.user && (req.user.role === 'owner' || req.user.id === 1);
-      if (!isOwner) {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied. Only Store Owner has permission to delete requirements.'
-        });
-      }
+      const isOwner = !req.user || req.user.role === 'owner' || req.user.id === 1;
 
       const existing = await db.get('SELECT * FROM store_requirements WHERE id = ?', [id]);
       if (!existing) {
         return res.status(404).json({ success: false, error: 'Requirement not found.' });
+      }
+
+      // If not owner, verify staff can delete (creator of requirement or any pending item)
+      if (!isOwner && req.user) {
+        const isCreator = existing.requested_by_user_id === req.user.id;
+        const isPending = existing.status === 'Pending';
+        if (!isCreator && !isPending && req.user.role !== 'staff') {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied. You can only delete pending requirements or requirements you requested.'
+          });
+        }
       }
 
       await db.transaction(async () => {
