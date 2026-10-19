@@ -306,7 +306,7 @@ class InvoicePersistenceService {
         title: isOwnerCreating ? 'New Invoice Added by Owner' : 'New Invoice Uploaded by Staff',
         message: isOwnerCreating
           ? `Owner added invoice #${persistedInvoice.invoice_number} (Total: ₹${persistedInvoice.total})`
-          : `Staff uploaded invoice #${persistedInvoice.invoice_number} for ${vName} (Total: ₹${persistedInvoice.total})`,
+          : `${data.userName || 'Staff'} uploaded invoice #${persistedInvoice.invoice_number} for ${vName} (Total: ₹${persistedInvoice.total})`,
         link: `/invoices/${persistedInvoice.id}`,
         related_id: persistedInvoice.id,
         related_type: 'invoice',

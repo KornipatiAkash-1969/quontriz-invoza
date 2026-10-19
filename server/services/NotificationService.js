@@ -31,14 +31,16 @@ class NotificationService {
 
       // Duplicate prevention: if identical unread notification created in the last 15 seconds, skip
       const existing = await db.get(`
-        SELECT id FROM notifications
+        SELECT id, created_at FROM notifications
         WHERE target_role = ? AND type = ? AND related_id = ? AND title = ? AND is_read = 0
-          AND datetime(created_at) >= datetime('now', '-15 seconds')
         ORDER BY id DESC LIMIT 1
       `, [target_role, type, related_id || -1, title.trim()]);
 
-      if (existing) {
-        return existing;
+      if (existing && existing.created_at) {
+        const diffMs = Math.abs(Date.now() - new Date(existing.created_at).getTime());
+        if (diffMs <= 15000) {
+          return existing;
+        }
       }
 
       const result = await db.run(`
@@ -87,7 +89,7 @@ class NotificationService {
 
     // Filter by target role or all, or targeted user
     if (userId) {
-      roleConditions.push('(user_id = ? OR target_role = ? OR target_role = ?)');
+      roleConditions.push('(user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))');
       params.push(userId, role, 'all');
     } else {
       roleConditions.push('(target_role = ? OR target_role = ?)');
@@ -117,7 +119,9 @@ class NotificationService {
 
     // Unread count specifically for this role/user (excluding test & orphaned)
     const unreadParams = userId ? [userId, role, 'all'] : [role, 'all'];
-    const unreadUserClause = userId ? '(user_id = ? OR target_role = ? OR target_role = ?)' : '(target_role = ? OR target_role = ?)';
+    const unreadUserClause = userId
+      ? '(user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))'
+      : '(target_role = ? OR target_role = ?)';
     const unreadRow = await db.get(`
       SELECT COUNT(*) as count FROM notifications
       WHERE is_read = 0 
@@ -156,7 +160,7 @@ class NotificationService {
       sql += ' AND (target_role = ? OR target_role = ?)';
       params.push(role, 'all');
     } else if (userId) {
-      sql += ' AND (user_id = ? OR target_role = ? OR target_role = ?)';
+      sql += ' AND (user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))';
       params.push(userId, role, 'all');
     }
 
@@ -172,7 +176,7 @@ class NotificationService {
     const params = [istNow];
 
     if (userId) {
-      sql += ' AND (user_id = ? OR target_role = ? OR target_role = ?)';
+      sql += ' AND (user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))';
       params.push(userId, role, 'all');
     } else {
       sql += ' AND (target_role = ? OR target_role = ?)';
@@ -196,7 +200,7 @@ class NotificationService {
     let sql = 'DELETE FROM notifications';
     const params = [];
     if (userId) {
-      sql += ' WHERE (user_id = ? OR target_role = ? OR target_role = ?)';
+      sql += ' WHERE (user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))';
       params.push(userId, role, 'all');
     } else {
       sql += ' WHERE (target_role = ? OR target_role = ?)';

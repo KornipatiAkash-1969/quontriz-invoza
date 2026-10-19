@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { notificationApi } from '../services/api';
 import { useAuth } from './AuthContext';
+import { useToast } from './ToastContext';
 
 const UpdatesContext = createContext(null);
 
 export function UpdatesProvider({ children }) {
   const { isAuthenticated, isOwner } = useAuth();
+  const { info: toastInfo } = useToast();
 
   const [updates, setUpdates] = useState({
     totalUpdatesCount: 0,
@@ -26,11 +28,32 @@ export function UpdatesProvider({ children }) {
   });
   const [loading, setLoading] = useState(false);
 
+  const knownNotifIdsRef = useRef(new Set());
+  const initialLoadRef = useRef(true);
+
   const fetchUpdates = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       const res = await notificationApi.getUpdates();
       if (res.data) {
+        const newNotifs = res.data.notifications || [];
+
+        // If not initial load, notify user of newly arrived unread notifications
+        if (!initialLoadRef.current && Array.isArray(newNotifs)) {
+          const freshArrivals = newNotifs.filter(
+            (n) => !knownNotifIdsRef.current.has(n.id) && (!n.is_read || n.is_read === 0)
+          );
+          if (freshArrivals.length > 0) {
+            freshArrivals.forEach((fresh) => {
+              toastInfo(`🔔 ${fresh.title}: ${fresh.message}`);
+            });
+          }
+        }
+
+        // Record all known notification IDs
+        newNotifs.forEach((n) => knownNotifIdsRef.current.add(n.id));
+        initialLoadRef.current = false;
+
         setUpdates(res.data);
       }
     } catch (err) {
@@ -38,7 +61,7 @@ export function UpdatesProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, toastInfo]);
 
   // Cross-tab broadcast channel
   const broadcastUpdate = useCallback(() => {
@@ -93,6 +116,11 @@ export function UpdatesProvider({ children }) {
   }, [isAuthenticated, fetchUpdates]);
 
   const markInvoiceViewed = useCallback(async (id) => {
+    // Optimistic badge decrement
+    setUpdates((prev) => ({
+      ...prev,
+      invoicesRouteBadge: Math.max(0, prev.invoicesRouteBadge - 1),
+    }));
     try {
       await notificationApi.markInvoiceViewed(id);
       broadcastUpdate();
@@ -102,6 +130,11 @@ export function UpdatesProvider({ children }) {
   }, [broadcastUpdate]);
 
   const markAllInvoicesViewed = useCallback(async () => {
+    // Optimistic badge clear
+    setUpdates((prev) => ({
+      ...prev,
+      invoicesRouteBadge: 0,
+    }));
     try {
       await notificationApi.markAllInvoicesViewed();
       broadcastUpdate();
@@ -111,6 +144,10 @@ export function UpdatesProvider({ children }) {
   }, [broadcastUpdate]);
 
   const markRequirementViewed = useCallback(async (id) => {
+    setUpdates((prev) => ({
+      ...prev,
+      requirementsRouteBadge: Math.max(0, prev.requirementsRouteBadge - 1),
+    }));
     try {
       await notificationApi.markRequirementViewed(id);
       broadcastUpdate();
@@ -120,6 +157,10 @@ export function UpdatesProvider({ children }) {
   }, [broadcastUpdate]);
 
   const markAllRequirementsViewed = useCallback(async () => {
+    setUpdates((prev) => ({
+      ...prev,
+      requirementsRouteBadge: 0,
+    }));
     try {
       await notificationApi.markAllRequirementsViewed();
       broadcastUpdate();
@@ -129,6 +170,13 @@ export function UpdatesProvider({ children }) {
   }, [broadcastUpdate]);
 
   const markAllViewed = useCallback(async () => {
+    setUpdates((prev) => ({
+      ...prev,
+      invoicesRouteBadge: 0,
+      requirementsRouteBadge: 0,
+      unreadCount: 0,
+      notifications: prev.notifications.map((n) => ({ ...n, is_read: 1 })),
+    }));
     try {
       await notificationApi.markAllViewed();
       broadcastUpdate();
@@ -138,6 +186,12 @@ export function UpdatesProvider({ children }) {
   }, [broadcastUpdate]);
 
   const markNotificationAsRead = useCallback(async (id) => {
+    // Optimistic instant read update
+    setUpdates((prev) => ({
+      ...prev,
+      notifications: prev.notifications.map((n) => (n.id === id ? { ...n, is_read: 1 } : n)),
+      unreadCount: Math.max(0, prev.unreadCount - 1),
+    }));
     try {
       await notificationApi.markAsRead(id);
       broadcastUpdate();
@@ -147,6 +201,14 @@ export function UpdatesProvider({ children }) {
   }, [broadcastUpdate]);
 
   const markAllNotificationsAsRead = useCallback(async () => {
+    // Optimistic instant clear for all
+    setUpdates((prev) => ({
+      ...prev,
+      notifications: prev.notifications.map((n) => ({ ...n, is_read: 1 })),
+      unreadCount: 0,
+      invoicesRouteBadge: 0,
+      requirementsRouteBadge: 0,
+    }));
     try {
       await notificationApi.markAllAsRead();
       broadcastUpdate();
@@ -156,6 +218,14 @@ export function UpdatesProvider({ children }) {
   }, [broadcastUpdate]);
 
   const clearAllNotifications = useCallback(async () => {
+    // Optimistic instant remove
+    setUpdates((prev) => ({
+      ...prev,
+      notifications: [],
+      unreadCount: 0,
+      invoicesRouteBadge: 0,
+      requirementsRouteBadge: 0,
+    }));
     try {
       await notificationApi.clearAll();
       broadcastUpdate();
@@ -165,6 +235,16 @@ export function UpdatesProvider({ children }) {
   }, [broadcastUpdate]);
 
   const deleteNotification = useCallback(async (id) => {
+    // Optimistic remove item
+    setUpdates((prev) => {
+      const target = prev.notifications.find((n) => n.id === id);
+      const isUnread = target && (!target.is_read || target.is_read === 0);
+      return {
+        ...prev,
+        notifications: prev.notifications.filter((n) => n.id !== id),
+        unreadCount: isUnread ? Math.max(0, prev.unreadCount - 1) : prev.unreadCount,
+      };
+    });
     try {
       await notificationApi.delete(id);
       broadcastUpdate();

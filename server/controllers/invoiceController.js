@@ -268,7 +268,8 @@ class InvoiceController {
           buyer: body.buyer || null,
           aiLog: body.aiLog || null,
           userId: effectiveUserId,
-          userRole: req.user?.role || 'staff'
+          userRole: req.user?.role || body.userRole || (req.user?.id === 1 ? 'owner' : 'staff'),
+          userName: req.user?.name || body.userName || (req.user?.role === 'owner' || req.user?.id === 1 ? 'Store Owner' : 'Staff')
         };
       } else {
         // Flat format compatibility
@@ -312,7 +313,8 @@ class InvoiceController {
           buyer: body.buyer || (body.buyer_name ? { company_name: body.buyer_name, gstin: body.buyer_gstin, billing_address: body.buyer_address } : null),
           aiLog: body.aiLog || null,
           userId: effectiveUserId,
-          userRole: req.user?.role || body.userRole || 'staff'
+          userRole: req.user?.role || body.userRole || (req.user?.id === 1 ? 'owner' : 'staff'),
+          userName: req.user?.name || body.userName || (req.user?.role === 'owner' || req.user?.id === 1 ? 'Store Owner' : 'Staff')
         };
       }
 
@@ -474,7 +476,8 @@ class InvoiceController {
       if (req.user) {
         try {
           const istNow = getIstIsoString();
-          if (req.user.role === 'owner') {
+          const isOwner = req.user.role === 'owner' || req.user.id === 1;
+          if (isOwner) {
             await db.run('UPDATE invoices SET viewed_by_owner = 1, viewed_at = ? WHERE id = ?', [istNow, id]);
             await db.run('UPDATE notifications SET is_read = 1, read_at = ? WHERE related_type = ? AND related_id = ? AND (target_role = ? OR target_role = ?)', [istNow, 'invoice', id, 'owner', 'all']);
           } else {

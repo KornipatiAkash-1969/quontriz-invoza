@@ -57,6 +57,14 @@ export default function TopNav({ onToggleSidebar }) {
     return true;
   });
 
+  const unreadInvoicesCount = (notifications || []).filter(
+    (n) => (!n.is_read || n.is_read === 0) && (n.related_type === 'invoice' || n.type?.includes('invoice'))
+  ).length;
+
+  const unreadRequirementsCount = (notifications || []).filter(
+    (n) => (!n.is_read || n.is_read === 0) && (n.related_type === 'requirement' || n.type?.includes('requirement'))
+  ).length;
+
   const handleNotificationClick = (n) => {
     // 1. Instantly close dropdown
     setShowNotifications(false);
@@ -227,7 +235,7 @@ export default function TopNav({ onToggleSidebar }) {
                   </button>
                   <button
                     onClick={() => setNotifFilter('invoices')}
-                    className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
+                    className={`px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap ${
                       notifFilter === 'invoices'
                         ? isOwner
                           ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
@@ -235,11 +243,16 @@ export default function TopNav({ onToggleSidebar }) {
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    Invoices
+                    <span>Invoices</span>
+                    {unreadInvoicesCount > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200/80 text-slate-700 font-bold">
+                        {unreadInvoicesCount}
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={() => setNotifFilter('requirements')}
-                    className={`px-2.5 py-1 rounded-lg transition whitespace-nowrap ${
+                    className={`px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 whitespace-nowrap ${
                       notifFilter === 'requirements'
                         ? isOwner
                           ? 'bg-white text-indigo-700 shadow-xs border border-slate-200/80 font-bold'
@@ -247,7 +260,12 @@ export default function TopNav({ onToggleSidebar }) {
                         : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    Required Items
+                    <span>Required Items</span>
+                    {unreadRequirementsCount > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200/80 text-slate-700 font-bold">
+                        {unreadRequirementsCount}
+                      </span>
+                    )}
                   </button>
                 </div>
 
