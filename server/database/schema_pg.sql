@@ -230,3 +230,10 @@ CREATE TABLE IF NOT EXISTS ai_extraction_logs (
   latency_ms INT,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS system_settings (
+  key VARCHAR(255) PRIMARY KEY,
+  value TEXT,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+

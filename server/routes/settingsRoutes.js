@@ -4,10 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const openAiService = require('../services/OpenAiInvoiceService');
 const geminiService = require('../services/GeminiInvoiceService');
+const systemSettingsService = require('../services/SystemSettingsService');
 const db = require('../database/db');
 
 /**
  * Settings Routes for Multimodal Document AI Engines (OpenAI & Google Gemini)
+ * Features:
+ * - Universal Cloud & Device Availability: API keys are shared across all devices and roles.
+ * - Key Locking: Keys can be permanently locked to prevent accidental modification or tampering.
  */
 
 const ENV_PATH = path.join(__dirname, '../.env');
@@ -52,30 +56,45 @@ function maskKey(key) {
   return key.slice(0, 7) + '••••••••••••••••••••••••••••••••' + key.slice(-4);
 }
 
-// 1. Get current AI provider configuration & system status
+// 1. Get current AI provider configuration & system status (Universal for all devices)
 router.get('/', async (req, res) => {
   try {
     const isAiConfigured = openAiService.isConfigured() || geminiService.isConfigured();
     const activeProvider = process.env.AI_PROVIDER || (geminiService.isConfigured() && !openAiService.isConfigured() ? 'gemini' : 'openai');
+    const isLocked = await systemSettingsService.isLocked();
 
     return res.json({
       success: true,
       data: {
         activeProvider,
+        isLocked,
+        isKeyLocked: isLocked,
+        deploymentScope: 'Universal Cloud Deployment (All Devices & Roles)',
+        lockedReason: isLocked
+          ? 'System AI Key is locked for all devices. Deployed centrally on the server.'
+          : 'System key is unlocked for editing.',
         openai: {
           model: openAiService.model,
           isConfigured: openAiService.isConfigured(),
+          isLocked,
           keyPreview: maskKey(openAiService.apiKey),
           apiKey: openAiService.apiKey ? maskKey(openAiService.apiKey) : '',
           isCustomKey: Boolean(openAiService.apiKey && openAiService.apiKey !== openAiService.DEFAULT_OPENAI_API_KEY),
-          status: openAiService.isConfigured() ? `Active (OpenAI ${openAiService.model})` : 'API Key Required'
+          status: isLocked
+            ? `Active & Locked (OpenAI ${openAiService.model})`
+            : (openAiService.isConfigured() ? `Active (OpenAI ${openAiService.model})` : 'API Key Required'),
+          deploymentScope: 'Universal across all devices (System Fallback)'
         },
         gemini: {
           model: geminiService.model,
           isConfigured: geminiService.isConfigured(),
+          isLocked,
           keyPreview: maskKey(geminiService.apiKey),
           apiKey: geminiService.apiKey ? maskKey(geminiService.apiKey) : '',
-          status: geminiService.isConfigured() ? `Active (Google Gemini ${geminiService.model})` : 'Free API Key Available'
+          status: isLocked
+            ? `Active & Locked (Google Gemini ${geminiService.model})`
+            : (geminiService.isConfigured() ? `Active (Google Gemini ${geminiService.model})` : 'Free API Key Available'),
+          deploymentScope: 'Universal across all devices (Owner & Staff)'
         },
         database: {
           engine: 'PostgreSQL 16+ (Render Managed / Pure-JS pg)',
@@ -91,8 +110,10 @@ router.get('/', async (req, res) => {
 });
 
 // 2. Update AI Provider & API Passkeys (OpenAI & Google Gemini)
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
+    const isLocked = await systemSettingsService.isLocked();
+
     const {
       provider,
       openaiApiKey,
@@ -101,11 +122,23 @@ router.post('/', (req, res) => {
       geminiModel
     } = req.body;
 
+    // Security Check: If locked, disallow modifying the API keys
+    const isModifyingGeminiKey = geminiApiKey !== undefined && !geminiApiKey.includes('••••') && geminiApiKey.trim() !== geminiService.apiKey;
+    const isModifyingOpenAiKey = openaiApiKey !== undefined && !openaiApiKey.includes('••••') && openaiApiKey.trim() !== openAiService.apiKey;
+
+    if (isLocked && (isModifyingGeminiKey || isModifyingOpenAiKey)) {
+      return res.status(403).json({
+        success: false,
+        error: 'The deployed API key is locked for all devices. Modifying the key is prohibited while locked. Please unlock the key first if you are the Owner.'
+      });
+    }
+
     const envUpdates = {};
 
     if (provider && ['openai', 'gemini'].includes(provider)) {
       process.env.AI_PROVIDER = provider;
       envUpdates.AI_PROVIDER = provider;
+      await systemSettingsService.set('ai_provider', provider);
     }
 
     // OpenAI updates
@@ -114,6 +147,7 @@ router.post('/', (req, res) => {
       process.env.OPENAI_API_KEY = cleanKey;
       openAiService.apiKey = cleanKey;
       envUpdates.OPENAI_API_KEY = cleanKey;
+      await systemSettingsService.set('openai_api_key', cleanKey);
     }
 
     if (openaiModel && openaiModel.trim()) {
@@ -121,6 +155,7 @@ router.post('/', (req, res) => {
       process.env.OPENAI_MODEL = cleanModel;
       openAiService.model = cleanModel;
       envUpdates.OPENAI_MODEL = cleanModel;
+      await systemSettingsService.set('openai_model', cleanModel);
     }
 
     // Gemini updates
@@ -129,6 +164,7 @@ router.post('/', (req, res) => {
       process.env.GEMINI_API_KEY = cleanKey;
       geminiService.apiKey = cleanKey;
       envUpdates.GEMINI_API_KEY = cleanKey;
+      await systemSettingsService.set('gemini_api_key', cleanKey);
     }
 
     if (geminiModel && geminiModel.trim()) {
@@ -136,15 +172,17 @@ router.post('/', (req, res) => {
       process.env.GEMINI_MODEL = cleanModel;
       geminiService.model = cleanModel;
       envUpdates.GEMINI_MODEL = cleanModel;
+      await systemSettingsService.set('gemini_model', cleanModel);
     }
 
     updateEnvFile(envUpdates);
 
     return res.json({
       success: true,
-      message: 'AI Provider configuration updated and saved successfully.',
+      message: 'AI Provider configuration updated and saved successfully for all devices.',
       data: {
-        activeProvider: process.env.AI_PROVIDER || 'openai',
+        activeProvider: process.env.AI_PROVIDER || 'gemini',
+        isLocked,
         openai: {
           model: openAiService.model,
           isConfigured: openAiService.isConfigured(),
@@ -156,6 +194,26 @@ router.post('/', (req, res) => {
           keyPreview: maskKey(geminiService.apiKey)
         }
       }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2b. Toggle Lock State (Owner action to protect or unlock deployed keys)
+router.post('/toggle-lock', async (req, res) => {
+  try {
+    const { locked } = req.body;
+    const isLocked = Boolean(locked);
+    await systemSettingsService.setLocked(isLocked);
+    updateEnvFile({ AI_KEY_LOCKED: isLocked ? 'true' : 'false' });
+
+    return res.json({
+      success: true,
+      isLocked,
+      message: isLocked
+        ? 'Deployed AI keys are now LOCKED. Key fields cannot be edited on any device.'
+        : 'System keys UNLOCKED for authorized editing.'
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });

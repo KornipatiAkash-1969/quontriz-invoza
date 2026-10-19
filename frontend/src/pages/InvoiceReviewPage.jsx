@@ -22,7 +22,8 @@ import {
   UserCheck,
   ChevronDown,
   ChevronUp,
-  UploadCloud
+  UploadCloud,
+  Globe
 } from 'lucide-react';
 import { invoiceApi, vendorApi, categoryApi, vendorTypeApi } from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -642,6 +643,10 @@ export default function InvoiceReviewPage() {
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               <span>Ready for Review</span>
+            </span>
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1">
+              <Globe className="w-3.5 h-3.5 text-blue-600" />
+              <span>AI Vision Active (All Devices)</span>
             </span>
           </div>
           <p className="text-xs text-slate-500 mt-1">

@@ -14,7 +14,10 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Lock,
+  Unlock,
+  Globe
 } from 'lucide-react';
 import { classifierApi, settingsApi } from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -30,6 +33,12 @@ export default function SettingsPage() {
   // Active AI Provider: 'openai' | 'gemini'
   const [activeProvider, setActiveProvider] = useState('openai');
 
+  // Deployed Key Lock & Universal Device State
+  const [isKeyLocked, setIsKeyLocked] = useState(true);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [togglingLock, setTogglingLock] = useState(false);
+  const [deploymentScope, setDeploymentScope] = useState('Universal Cloud Deployment (All Devices & Roles)');
+
   // OpenAI Configuration State
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [openaiModel, setOpenaiModel] = useState('gpt-4o');
@@ -41,7 +50,7 @@ export default function SettingsPage() {
 
   // Google Gemini Configuration State
   const [geminiApiKey, setGeminiApiKey] = useState('');
-  const [geminiModel, setGeminiModel] = useState('gemini-1.5-flash');
+  const [geminiModel, setGeminiModel] = useState('gemini-3.5-flash-lite');
   const [geminiStatus, setGeminiStatus] = useState('Free Tier Available');
   const [isGeminiConfigured, setIsGeminiConfigured] = useState(false);
   const [showGeminiKey, setShowGeminiKey] = useState(false);
@@ -68,9 +77,11 @@ export default function SettingsPage() {
       try {
         const res = await settingsApi.get();
         if (res.success && res.data) {
-          const { openai = {}, gemini = {}, activeProvider: prov = 'openai', database = {} } = res.data;
+          const { openai = {}, gemini = {}, activeProvider: prov = 'openai', database = {}, isLocked = true, deploymentScope: scope } = res.data;
 
           setActiveProvider(prov);
+          setIsKeyLocked(Boolean(isLocked));
+          if (scope) setDeploymentScope(scope);
 
           // OpenAI
           setOpenaiModel(openai.model || 'gpt-4o');
@@ -180,21 +191,57 @@ export default function SettingsPage() {
     }
   };
 
+  // Handle Toggling Key Lock (Owner only)
+  const handleToggleLock = async (targetLocked) => {
+    setTogglingLock(true);
+    try {
+      const res = await settingsApi.toggleLock(targetLocked);
+      if (res.success) {
+        setIsKeyLocked(res.isLocked);
+        if (res.isLocked) {
+          setShowOpenaiKey(false);
+          setShowGeminiKey(false);
+          toastSuccess('Deployed system key locked for all devices. Modifying is now disabled.');
+        } else {
+          toastSuccess('Deployed system key unlocked. You may now modify configuration.');
+        }
+      }
+    } catch (err) {
+      toastError(err.message || 'Failed to toggle lock state.');
+    } finally {
+      setTogglingLock(false);
+    }
+  };
+
   // Save All AI Settings & Provider
   const handleSaveAllSettings = async () => {
     setSavingSettings(true);
     try {
       const payload = {
         provider: activeProvider,
-        openaiApiKey,
         openaiModel,
-        geminiApiKey,
         geminiModel
       };
 
+      // Only send keys if currently unlocked
+      if (!isKeyLocked) {
+        payload.openaiApiKey = openaiApiKey;
+        payload.geminiApiKey = geminiApiKey;
+      }
+
       const res = await settingsApi.save(payload);
       if (res.success) {
-        toastSuccess('AI settings & API keys saved successfully!');
+        if (!isKeyLocked) {
+          // Automatically re-lock key for security after saving
+          await settingsApi.toggleLock(true);
+          setIsKeyLocked(true);
+          setShowOpenaiKey(false);
+          setShowGeminiKey(false);
+          toastSuccess('AI configuration updated & re-locked for all devices!');
+        } else {
+          toastSuccess('AI settings saved successfully! (Key remains locked across all devices).');
+        }
+
         if (res.data?.openai) {
           setIsOpenaiConfigured(res.data.openai.isConfigured);
         }
@@ -283,25 +330,72 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Informational Callout Banner */}
-        <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-200/80 text-xs text-blue-950 flex items-start gap-3">
-          <Zap className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="space-y-1">
-            <span className="font-bold">Recommendation for High Accuracy with Zero Credit Exhaustion:</span>
-            <p className="leading-relaxed">
-              OpenAI requires paid billing credits and will stop working with error <strong>429 (credit_balance_exhausted)</strong> when credits expire.
-              You can switch to <strong>Google Gemini (1.5 Flash)</strong> for generous free-tier multimodal vision with native handwriting recognition.
-            </p>
-            <a
-              href="https://aistudio.google.com/apikey"
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 font-bold underline pt-0.5"
-            >
-              <span>Get your free Google Gemini API Key at Google AI Studio (No Credit Card Required)</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
+        {/* UNIVERSAL DEPLOYMENT & KEY LOCK STATUS BANNER */}
+        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
+          isKeyLocked
+            ? 'bg-gradient-to-r from-amber-50/80 via-slate-50 to-blue-50/70 border-amber-200/90 shadow-2xs'
+            : 'bg-emerald-50/80 border-emerald-300 shadow-2xs'
+        }`}>
+          <div className="flex items-start gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
+              isKeyLocked ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+            }`}>
+              {isKeyLocked ? <Lock className="w-5 h-5" /> : <Unlock className="w-5 h-5" />}
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="font-bold text-xs sm:text-sm text-slate-900">
+                  {isKeyLocked ? 'System AI Key Active & Locked' : 'System Key Editing Unlocked'}
+                </h4>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">
+                  <Globe className="w-3 h-3 text-blue-600" />
+                  <span>Available on All Devices</span>
+                </span>
+                {isKeyLocked ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-amber-600" />
+                    <span>Locked</span>
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                    <Unlock className="w-3 h-3 text-emerald-600" />
+                    <span>Editable</span>
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                {isKeyLocked
+                  ? 'This Multimodal AI Vision key is deployed centrally on the server and shared universally across all devices (Owner & Staff). Key editing is locked to prevent service interruption.'
+                  : 'Editing mode is active. Modifying this key will update invoice processing across all devices. Re-lock after editing.'}
+              </p>
+            </div>
           </div>
+
+          {/* Lock / Unlock Toggle (Owner Only) */}
+          {isOwner && (
+            <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
+              {isKeyLocked ? (
+                <button
+                  type="button"
+                  onClick={() => setShowUnlockModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 shadow-2xs transition"
+                >
+                  <Lock className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Unlock Key</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleToggleLock(true)}
+                  disabled={togglingLock}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-xs transition disabled:opacity-50"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>{togglingLock ? 'Locking...' : 'Lock Key Now'}</span>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* PROVIDER 1: GOOGLE GEMINI SETTINGS */}
@@ -315,6 +409,10 @@ export default function SettingsPage() {
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
                 {geminiStatus}
               </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hidden sm:inline-flex items-center gap-1">
+                <Globe className="w-3 h-3 text-emerald-600" />
+                <span>All Devices</span>
+              </span>
             </div>
             <span className="text-[11px] text-slate-400 font-medium">Free Tier: 15 Requests / min</span>
           </div>
@@ -323,24 +421,56 @@ export default function SettingsPage() {
             {/* Gemini API Key */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
-                <span>Gemini API Key (starts with AIzaSy...)</span>
-                <button
-                  type="button"
-                  onClick={() => setShowGeminiKey(!showGeminiKey)}
-                  className="text-[11px] text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
-                >
-                  {showGeminiKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                  <span>{showGeminiKey ? 'Hide' : 'Reveal'}</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <span>Gemini API Key</span>
+                  {isKeyLocked ? (
+                    <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                      <Lock className="w-2.5 h-2.5" />
+                      <span>Locked</span>
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                      <Unlock className="w-2.5 h-2.5" />
+                      <span>Unlocked</span>
+                    </span>
+                  )}
+                </div>
+                {!isKeyLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setShowGeminiKey(!showGeminiKey)}
+                    className="text-[11px] text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                  >
+                    {showGeminiKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    <span>{showGeminiKey ? 'Hide' : 'Reveal'}</span>
+                  </button>
+                )}
               </label>
-              <input
-                type={showGeminiKey ? 'text' : 'password'}
-                value={geminiApiKey}
-                onChange={(e) => setGeminiApiKey(e.target.value)}
-                placeholder="AIzaSy..."
-                className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-xl outline-none font-mono bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-              />
-              <p className="text-[11px] text-slate-400">Generate at Google AI Studio without entering any credit card.</p>
+
+              <div className="relative">
+                <input
+                  type={showGeminiKey && !isKeyLocked ? 'text' : 'password'}
+                  value={geminiApiKey}
+                  readOnly={isKeyLocked}
+                  onChange={(e) => !isKeyLocked && setGeminiApiKey(e.target.value)}
+                  placeholder="AIzaSy..."
+                  className={`w-full px-3.5 py-2.5 text-xs sm:text-sm border rounded-xl outline-none font-mono transition ${
+                    isKeyLocked
+                      ? 'bg-slate-100/90 text-slate-500 border-slate-200 cursor-not-allowed select-none'
+                      : 'bg-white border-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600'
+                  }`}
+                />
+                {isKeyLocked && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-amber-600 pointer-events-none">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400">
+                {isKeyLocked
+                  ? '🔒 System Key Locked: Active across all staff & owner devices. Modifying is locked to protect deployment.'
+                  : 'Generate at Google AI Studio without entering any credit card.'}
+              </p>
             </div>
 
             {/* Gemini Model */}
@@ -351,9 +481,10 @@ export default function SettingsPage() {
                 onChange={(e) => setGeminiModel(e.target.value)}
                 className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-xl outline-none font-medium bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
               >
-                <option value="gemini-1.5-flash">gemini-1.5-flash (Fast, Free & High-Accuracy Vision - Recommended)</option>
-                <option value="gemini-2.0-flash">gemini-2.0-flash (Next-Gen Multimodal Reasoning)</option>
-                <option value="gemini-1.5-pro">gemini-1.5-pro (Deep Document Analysis)</option>
+                <option value="gemini-3.5-flash-lite">gemini-3.5-flash-lite (Fast, Free & High-Accuracy Vision - Active & Recommended)</option>
+                <option value="gemini-3.6-flash">gemini-3.6-flash (Latest Multimodal Vision Model)</option>
+                <option value="gemini-3.5-flash">gemini-3.5-flash (Standard Multimodal Vision)</option>
+                <option value="gemini-1.5-flash">gemini-1.5-flash (Legacy Multimodal)</option>
               </select>
               <div className="flex items-center justify-between pt-1">
                 <button
@@ -397,6 +528,10 @@ export default function SettingsPage() {
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
                 {openaiStatus}
               </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200 hidden sm:inline-flex items-center gap-1">
+                <Globe className="w-3 h-3 text-slate-500" />
+                <span>System Fallback</span>
+              </span>
             </div>
             <span className="text-[11px] text-slate-400 font-medium">Requires paid credits on platform.openai.com</span>
           </div>
@@ -405,24 +540,56 @@ export default function SettingsPage() {
             {/* OpenAI API Key */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
-                <span>OpenAI API Key (starts with sk-proj-...)</span>
-                <button
-                  type="button"
-                  onClick={() => setShowOpenaiKey(!showOpenaiKey)}
-                  className="text-[11px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
-                >
-                  {showOpenaiKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                  <span>{showOpenaiKey ? 'Hide' : 'Reveal'}</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <span>OpenAI API Key</span>
+                  {isKeyLocked ? (
+                    <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1">
+                      <Lock className="w-2.5 h-2.5" />
+                      <span>Locked</span>
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                      <Unlock className="w-2.5 h-2.5" />
+                      <span>Unlocked</span>
+                    </span>
+                  )}
+                </div>
+                {!isKeyLocked && (
+                  <button
+                    type="button"
+                    onClick={() => setShowOpenaiKey(!showOpenaiKey)}
+                    className="text-[11px] text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                  >
+                    {showOpenaiKey ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    <span>{showOpenaiKey ? 'Hide' : 'Reveal'}</span>
+                  </button>
+                )}
               </label>
-              <input
-                type={showOpenaiKey ? 'text' : 'password'}
-                value={openaiApiKey}
-                onChange={(e) => setOpenaiApiKey(e.target.value)}
-                placeholder="sk-proj-..."
-                className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-xl outline-none font-mono bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
-              />
-              <p className="text-[11px] text-slate-400">Must have active positive billing balance to avoid HTTP 429 quota exhaustion.</p>
+
+              <div className="relative">
+                <input
+                  type={showOpenaiKey && !isKeyLocked ? 'text' : 'password'}
+                  value={openaiApiKey}
+                  readOnly={isKeyLocked}
+                  onChange={(e) => !isKeyLocked && setOpenaiApiKey(e.target.value)}
+                  placeholder="sk-proj-..."
+                  className={`w-full px-3.5 py-2.5 text-xs sm:text-sm border rounded-xl outline-none font-mono transition ${
+                    isKeyLocked
+                      ? 'bg-slate-100/90 text-slate-500 border-slate-200 cursor-not-allowed select-none'
+                      : 'bg-white border-slate-300 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600'
+                  }`}
+                />
+                {isKeyLocked && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-amber-600 pointer-events-none">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400">
+                {isKeyLocked
+                  ? '🔒 System Key Locked: Active as fallback across all devices.'
+                  : 'Must have active positive billing balance to avoid HTTP 429 quota exhaustion.'}
+              </p>
             </div>
 
             {/* OpenAI Model */}
@@ -679,6 +846,48 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Unlock Confirmation Modal */}
+      {showUnlockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shadow-xs">
+              <Lock className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Unlock Deployed System Key?</h3>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                This Multimodal Vision AI Key is deployed centrally on the server and actively handles invoice extraction for <strong>all connected devices (Store Owner and Staff)</strong>.
+              </p>
+              <div className="mt-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <span>
+                  Modifying or clearing this key will affect all staff members uploading invoices. Are you sure you want to unlock editing?
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowUnlockModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              >
+                Keep Locked
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUnlockModal(false);
+                  handleToggleLock(false);
+                }}
+                className="px-4 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-xs transition"
+              >
+                Confirm & Unlock
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -15,7 +15,9 @@ import {
   RotateCcw,
   FlaskConical,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  Globe
 } from 'lucide-react';
 import { invoiceApi, vendorApi, categoryApi, vendorTypeApi } from '../services/api';
 import { useToast } from '../context/ToastContext';
@@ -411,6 +413,25 @@ export default function UploadPage() {
           <span className="hidden sm:inline">Manually Enter Entire Invoice</span>
           <span className="sm:hidden">Manual Invoice Entry</span>
         </button>
+      </div>
+
+      {/* Multimodal AI System Deployment Status Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-50/80 via-slate-50 to-indigo-50/70 border border-blue-200/80 text-xs shadow-2xs">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="font-bold text-slate-800">Multimodal AI Vision:</span>
+          <span className="text-slate-600">Google Gemini active across all devices</span>
+        </div>
+        <div className="flex items-center gap-2 text-[11px]">
+          <span className="inline-flex items-center gap-1 font-bold text-blue-700 bg-blue-100/90 px-2.5 py-0.5 rounded-full border border-blue-200">
+            <Globe className="w-3 h-3 text-blue-600" />
+            <span>Universal Cloud Key</span>
+          </span>
+          <span className="inline-flex items-center gap-1 font-bold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full border border-amber-200">
+            <Lock className="w-3 h-3 text-amber-600" />
+            <span>Locked & Secured</span>
+          </span>
+        </div>
       </div>
 
       {/* TAB 1: UPLOAD PDF OR IMAGE */}

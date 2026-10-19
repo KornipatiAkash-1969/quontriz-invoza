@@ -15,10 +15,12 @@ const unitNormalizationService = require('./UnitNormalizationService');
 class GeminiInvoiceService {
   constructor() {
     this.apiKey = (process.env.GEMINI_API_KEY || '').trim();
-    this.model = (process.env.GEMINI_MODEL || 'gemini-1.5-flash').trim();
+    this.model = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
+    this.candidateModels = ['gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview'];
   }
 
   isConfigured() {
+    this.apiKey = (process.env.GEMINI_API_KEY || this.apiKey || '').trim();
     return Boolean(this.apiKey && this.apiKey.length >= 20);
   }
 
@@ -31,39 +33,42 @@ class GeminiInvoiceService {
       };
     }
 
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: 'Respond with: {"status": "ok"}' }] }],
-          generationConfig: { response_mime_type: 'application/json' }
-        })
-      });
+    const testModels = [this.model, ...this.candidateModels.filter(m => m !== this.model)];
+    let lastError = null;
 
-      if (res.ok) {
-        return {
-          connected: true,
-          model: this.model,
-          message: `Connected to Google Gemini API successfully! (Model: ${this.model})`
-        };
+    for (const m of testModels) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${this.apiKey}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Respond with: {"status": "ok"}' }] }],
+            generationConfig: { response_mime_type: 'application/json' }
+          })
+        });
+
+        if (res.ok) {
+          this.model = m;
+          return {
+            connected: true,
+            model: m,
+            message: `Connected to Google Gemini API successfully! (Model: ${m})`
+          };
+        }
+
+        const err = await res.json().catch(() => ({}));
+        lastError = err?.error?.message || `HTTP ${res.status}`;
+      } catch (err) {
+        lastError = err.message;
       }
-
-      const err = await res.json().catch(() => ({}));
-      const errMsg = err?.error?.message || `HTTP ${res.status}`;
-      return {
-        connected: false,
-        model: this.model,
-        message: `Google Gemini returned: ${errMsg}`
-      };
-    } catch (err) {
-      return {
-        connected: false,
-        model: this.model,
-        message: `Network error connecting to Gemini: ${err.message}`
-      };
     }
+
+    return {
+      connected: false,
+      model: this.model,
+      message: `Google Gemini returned: ${lastError}`
+    };
   }
 
   async analyzeInvoice(filePath, ocrText = '') {
@@ -174,52 +179,68 @@ Respond strictly with valid JSON following this exact schema:
 Extracted text hints from local reader (if any):
 ${ocrText || '(Direct visual analysis)'}`;
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
-    console.log(`[GeminiInvoiceService] Querying Google Gemini (${this.model}) with multimodal ${mimeType}...`);
+    const modelsToTry = [this.model, ...this.candidateModels.filter(m => m !== this.model)];
+    let lastError = null;
 
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: promptText },
+    for (const m of modelsToTry) {
+      try {
+        console.log(`[GeminiInvoiceService] Querying Google Gemini (${m}) with multimodal ${mimeType}...`);
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${this.apiKey}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
               {
-                inline_data: {
-                  mime_type: mimeType,
-                  data: base64Data
-                }
+                parts: [
+                  { text: promptText },
+                  {
+                    inline_data: {
+                      mime_type: mimeType,
+                      data: base64Data
+                    }
+                  }
+                ]
               }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.1,
-          response_mime_type: 'application/json'
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              response_mime_type: 'application/json'
+            }
+          })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          const msg = err?.error?.message || `HTTP ${res.status}`;
+          console.warn(`[GeminiInvoiceService] Model ${m} returned error (${msg}). Trying fallback model...`);
+          lastError = new Error(`Gemini API Error (${m}): ${msg}`);
+          continue;
         }
-      })
-    });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      const msg = err?.error?.message || `HTTP ${res.status}`;
-      throw new Error(`Gemini API Error: ${msg}`);
+        const data = await res.json();
+        const rawJsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawJsonText) {
+          console.warn(`[GeminiInvoiceService] Model ${m} returned empty response. Trying fallback model...`);
+          lastError = new Error(`Gemini (${m}) returned an empty response.`);
+          continue;
+        }
+
+        const parsed = JSON.parse(rawJsonText);
+        this.model = m;
+        return {
+          engine: 'gemini',
+          model: m,
+          latencyMs: Date.now() - startTime,
+          ...parsed
+        };
+      } catch (err) {
+        console.warn(`[GeminiInvoiceService] Exception with ${m}: ${err.message}`);
+        lastError = err;
+      }
     }
 
-    const data = await res.json();
-    const rawJsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!rawJsonText) {
-      throw new Error('Gemini returned an empty response.');
-    }
-
-    const parsed = JSON.parse(rawJsonText);
-    return {
-      engine: 'gemini',
-      model: this.model,
-      latencyMs: Date.now() - startTime,
-      ...parsed
-    };
+    throw lastError || new Error('All Gemini candidate models failed.');
   }
 }
 

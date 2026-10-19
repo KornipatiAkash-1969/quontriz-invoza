@@ -183,6 +183,7 @@ export const settingsApi = {
   save: (data) => api.post('/settings', data),
   testOpenAI: (data) => api.post('/settings/test-openai', data),
   testGemini: (data) => api.post('/settings/test-gemini', data),
+  toggleLock: (locked) => api.post('/settings/toggle-lock', { locked }),
 };
 
 export const supportApi = {
