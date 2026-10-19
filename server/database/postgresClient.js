@@ -47,6 +47,7 @@ function convertPgDdlToWasm(sql) {
 }
 
 let lastMtime = 0;
+let inTransaction = false;
 
 async function getWasmDb() {
   if (!SQL_ENGINE) {
@@ -54,25 +55,28 @@ async function getWasmDb() {
     SQL_ENGINE = await initSqlJs();
   }
 
+  // If already instantiated in memory, keep the active instance (crucial for transactions)
+  if (wasmDb) {
+    return wasmDb;
+  }
+
   if (fs.existsSync(WASM_DB_FILE)) {
     try {
+      const buffer = fs.readFileSync(WASM_DB_FILE);
+      wasmDb = new SQL_ENGINE.Database(buffer);
       const stats = fs.statSync(WASM_DB_FILE);
-      if (!wasmDb || stats.mtimeMs > lastMtime) {
-        const buffer = fs.readFileSync(WASM_DB_FILE);
-        wasmDb = new SQL_ENGINE.Database(buffer);
-        lastMtime = stats.mtimeMs;
-      }
+      lastMtime = stats.mtimeMs;
     } catch {
-      if (!wasmDb) wasmDb = new SQL_ENGINE.Database();
+      wasmDb = new SQL_ENGINE.Database();
     }
-  } else if (!wasmDb) {
+  } else {
     wasmDb = new SQL_ENGINE.Database();
   }
   return wasmDb;
 }
 
 function persistWasmDb() {
-  if (!wasmDb) return;
+  if (!wasmDb || inTransaction) return;
   try {
     const data = wasmDb.export();
     fs.writeFileSync(WASM_DB_FILE, Buffer.from(data));
@@ -266,7 +270,9 @@ const postgresClient = {
     db.run(cleanSql, params);
     const idRow = db.exec('SELECT last_insert_rowid() as id');
     const lastId = idRow && idRow[0]?.values && idRow[0].values[0] ? idRow[0].values[0][0] : null;
-    persistWasmDb();
+    if (!inTransaction) {
+      persistWasmDb();
+    }
     return {
       lastInsertRowid: lastId,
       insertId: lastId,
@@ -283,7 +289,9 @@ const postgresClient = {
     const db = await getWasmDb();
     const adapted = convertPgDdlToWasm(sql);
     db.run(adapted);
-    persistWasmDb();
+    if (!inTransaction) {
+      persistWasmDb();
+    }
   },
 
   async transaction(fn) {
@@ -317,7 +325,15 @@ const postgresClient = {
     }
 
     const db = await getWasmDb();
-    db.run('BEGIN TRANSACTION;');
+    inTransaction = true;
+    let inDbTx = false;
+    try {
+      db.run('BEGIN TRANSACTION;');
+      inDbTx = true;
+    } catch (bErr) {
+      // Transaction already active
+    }
+
     try {
       const self = this;
       const txHelper = {
@@ -326,12 +342,28 @@ const postgresClient = {
         run: (sql, params = []) => self.run(sql, params)
       };
       const result = await fn(txHelper);
-      db.run('COMMIT;');
+      if (inDbTx) {
+        try {
+          db.run('COMMIT;');
+        } catch (cErr) {
+          // If transaction was committed or inactive
+        }
+      }
+      inTransaction = false;
       persistWasmDb();
       return result;
     } catch (err) {
-      db.run('ROLLBACK;');
+      if (inDbTx) {
+        try {
+          db.run('ROLLBACK;');
+        } catch (rbErr) {
+          // Ignore rollback failure so the real error is preserved
+        }
+      }
+      inTransaction = false;
       throw err;
+    } finally {
+      inTransaction = false;
     }
   }
 };
