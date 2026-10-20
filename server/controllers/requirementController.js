@@ -22,9 +22,9 @@ class RequirementController {
       let params = [];
 
       if (search) {
-        whereClauses.push('(r.item_name LIKE ? OR r.specification LIKE ? OR r.notes LIKE ? OR r.requested_by_name LIKE ? OR r.preferred_vendor_name LIKE ?)');
+        whereClauses.push('(r.item_name LIKE ? OR r.specification LIKE ? OR r.notes LIKE ? OR r.requested_by_name LIKE ? OR u.name LIKE ? OR r.preferred_vendor_name LIKE ?)');
         const s = `%${search}%`;
-        params.push(s, s, s, s, s);
+        params.push(s, s, s, s, s, s);
       }
 
       if (status && status !== 'All') {
@@ -49,8 +49,12 @@ class RequirementController {
       const finalOrder = sortOrder.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
       const sql = `
-        SELECT r.*
+        SELECT 
+          r.*,
+          COALESCE(u.name, r.requested_by_name, 'Staff') as requested_by_name,
+          COALESCE(u.role, 'staff') as requested_by_role
         FROM store_requirements r
+        LEFT JOIN users u ON r.requested_by_user_id = u.id
         ${whereSql}
         ORDER BY ${finalSortBy} ${finalOrder}
       `;
@@ -380,8 +384,8 @@ class RequirementController {
       let params = [];
 
       if (search) {
-        whereClauses.push('(r.item_name LIKE ? OR r.specification LIKE ? OR r.notes LIKE ? OR r.requested_by_name LIKE ?)');
-        params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        whereClauses.push('(r.item_name LIKE ? OR r.specification LIKE ? OR r.notes LIKE ? OR r.requested_by_name LIKE ? OR u.name LIKE ?)');
+        params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
       }
 
       if (status && status !== 'All') {
@@ -396,8 +400,12 @@ class RequirementController {
 
       const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
       const items = await db.query(`
-        SELECT r.*
+        SELECT 
+          r.*,
+          COALESCE(u.name, r.requested_by_name, 'Staff') as requested_by_name,
+          COALESCE(u.role, 'staff') as requested_by_role
         FROM store_requirements r
+        LEFT JOIN users u ON r.requested_by_user_id = u.id
         ${whereSql}
         ORDER BY r.created_at DESC
       `, params);

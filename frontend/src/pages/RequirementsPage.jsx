@@ -15,7 +15,8 @@ import {
   FileSpreadsheet,
   Package,
   Sparkles,
-  Check
+  Check,
+  User
 } from 'lucide-react';
 import { requirementApi, vendorApi, categoryApi } from '../services/api';
 import { Spinner, TableSkeleton, ConfirmDialog } from '../components/ui';
@@ -581,6 +582,16 @@ export default function RequirementsPage() {
                                 {fullDesc}
                               </span>
                             </div>
+                            {/* Staff Requester indicator in item cell */}
+                            {isOwner && (
+                              <div className="flex items-center gap-1.5 text-[11px] pt-0.5">
+                                <span className="text-slate-400 font-medium">Staff:</span>
+                                <span className="font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-md inline-flex items-center gap-1 shadow-2xs">
+                                  <User className="w-3 h-3 text-emerald-600" />
+                                  <span>{item.requested_by_name || 'Staff'}</span>
+                                </span>
+                              </div>
+                            )}
                             {item.notes && (
                               <p className="text-[11px] text-slate-400 italic">“{item.notes}”</p>
                             )}
@@ -668,9 +679,33 @@ export default function RequirementsPage() {
 
                         {/* Requested By */}
                         <td className="py-3.5 px-4">
-                          <div>
-                            <p className="font-bold text-slate-800 text-xs">{item.requested_by_name || 'Staff'}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(item.created_at)}</p>
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-2xs ${
+                                item.requested_by_role === 'owner'
+                                  ? 'bg-indigo-100 text-indigo-700'
+                                  : 'bg-emerald-100 text-emerald-700'
+                              }`}
+                            >
+                              {(item.requested_by_name || 'Staff').charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-bold text-slate-900 text-xs">
+                                  {item.requested_by_name || 'Staff'}
+                                </p>
+                                <span
+                                  className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                    item.requested_by_role === 'owner'
+                                      ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  }`}
+                                >
+                                  {item.requested_by_role === 'owner' ? 'Owner' : 'Staff'}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-400 mt-0.5">{formatDate(item.created_at)}</p>
+                            </div>
                           </div>
                         </td>
 
@@ -801,6 +836,25 @@ export default function RequirementsPage() {
                         “{item.notes}”
                       </p>
                     )}
+
+                    {/* Staff Requester metadata on mobile */}
+                    <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-slate-100/90 text-slate-600">
+                      <div className="flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-slate-400 font-medium">Staff:</span>
+                        <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded text-[11px] inline-flex items-center gap-1">
+                          {item.requested_by_name || 'Staff'}
+                        </span>
+                        {item.requested_by_role && (
+                          <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase ${
+                            item.requested_by_role === 'owner' ? 'bg-indigo-50 text-indigo-700' : 'bg-emerald-50 text-emerald-700'
+                          }`}>
+                            {item.requested_by_role}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-400 font-medium">{formatDate(item.created_at)}</span>
+                    </div>
 
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2 flex-wrap">
                       <div className="flex-1 min-w-[140px]">
@@ -954,6 +1008,25 @@ export default function RequirementsPage() {
                     </p>
                   </div>
                 </div>
+
+                {/* Staff Requester Info in Modal */}
+                {editingItem && (
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/90 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-1.5 text-slate-600">
+                      <User className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="text-slate-500">Requested by:</span>
+                      <strong className="font-bold text-slate-900">{editingItem.requested_by_name || 'Staff'}</strong>
+                      {editingItem.requested_by_role && (
+                        <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold uppercase ${
+                          editingItem.requested_by_role === 'owner' ? 'bg-indigo-50 text-indigo-700' : 'bg-emerald-50 text-emerald-700'
+                        }`}>
+                          {editingItem.requested_by_role}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-medium">{formatDate(editingItem.created_at)}</span>
+                  </div>
+                )}
 
                 {/* Item Name */}
                 <div>
