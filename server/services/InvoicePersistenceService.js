@@ -130,10 +130,10 @@ class InvoicePersistenceService {
 
       const isOwnerCreating = (data.userRole === 'owner' || userId === 1);
       const viewedByOwner = isOwnerCreating ? 1 : 0;
-      const viewedByStaff = isOwnerCreating ? 0 : 1;
+      const viewedByStaff = 1;
       const istNow = getIstIsoString();
       const viewedAt = viewedByOwner ? istNow : null;
-      const staffViewedAt = viewedByStaff ? istNow : null;
+      const staffViewedAt = istNow;
 
       const invResult = await db.run(`
         INSERT INTO invoices (
@@ -300,19 +300,38 @@ class InvoicePersistenceService {
     try {
       const isOwnerCreating = (data.userRole === 'owner' || userId === 1);
       const vName = vendor?.vendor_name || vendor?.name || invoice.vendor_name || 'Vendor';
-      await notificationService.createNotification({
-        target_role: isOwnerCreating ? 'staff' : 'owner',
-        type: 'invoice_created',
-        title: isOwnerCreating ? 'New Invoice Added by Owner' : 'New Invoice Uploaded by Staff',
-        message: isOwnerCreating
-          ? `Owner added invoice #${persistedInvoice.invoice_number} (Total: ₹${persistedInvoice.total})`
-          : `${data.userName || 'Staff'} uploaded invoice #${persistedInvoice.invoice_number} for ${vName} (Total: ₹${persistedInvoice.total})`,
-        link: `/invoices/${persistedInvoice.id}`,
-        related_id: persistedInvoice.id,
-        related_type: 'invoice',
-        created_by_user_id: userId,
-        created_by_name: isOwnerCreating ? 'Store Owner' : (data.userName || 'Staff')
-      });
+
+      // If created by owner, DO NOT create notifications for staff
+      if (!isOwnerCreating) {
+        // 1. Notify Owner so owner can review & approve
+        await notificationService.createNotification({
+          target_role: 'owner',
+          type: 'invoice_created',
+          title: 'New Invoice Uploaded by Staff',
+          message: `${data.userName || 'Staff'} uploaded invoice #${persistedInvoice.invoice_number} for ${vName} (Total: ₹${persistedInvoice.total})`,
+          link: `/invoices/${persistedInvoice.id}`,
+          related_id: persistedInvoice.id,
+          related_type: 'invoice',
+          created_by_user_id: userId,
+          created_by_name: data.userName || 'Staff'
+        });
+
+        // 2. Notify ONLY THAT PARTICULAR STAFF who uploaded it
+        if (userId) {
+          await notificationService.createNotification({
+            user_id: userId,
+            target_role: 'staff',
+            type: 'invoice_created',
+            title: 'Invoice Uploaded Successfully',
+            message: `Invoice #${persistedInvoice.invoice_number} (${vName}) uploaded for owner review`,
+            link: `/invoices/${persistedInvoice.id}`,
+            related_id: persistedInvoice.id,
+            related_type: 'invoice',
+            created_by_user_id: userId,
+            created_by_name: data.userName || 'Staff'
+          });
+        }
+      }
     } catch (notifErr) {
       console.warn('[InvoicePersistenceService] Notification creation note:', notifErr.message);
     }

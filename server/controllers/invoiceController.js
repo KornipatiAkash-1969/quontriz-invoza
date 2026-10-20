@@ -705,17 +705,35 @@ class InvoiceController {
 
       // Create persistent notification for the reciprocal party
       try {
-        await notificationService.createNotification({
-          target_role: isOwner ? 'staff' : 'owner',
-          type: 'invoice_updated',
-          title: isOwner ? 'Invoice Updated by Owner' : 'Invoice Updated by Staff',
-          message: `${isOwner ? 'Owner' : 'Staff'} updated invoice #${updated.invoice_number} (Total: ₹${updated.total})`,
-          link: `/invoices/${updated.id}`,
-          related_id: updated.id,
-          related_type: 'invoice',
-          created_by_user_id: req.user?.id || null,
-          created_by_name: req.user?.name || (isOwner ? 'Store Owner' : 'Staff')
-        });
+        const creatorId = updated.created_by_user_id;
+        const isOwnerInvoice = !creatorId || creatorId === 1;
+
+        if (isOwner && !isOwnerInvoice && creatorId) {
+          await notificationService.createNotification({
+            user_id: creatorId,
+            target_role: 'staff',
+            type: 'invoice_updated',
+            title: 'Invoice Updated by Owner',
+            message: `Owner updated invoice #${updated.invoice_number} (Total: ₹${updated.total})`,
+            link: `/invoices/${updated.id}`,
+            related_id: updated.id,
+            related_type: 'invoice',
+            created_by_user_id: req.user?.id || 1,
+            created_by_name: req.user?.name || 'Store Owner'
+          });
+        } else if (!isOwner) {
+          await notificationService.createNotification({
+            target_role: 'owner',
+            type: 'invoice_updated',
+            title: 'Invoice Updated by Staff',
+            message: `${req.user?.name || 'Staff'} updated invoice #${updated.invoice_number} (Total: ₹${updated.total})`,
+            link: `/invoices/${updated.id}`,
+            related_id: updated.id,
+            related_type: 'invoice',
+            created_by_user_id: req.user?.id || null,
+            created_by_name: req.user?.name || 'Staff'
+          });
+        }
       } catch (notifErr) {
         console.warn('[InvoiceController] Notification error:', notifErr.message);
       }
@@ -807,20 +825,27 @@ class InvoiceController {
 
       const updated = await this.fetchInvoiceWithDetails(id);
 
-      try {
-        await notificationService.createNotification({
-          target_role: 'staff',
-          type: 'invoice_paid',
-          title: 'Invoice Payment Approved',
-          message: `Owner approved & paid invoice #${updated.invoice_number} (₹${updated.total}) via ${paymentMethod}`,
-          link: `/invoices/${updated.id}`,
-          related_id: updated.id,
-          related_type: 'invoice',
-          created_by_user_id: req.user?.id || 1,
-          created_by_name: req.user?.name || 'Store Owner'
-        });
-      } catch (notifErr) {
-        console.warn('[InvoiceController] Notification error on payment:', notifErr.message);
+      const creatorId = updated.created_by_user_id;
+      const isOwnerInvoice = !creatorId || creatorId === 1 || updated.created_by_role === 'owner';
+
+      // Only notify if invoice was uploaded by a staff member, and target ONLY that specific staff member
+      if (!isOwnerInvoice && creatorId) {
+        try {
+          await notificationService.createNotification({
+            user_id: creatorId,
+            target_role: 'staff',
+            type: 'invoice_paid',
+            title: 'Invoice Payment Approved',
+            message: `Owner approved & paid invoice #${updated.invoice_number} (₹${updated.total}) via ${paymentMethod}`,
+            link: `/invoices/${updated.id}`,
+            related_id: updated.id,
+            related_type: 'invoice',
+            created_by_user_id: req.user?.id || 1,
+            created_by_name: req.user?.name || 'Store Owner'
+          });
+        } catch (notifErr) {
+          console.warn('[InvoiceController] Notification error on payment:', notifErr.message);
+        }
       }
 
       return res.json({
@@ -869,20 +894,27 @@ class InvoiceController {
 
       const updated = await this.fetchInvoiceWithDetails(id);
 
-      try {
-        await notificationService.createNotification({
-          target_role: 'staff',
-          type: 'invoice_rejected',
-          title: 'Invoice Rejected by Owner',
-          message: `Invoice #${updated.invoice_number} was rejected. Reason: ${reason}`,
-          link: `/invoices/${updated.id}`,
-          related_id: updated.id,
-          related_type: 'invoice',
-          created_by_user_id: req.user?.id || 1,
-          created_by_name: req.user?.name || 'Store Owner'
-        });
-      } catch (notifErr) {
-        console.warn('[InvoiceController] Notification error on reject:', notifErr.message);
+      const creatorId = updated.created_by_user_id;
+      const isOwnerInvoice = !creatorId || creatorId === 1 || updated.created_by_role === 'owner';
+
+      // Only notify if invoice was uploaded by a staff member, and target ONLY that specific staff member
+      if (!isOwnerInvoice && creatorId) {
+        try {
+          await notificationService.createNotification({
+            user_id: creatorId,
+            target_role: 'staff',
+            type: 'invoice_rejected',
+            title: 'Invoice Rejected by Owner',
+            message: `Invoice #${updated.invoice_number} was rejected. Reason: ${reason}`,
+            link: `/invoices/${updated.id}`,
+            related_id: updated.id,
+            related_type: 'invoice',
+            created_by_user_id: req.user?.id || 1,
+            created_by_name: req.user?.name || 'Store Owner'
+          });
+        } catch (notifErr) {
+          console.warn('[InvoiceController] Notification error on reject:', notifErr.message);
+        }
       }
 
       return res.json({

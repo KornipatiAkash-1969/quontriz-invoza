@@ -149,22 +149,22 @@ class RequirementController {
 
       const created = await db.get('SELECT * FROM store_requirements WHERE id = ?', [result.lastInsertRowid || result.insertId]);
 
-      try {
-        await notificationService.createNotification({
-          target_role: isOwner ? 'staff' : 'owner',
-          type: 'requirement_created',
-          title: isOwner ? 'New Demand Added by Owner' : 'New Store Requirement',
-          message: isOwner
-            ? `Owner added demand: ${created.item_name} (${created.quantity} ${created.unit})`
-            : `${requestedByName} requested: ${created.item_name} (${created.quantity} ${created.unit})`,
-          link: '/requirements',
-          related_id: created.id,
-          related_type: 'requirement',
-          created_by_user_id: requestedByUserId,
-          created_by_name: requestedByName
-        });
-      } catch (notifErr) {
-        console.warn('[RequirementController] Notification error on create:', notifErr.message);
+      if (!isOwner) {
+        try {
+          await notificationService.createNotification({
+            target_role: 'owner',
+            type: 'requirement_created',
+            title: 'New Store Requirement',
+            message: `${requestedByName} requested: ${created.item_name} (${created.quantity} ${created.unit})`,
+            link: '/requirements',
+            related_id: created.id,
+            related_type: 'requirement',
+            created_by_user_id: requestedByUserId,
+            created_by_name: requestedByName
+          });
+        } catch (notifErr) {
+          console.warn('[RequirementController] Notification error on create:', notifErr.message);
+        }
       }
 
       return res.status(201).json({
@@ -300,17 +300,24 @@ class RequirementController {
           notifMsg = `Owner rejected demand for ${updated.item_name}`;
         }
 
-        await notificationService.createNotification({
-          target_role: 'staff',
-          type: notifType,
-          title: notifTitle,
-          message: notifMsg,
-          link: '/requirements',
-          related_id: updated.id,
-          related_type: 'requirement',
-          created_by_user_id: req.user?.id || 1,
-          created_by_name: req.user?.name || 'Store Owner'
-        });
+        const requesterId = updated.requested_by_user_id;
+        const isOwnerRequirement = !requesterId || requesterId === 1;
+
+        // Only notify the particular staff member who requested this item
+        if (!isOwnerRequirement && requesterId) {
+          await notificationService.createNotification({
+            user_id: requesterId,
+            target_role: 'staff',
+            type: notifType,
+            title: notifTitle,
+            message: notifMsg,
+            link: '/requirements',
+            related_id: updated.id,
+            related_type: 'requirement',
+            created_by_user_id: req.user?.id || 1,
+            created_by_name: req.user?.name || 'Store Owner'
+          });
+        }
       } catch (notifErr) {
         console.warn('[RequirementController] Notification error on update:', notifErr.message);
       }

@@ -88,7 +88,12 @@ class NotificationService {
     const params = [];
 
     // Filter by target role or all, or targeted user
-    if (userId) {
+    if (userId && role === 'staff') {
+      // For staff: ONLY show notifications targeted directly to this specific staff user_id, or global announcements ('all')
+      // Excludes notifications of other staff and excludes owner invoice notifications
+      roleConditions.push('(user_id = ? OR (user_id IS NULL AND target_role = ?))');
+      params.push(userId, 'all');
+    } else if (userId) {
       roleConditions.push('(user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))');
       params.push(userId, role, 'all');
     } else {
@@ -118,10 +123,18 @@ class NotificationService {
     const totalCount = totalRow?.count || 0;
 
     // Unread count specifically for this role/user (excluding test & orphaned)
-    const unreadParams = userId ? [userId, role, 'all'] : [role, 'all'];
-    const unreadUserClause = userId
-      ? '(user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))'
-      : '(target_role = ? OR target_role = ?)';
+    let unreadParams;
+    let unreadUserClause;
+    if (userId && role === 'staff') {
+      unreadUserClause = '(user_id = ? OR (user_id IS NULL AND target_role = ?))';
+      unreadParams = [userId, 'all'];
+    } else if (userId) {
+      unreadUserClause = '(user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))';
+      unreadParams = [userId, role, 'all'];
+    } else {
+      unreadUserClause = '(target_role = ? OR target_role = ?)';
+      unreadParams = [role, 'all'];
+    }
     const unreadRow = await db.get(`
       SELECT COUNT(*) as count FROM notifications
       WHERE is_read = 0 
@@ -159,6 +172,9 @@ class NotificationService {
     if (role && !userId) {
       sql += ' AND (target_role = ? OR target_role = ?)';
       params.push(role, 'all');
+    } else if (userId && role === 'staff') {
+      sql += ' AND (user_id = ? OR (user_id IS NULL AND target_role = ?))';
+      params.push(userId, 'all');
     } else if (userId) {
       sql += ' AND (user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))';
       params.push(userId, role, 'all');
@@ -175,7 +191,10 @@ class NotificationService {
     let sql = 'UPDATE notifications SET is_read = 1, read_at = ? WHERE is_read = 0';
     const params = [istNow];
 
-    if (userId) {
+    if (userId && role === 'staff') {
+      sql += ' AND (user_id = ? OR (user_id IS NULL AND target_role = ?))';
+      params.push(userId, 'all');
+    } else if (userId) {
       sql += ' AND (user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))';
       params.push(userId, role, 'all');
     } else {
@@ -199,7 +218,10 @@ class NotificationService {
   async clearAll(role = 'owner', userId = null) {
     let sql = 'DELETE FROM notifications';
     const params = [];
-    if (userId) {
+    if (userId && role === 'staff') {
+      sql += ' WHERE (user_id = ? OR (user_id IS NULL AND target_role = ?))';
+      params.push(userId, 'all');
+    } else if (userId) {
       sql += ' WHERE (user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))';
       params.push(userId, role, 'all');
     } else {

@@ -24,6 +24,7 @@ class NotificationController {
           i.paid,
           i.status,
           i.pdf_path,
+          i.created_by_user_id,
           i.viewed_by_owner,
           i.viewed_at,
           i.viewed_by_staff,
@@ -62,6 +63,7 @@ class NotificationController {
           r.viewed_at,
           r.viewed_by_staff,
           r.staff_viewed_at,
+          r.requested_by_user_id,
           r.requested_by_name,
           r.fulfilled_by_name,
           r.created_at,
@@ -92,12 +94,17 @@ class NotificationController {
         unviewedRequirements = allRequirements.filter(r => !r.viewed_by_owner || r.viewed_by_owner === 0);
         viewedRequirements = allRequirements.filter(r => r.viewed_by_owner === 1);
       } else {
-        // Staff notifications: updates made by owner
-        unviewedInvoices = allInvoices.filter(inv => !inv.viewed_by_staff || inv.viewed_by_staff === 0);
-        viewedInvoices = allInvoices.filter(inv => inv.viewed_by_staff === 1);
+        // Staff notifications: ONLY invoices uploaded by THIS particular staff member.
+        // Invoices uploaded by the Owner or other staff are NEVER visible in this staff's notification view.
+        const currentUserId = user ? user.id : null;
+        const myStaffInvoices = allInvoices.filter(inv => currentUserId && inv.created_by_user_id === currentUserId);
+        unviewedInvoices = myStaffInvoices.filter(inv => !inv.viewed_by_staff || inv.viewed_by_staff === 0);
+        viewedInvoices = myStaffInvoices.filter(inv => inv.viewed_by_staff === 1);
 
-        unviewedRequirements = allRequirements.filter(r => !r.viewed_by_staff || r.viewed_by_staff === 0);
-        viewedRequirements = allRequirements.filter(r => r.viewed_by_staff === 1);
+        // Staff requirements: ONLY requirements requested by THIS particular staff member.
+        const myStaffRequirements = allRequirements.filter(r => currentUserId && r.requested_by_user_id === currentUserId);
+        unviewedRequirements = myStaffRequirements.filter(r => !r.viewed_by_staff || r.viewed_by_staff === 0);
+        viewedRequirements = myStaffRequirements.filter(r => r.viewed_by_staff === 1);
       }
 
       // Fetch persistent notifications from notifications table
@@ -110,10 +117,9 @@ class NotificationController {
       const invoicesRouteBadge = unviewedInvoices.length;
       const requirementsRouteBadge = unviewedRequirements.length;
       const unreadNotificationsCount = persistentNotifs.unreadCount || 0;
-      const totalUpdatesCount = Math.max(
-        invoicesRouteBadge + requirementsRouteBadge,
-        unreadNotificationsCount
-      );
+      const totalUpdatesCount = isOwner
+        ? Math.max(invoicesRouteBadge + requirementsRouteBadge, unreadNotificationsCount)
+        : unreadNotificationsCount;
 
       const staffPdfUploadsCount = unviewedInvoices.filter(inv => inv.upload_type === 'pdf').length;
       const staffImageUploadsCount = unviewedInvoices.filter(inv => inv.upload_type === 'image').length;

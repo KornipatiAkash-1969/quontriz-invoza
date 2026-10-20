@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { notificationApi } from '../services/api';
 import { useAuth } from './AuthContext';
-import { useToast } from './ToastContext';
 
 const UpdatesContext = createContext(null);
 
 export function UpdatesProvider({ children }) {
   const { isAuthenticated, isOwner } = useAuth();
-  const { info: toastInfo } = useToast();
 
   const [updates, setUpdates] = useState({
     totalUpdatesCount: 0,
@@ -28,32 +26,11 @@ export function UpdatesProvider({ children }) {
   });
   const [loading, setLoading] = useState(false);
 
-  const knownNotifIdsRef = useRef(new Set());
-  const initialLoadRef = useRef(true);
-
   const fetchUpdates = useCallback(async () => {
     if (!isAuthenticated) return;
     try {
       const res = await notificationApi.getUpdates();
       if (res.data) {
-        const newNotifs = res.data.notifications || [];
-
-        // If not initial load, notify user of newly arrived unread notifications
-        if (!initialLoadRef.current && Array.isArray(newNotifs)) {
-          const freshArrivals = newNotifs.filter(
-            (n) => !knownNotifIdsRef.current.has(n.id) && (!n.is_read || n.is_read === 0)
-          );
-          if (freshArrivals.length > 0) {
-            freshArrivals.forEach((fresh) => {
-              toastInfo(`🔔 ${fresh.title}: ${fresh.message}`);
-            });
-          }
-        }
-
-        // Record all known notification IDs
-        newNotifs.forEach((n) => knownNotifIdsRef.current.add(n.id));
-        initialLoadRef.current = false;
-
         setUpdates(res.data);
       }
     } catch (err) {
@@ -61,7 +38,7 @@ export function UpdatesProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, toastInfo]);
+  }, [isAuthenticated]);
 
   // Cross-tab broadcast channel
   const broadcastUpdate = useCallback(() => {
