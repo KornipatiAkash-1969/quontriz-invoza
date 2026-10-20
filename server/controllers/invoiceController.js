@@ -229,9 +229,14 @@ class InvoiceController {
 
       const creatorUserId = req.user?.id || body.userId || body.created_by_user_id || body.creatorId || null;
       let effectiveUserId = creatorUserId;
-      if (!effectiveUserId && (req.user?.role === 'staff' || body.userRole === 'staff')) {
-        const defaultStaff = await db.get("SELECT id FROM users WHERE role = 'staff' LIMIT 1");
-        if (defaultStaff) effectiveUserId = defaultStaff.id;
+      if (!effectiveUserId) {
+        if (req.user?.role === 'staff' || body.userRole === 'staff') {
+          const defaultStaff = await db.get("SELECT id FROM users WHERE role = 'staff' LIMIT 1");
+          if (defaultStaff) effectiveUserId = defaultStaff.id;
+        } else if (req.user?.role === 'owner' || body.userRole === 'owner') {
+          const defaultOwner = await db.get("SELECT id FROM users WHERE role = 'owner' LIMIT 1");
+          if (defaultOwner) effectiveUserId = defaultOwner.id;
+        }
       }
 
       if (body.invoice && Array.isArray(body.items)) {
@@ -706,7 +711,7 @@ class InvoiceController {
       // Create persistent notification for the reciprocal party
       try {
         const creatorId = updated.created_by_user_id;
-        const isOwnerInvoice = !creatorId || creatorId === 1;
+        const isOwnerInvoice = !creatorId || creatorId === 1 || updated.created_by_role === 'owner';
 
         if (isOwner && !isOwnerInvoice && creatorId) {
           await notificationService.createNotification({
@@ -722,17 +727,23 @@ class InvoiceController {
             created_by_name: req.user?.name || 'Store Owner'
           });
         } else if (!isOwner) {
-          await notificationService.createNotification({
-            target_role: 'owner',
-            type: 'invoice_updated',
-            title: 'Invoice Updated by Staff',
-            message: `${req.user?.name || 'Staff'} updated invoice #${updated.invoice_number} (Total: ₹${updated.total})`,
-            link: `/invoices/${updated.id}`,
-            related_id: updated.id,
-            related_type: 'invoice',
-            created_by_user_id: req.user?.id || null,
-            created_by_name: req.user?.name || 'Staff'
-          });
+          const owners = await db.query("SELECT id FROM users WHERE role = 'owner'");
+          if (owners && owners.length > 0) {
+            for (const owner of owners) {
+              await notificationService.createNotification({
+                user_id: owner.id,
+                target_role: 'owner',
+                type: 'invoice_updated',
+                title: 'Invoice Updated by Staff',
+                message: `${req.user?.name || 'Staff'} updated invoice #${updated.invoice_number} (Total: ₹${updated.total})`,
+                link: `/invoices/${updated.id}`,
+                related_id: updated.id,
+                related_type: 'invoice',
+                created_by_user_id: req.user?.id || null,
+                created_by_name: req.user?.name || 'Staff'
+              });
+            }
+          }
         }
       } catch (notifErr) {
         console.warn('[InvoiceController] Notification error:', notifErr.message);

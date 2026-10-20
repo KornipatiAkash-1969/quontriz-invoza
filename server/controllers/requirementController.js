@@ -308,7 +308,8 @@ class RequirementController {
         }
 
         const requesterId = updated.requested_by_user_id;
-        const isOwnerRequirement = !requesterId || requesterId === 1;
+        const requester = requesterId ? await db.get("SELECT role FROM users WHERE id = ?", [requesterId]) : null;
+        const isOwnerRequirement = !requesterId || requester?.role === 'owner';
 
         // Only notify the particular staff member who requested this item
         if (!isOwnerRequirement && requesterId) {

@@ -298,23 +298,40 @@ class InvoicePersistenceService {
     });
 
     try {
-      const isOwnerCreating = (data.userRole === 'owner' || userId === 1);
+      const isOwnerCreating = (data.userRole === 'owner' || userId === 1 || data.isOwner);
       const vName = vendor?.vendor_name || vendor?.name || invoice.vendor_name || 'Vendor';
 
-      // If created by owner, DO NOT create notifications for staff
       if (!isOwnerCreating) {
-        // 1. Notify Owner so owner can review & approve
-        await notificationService.createNotification({
-          target_role: 'owner',
-          type: 'invoice_created',
-          title: 'New Invoice Uploaded by Staff',
-          message: `${data.userName || 'Staff'} uploaded invoice #${persistedInvoice.invoice_number} for ${vName} (Total: ₹${persistedInvoice.total})`,
-          link: `/invoices/${persistedInvoice.id}`,
-          related_id: persistedInvoice.id,
-          related_type: 'invoice',
-          created_by_user_id: userId,
-          created_by_name: data.userName || 'Staff'
-        });
+        // 1. Notify all Owners so owner can review & approve
+        const owners = await db.query("SELECT id FROM users WHERE role = 'owner'");
+        if (owners && owners.length > 0) {
+          for (const owner of owners) {
+            await notificationService.createNotification({
+              user_id: owner.id,
+              target_role: 'owner',
+              type: 'invoice_created',
+              title: 'New Invoice Uploaded by Staff',
+              message: `${data.userName || 'Staff'} uploaded invoice #${persistedInvoice.invoice_number} for ${vName} (Total: ₹${persistedInvoice.total})`,
+              link: `/invoices/${persistedInvoice.id}`,
+              related_id: persistedInvoice.id,
+              related_type: 'invoice',
+              created_by_user_id: userId,
+              created_by_name: data.userName || 'Staff'
+            });
+          }
+        } else {
+          await notificationService.createNotification({
+            target_role: 'owner',
+            type: 'invoice_created',
+            title: 'New Invoice Uploaded by Staff',
+            message: `${data.userName || 'Staff'} uploaded invoice #${persistedInvoice.invoice_number} for ${vName} (Total: ₹${persistedInvoice.total})`,
+            link: `/invoices/${persistedInvoice.id}`,
+            related_id: persistedInvoice.id,
+            related_type: 'invoice',
+            created_by_user_id: userId,
+            created_by_name: data.userName || 'Staff'
+          });
+        }
 
         // 2. Notify ONLY THAT PARTICULAR STAFF who uploaded it
         if (userId) {
@@ -329,6 +346,40 @@ class InvoicePersistenceService {
             related_type: 'invoice',
             created_by_user_id: userId,
             created_by_name: data.userName || 'Staff'
+          });
+        }
+      } else {
+        // Owner uploaded invoice: notify OTHER owners so their portals receive the notification
+        const otherOwners = await db.query(
+          "SELECT id FROM users WHERE role = 'owner' AND id != ?",
+          [userId || 0]
+        );
+        if (otherOwners && otherOwners.length > 0) {
+          for (const owner of otherOwners) {
+            await notificationService.createNotification({
+              user_id: owner.id,
+              target_role: 'owner',
+              type: 'invoice_created',
+              title: 'New Invoice Added by Owner',
+              message: `${data.userName || 'Owner'} uploaded invoice #${persistedInvoice.invoice_number} for ${vName} (Total: ₹${persistedInvoice.total})`,
+              link: `/invoices/${persistedInvoice.id}`,
+              related_id: persistedInvoice.id,
+              related_type: 'invoice',
+              created_by_user_id: userId,
+              created_by_name: data.userName || 'Owner'
+            });
+          }
+        } else {
+          await notificationService.createNotification({
+            target_role: 'owner',
+            type: 'invoice_created',
+            title: 'New Invoice Added by Owner',
+            message: `${data.userName || 'Owner'} uploaded invoice #${persistedInvoice.invoice_number} for ${vName} (Total: ₹${persistedInvoice.total})`,
+            link: `/invoices/${persistedInvoice.id}`,
+            related_id: persistedInvoice.id,
+            related_type: 'invoice',
+            created_by_user_id: userId,
+            created_by_name: data.userName || 'Owner'
           });
         }
       }

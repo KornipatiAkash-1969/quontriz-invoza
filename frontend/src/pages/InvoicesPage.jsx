@@ -429,12 +429,15 @@ export default function InvoicesPage() {
                       inv.status === 'Paid' ||
                       (Number(inv.amount_paid || inv.paid || 0) >= Number(inv.total) && Number(inv.total) > 0);
                     const isPending = !isPaid && inv.status !== 'Rejected';
-                    const isStaffUpload =
+                    const isCreatorOwner =
+                      inv.created_by_role === 'owner' ||
+                      inv.created_by_role === 'admin' ||
+                      inv.staff_role === 'owner';
+                    const isStaffUpload = !isCreatorOwner && (
                       inv.created_by_role === 'staff' ||
                       inv.created_by_role === 'employee' ||
-                      (inv.created_by_user_id && inv.created_by_user_id !== 1) ||
-                      (!inv.created_by_user_id) ||
-                      inv.viewed_by_owner === 0;
+                      inv.staff_role === 'staff'
+                    );
                     const isUnviewed = isOwner
                       ? (!inv.viewed_by_owner || inv.viewed_by_owner === 0)
                       : (!inv.viewed_by_staff || inv.viewed_by_staff === 0);
@@ -460,25 +463,41 @@ export default function InvoicesPage() {
                               </span>
                             )}
                           </div>
-                          {isStaffUpload && (
-                            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                              {isPdf ? (
+                          <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                            {isCreatorOwner ? (
+                              isPdf ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                  <FileText className="w-3 h-3 text-indigo-600" />
+                                  <span>Owner PDF Upload</span>
+                                </span>
+                              ) : isImage ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                  <ImageIcon className="w-3 h-3 text-indigo-600" />
+                                  <span>Owner Image Upload</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                  <span>Owner Manual Entry</span>
+                                </span>
+                              )
+                            ) : isStaffUpload ? (
+                              isPdf ? (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                   <FileText className="w-3 h-3 text-rose-600" />
                                   <span>Staff PDF Upload</span>
                                 </span>
                               ) : isImage ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                  <ImageIcon className="w-3 h-3 text-indigo-600" />
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <ImageIcon className="w-3 h-3 text-emerald-600" />
                                   <span>Staff Image Upload</span>
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
                                   <span>Staff Manual Entry</span>
                                 </span>
-                              )}
-                            </div>
-                          )}
+                              )
+                            ) : null}
+                          </div>
                         </td>
                         <td className="py-2.5 px-3 sm:px-4">
                           <p className="font-semibold text-slate-800">{inv.vendor_name || '—'}</p>
@@ -543,7 +562,7 @@ export default function InvoicesPage() {
                                 <span>Pending Owner Approval</span>
                               </>
                             ) : (
-                              <span>Pending Approval & Payment</span>
+                              <span>Pending Payment</span>
                             )}
                           </span>
                         </td>
@@ -636,15 +655,21 @@ export default function InvoicesPage() {
                   inv.status === 'Paid' ||
                   (Number(inv.amount_paid || inv.paid || 0) >= Number(inv.total) && Number(inv.total) > 0);
                 const isPending = !isPaid && inv.status !== 'Rejected';
-                const isStaffUpload =
+                const isCreatorOwner =
+                  inv.created_by_role === 'owner' ||
+                  inv.created_by_role === 'admin' ||
+                  inv.staff_role === 'owner';
+                const isStaffUpload = !isCreatorOwner && (
                   inv.created_by_role === 'staff' ||
                   inv.created_by_role === 'employee' ||
-                  (inv.created_by_user_id && inv.created_by_user_id !== 1) ||
-                  (!inv.created_by_user_id) ||
-                  inv.viewed_by_owner === 0;
+                  inv.staff_role === 'staff'
+                );
                 const isUnviewed = isOwner
                   ? (!inv.viewed_by_owner || inv.viewed_by_owner === 0)
                   : (!inv.viewed_by_staff || inv.viewed_by_staff === 0);
+                const ext = (inv.pdf_path || '').split('.').pop().toLowerCase();
+                const isPdf = ext === 'pdf';
+                const isImage = ['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext);
                 return (
                   <div
                     key={inv.id}
@@ -665,6 +690,41 @@ export default function InvoicesPage() {
                               {isOwner ? '● Staff Update' : '● Status Update'}
                             </span>
                           )}
+                        </div>
+                        <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                          {isCreatorOwner ? (
+                            isPdf ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                <FileText className="w-3 h-3 text-indigo-600" />
+                                <span>Owner PDF Upload</span>
+                              </span>
+                            ) : isImage ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                <ImageIcon className="w-3 h-3 text-indigo-600" />
+                                <span>Owner Image Upload</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                <span>Owner Manual Entry</span>
+                              </span>
+                            )
+                          ) : isStaffUpload ? (
+                            isPdf ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                <FileText className="w-3 h-3 text-rose-600" />
+                                <span>Staff PDF Upload</span>
+                              </span>
+                            ) : isImage ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <ImageIcon className="w-3 h-3 text-emerald-600" />
+                                <span>Staff Image Upload</span>
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                <span>Staff Manual Entry</span>
+                              </span>
+                            )
+                          ) : null}
                         </div>
                         <p className="font-semibold text-slate-800 text-xs mt-1 truncate">
                           {inv.vendor_name || '—'}
@@ -728,7 +788,7 @@ export default function InvoicesPage() {
                       </div>
 
                       <div className="text-[10px] text-slate-400">
-                        By <span className="font-semibold text-slate-700">{inv.created_by_name || 'Staff'}</span>
+                        By <span className="font-semibold text-slate-700">{inv.created_by_name || (isCreatorOwner ? 'Store Owner' : 'Staff')}</span>
                       </div>
                     </div>
 

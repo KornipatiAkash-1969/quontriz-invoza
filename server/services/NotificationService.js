@@ -29,12 +29,13 @@ class NotificationService {
 
       const istNow = getIstIsoString();
 
-      // Duplicate prevention: if identical unread notification created in the last 15 seconds, skip
+      // Duplicate prevention: if identical unread notification for this user/role created in the last 15 seconds, skip
       const existing = await db.get(`
         SELECT id, created_at FROM notifications
-        WHERE target_role = ? AND type = ? AND related_id = ? AND title = ? AND is_read = 0
+        WHERE (user_id = ? OR (user_id IS NULL AND ? IS NULL))
+          AND target_role = ? AND type = ? AND related_id = ? AND title = ? AND is_read = 0
         ORDER BY id DESC LIMIT 1
-      `, [target_role, type, related_id || -1, title.trim()]);
+      `, [user_id || null, user_id || null, target_role, type, related_id || -1, title.trim()]);
 
       if (existing && existing.created_at) {
         const diffMs = Math.abs(Date.now() - new Date(existing.created_at).getTime());
@@ -94,8 +95,9 @@ class NotificationService {
       roleConditions.push('(user_id = ? OR (user_id IS NULL AND target_role = ?))');
       params.push(userId, 'all');
     } else if (userId) {
-      roleConditions.push('(user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))');
-      params.push(userId, role, 'all');
+      // For owners: show notifications directly targeted to user_id, or role='owner'/'all' not created by themselves
+      roleConditions.push('(user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?) AND (created_by_user_id IS NULL OR created_by_user_id != ?)))');
+      params.push(userId, role, 'all', userId);
     } else {
       roleConditions.push('(target_role = ? OR target_role = ?)');
       params.push(role, 'all');
@@ -129,8 +131,8 @@ class NotificationService {
       unreadUserClause = '(user_id = ? OR (user_id IS NULL AND target_role = ?))';
       unreadParams = [userId, 'all'];
     } else if (userId) {
-      unreadUserClause = '(user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?)))';
-      unreadParams = [userId, role, 'all'];
+      unreadUserClause = '(user_id = ? OR (user_id IS NULL AND (target_role = ? OR target_role = ?) AND (created_by_user_id IS NULL OR created_by_user_id != ?)))';
+      unreadParams = [userId, role, 'all', userId];
     } else {
       unreadUserClause = '(target_role = ? OR target_role = ?)';
       unreadParams = [role, 'all'];

@@ -144,10 +144,15 @@ export default function InvoiceDetailPage() {
   const items = invoice.items || [];
   const isPaid = invoice.status === 'Paid' || (Number(invoice.amount_paid || invoice.paid || 0) >= Number(invoice.total) && Number(invoice.total) > 0);
   const isPending = !isPaid && invoice.status !== 'Rejected';
-  const isStaffUpload =
+  const isCreatorOwner =
+    invoice.created_by_role === 'owner' ||
+    invoice.created_by_role === 'admin' ||
+    invoice.staff_role === 'owner';
+  const isStaffUpload = !isCreatorOwner && (
     invoice.created_by_role === 'staff' ||
     invoice.created_by_role === 'employee' ||
-    (invoice.created_by_user_id && invoice.created_by_user_id !== 1);
+    invoice.staff_role === 'staff'
+  );
   const ext = (invoice.pdf_path || '').split('.').pop().toLowerCase();
   const isPdf = ext === 'pdf';
   const isImage = ['png', 'jpg', 'jpeg', 'webp', 'bmp'].includes(ext);
@@ -229,77 +234,75 @@ export default function InvoiceDetailPage() {
         </div>
       </div>
 
-      {/* Staff Upload Item Indicator Banner */}
-      {isStaffUpload && (
-        <div
-          className={`no-print rounded-2xl p-4 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs ${
-            isPending
-              ? 'bg-amber-50/90 border-amber-300 text-amber-950'
-              : 'bg-slate-50 border-slate-200 text-slate-700'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
-                isPdf
-                  ? 'bg-rose-100 text-rose-700 border border-rose-200'
-                  : isImage
-                  ? isOwner
-                    ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
-                    : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                  : 'bg-slate-200 text-slate-700'
-              }`}
-            >
-              {isPdf ? (
-                <FileText className="w-5 h-5 text-rose-600" />
-              ) : isImage ? (
-                <ImageIcon
-                  className={`w-5 h-5 ${
-                    isOwner ? 'text-indigo-600' : 'text-emerald-600'
-                  }`}
-                />
-              ) : (
-                <UploadCloud className="w-5 h-5 text-slate-600" />
-              )}
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-extrabold text-sm text-slate-900">
-                  {isPdf
-                    ? 'Staff PDF Upload'
-                    : isImage
-                    ? 'Staff Image Upload'
-                    : 'Staff Manual Entry'}
-                </span>
-                <span
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                    isPending
-                      ? 'bg-amber-200/80 text-amber-900'
-                      : 'bg-emerald-100 text-emerald-800'
-                  }`}
-                >
-                  {isPending ? 'Pending Owner Review' : 'Verified by Owner'}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5">
-                Uploaded by{' '}
-                <strong className="text-slate-800">
-                  {invoice.created_by_name || 'Staff Employee'}
-                </strong>{' '}
-                on {formatDateTime(invoice.created_at)}
-              </p>
-            </div>
+      {/* Upload Item Indicator Banner */}
+      <div
+        className={`no-print rounded-2xl p-4 border flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs ${
+          isPending
+            ? isCreatorOwner
+              ? 'bg-indigo-50/50 border-indigo-200 text-slate-800'
+              : 'bg-amber-50/90 border-amber-300 text-amber-950'
+            : 'bg-slate-50 border-slate-200 text-slate-700'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
+              isCreatorOwner
+                ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                : isPdf
+                ? 'bg-rose-100 text-rose-700 border border-rose-200'
+                : isImage
+                ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                : 'bg-slate-200 text-slate-700'
+            }`}
+          >
+            {isPdf ? (
+              <FileText className={`w-5 h-5 ${isCreatorOwner ? 'text-indigo-600' : 'text-rose-600'}`} />
+            ) : isImage ? (
+              <ImageIcon className={`w-5 h-5 ${isCreatorOwner ? 'text-indigo-600' : 'text-emerald-600'}`} />
+            ) : (
+              <UploadCloud className={`w-5 h-5 ${isCreatorOwner ? 'text-indigo-600' : 'text-slate-600'}`} />
+            )}
           </div>
-
-          {isPending && isOwner && (
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-amber-500 text-white font-bold text-xs shadow-xs">
-                Requires Owner Sign-off
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-extrabold text-sm text-slate-900">
+                {isCreatorOwner
+                  ? (isPdf ? 'Owner PDF Upload' : isImage ? 'Owner Image Upload' : 'Owner Manual Entry')
+                  : (isPdf ? 'Staff PDF Upload' : isImage ? 'Staff Image Upload' : 'Staff Manual Entry')}
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                  isPending
+                    ? isCreatorOwner
+                      ? 'bg-indigo-100 text-indigo-800'
+                      : 'bg-amber-200/80 text-amber-900'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                {isPending
+                  ? isCreatorOwner ? 'Pending Payment' : 'Pending Owner Review'
+                  : 'Approved & Verified'}
               </span>
             </div>
-          )}
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Uploaded by{' '}
+              <strong className="text-slate-800">
+                {invoice.created_by_name || (isCreatorOwner ? 'Store Owner' : 'Staff Employee')}
+              </strong>{' '}
+              on {formatDateTime(invoice.created_at)}
+            </p>
+          </div>
         </div>
-      )}
+
+        {isPending && isOwner && !isCreatorOwner && (
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full bg-amber-500 text-white font-bold text-xs shadow-xs">
+              Requires Owner Sign-off
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* Owner Approval & Payment Callout Banner if Pending (interactive UI only, hidden on print) */}
       {isPending && isOwner && (
@@ -312,8 +315,9 @@ export default function InvoiceDetailPage() {
               </h3>
             </div>
             <p className="text-xs text-amber-100 mt-1 max-w-xl">
-              Submitted by <span className="font-bold text-white">{invoice.created_by_name || 'Staff Employee'}</span>.
-              As store owner, you can review the total ({formatCurrency(invoice.total)}) and approve it by completing payment.
+              {isCreatorOwner
+                ? `Created by store owner ${invoice.created_by_name || ''}. You can review the total (${formatCurrency(invoice.total)}) and complete payment.`
+                : `Submitted by ${invoice.created_by_name || 'Staff Employee'}. As store owner, you can review the total (${formatCurrency(invoice.total)}) and approve it by completing payment.`}
             </p>
           </div>
 
