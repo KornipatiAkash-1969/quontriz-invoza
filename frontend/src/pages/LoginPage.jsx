@@ -25,7 +25,12 @@ export default function LoginPage() {
   const { error: toastError } = useToast();
   const { refreshUpdates } = useUpdates();
 
-  const [portalRole, setPortalRole] = useState('owner'); // 'owner' | 'staff'
+  // Initially set to 'staff' as default portal
+  const [portalRole, setPortalRole] = useState(() => {
+    const queryRole = new URLSearchParams(location.search).get('role');
+    if (queryRole === 'owner' || location.state?.role === 'owner') return 'owner';
+    return 'staff';
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
