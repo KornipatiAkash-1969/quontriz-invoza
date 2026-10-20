@@ -114,7 +114,8 @@ class RequirementController {
       }
 
       const reqUser = req.user;
-      const requestedByName = reqUser ? reqUser.name : 'Store Staff';
+      const requestedByName = (req.body.requested_by_name && req.body.requested_by_name.trim())
+        || (reqUser ? reqUser.name : 'Store Staff');
       const requestedByUserId = reqUser ? reqUser.id : null;
       const isOwner = reqUser && (reqUser.role === 'owner' || reqUser.id === 1);
       const viewedByOwner = isOwner ? 1 : 0;
@@ -234,6 +235,7 @@ class RequirementController {
 
       const cleanQuantity = !isNaN(Number(quantity)) && Number(quantity) > 0 ? Number(quantity) : (existing.quantity || 1);
       const cleanPrice = !isNaN(Number(estimated_price)) && Number(estimated_price) >= 0 ? Number(estimated_price) : 0;
+      const cleanRequestedByName = (req.body.requested_by_name && req.body.requested_by_name.trim()) || existing.requested_by_name || 'Staff';
 
       // When Owner updates/approves/orders, reset staff viewed status so staff receives live badge & notification
       const viewedByOwner = 1;
@@ -246,7 +248,7 @@ class RequirementController {
         SET item_name = ?, specification = ?, quantity = ?, unit = ?,
             category_id = ?, category_name = ?, priority = ?, estimated_price = ?,
             preferred_vendor_id = ?, preferred_vendor_name = ?, notes = ?,
-            status = ?, fulfilled_by_user_id = ?, fulfilled_by_name = ?, fulfilled_at = ?,
+            status = ?, requested_by_name = ?, fulfilled_by_user_id = ?, fulfilled_by_name = ?, fulfilled_at = ?,
             viewed_by_owner = ?, viewed_at = ?,
             viewed_by_staff = ?, staff_viewed_at = ?, updated_at = ?
         WHERE id = ?
@@ -263,6 +265,7 @@ class RequirementController {
         (preferred_vendor_name || '').trim(),
         (notes || '').trim(),
         status || existing.status || 'Pending',
+        cleanRequestedByName,
         fulfilledByUserId,
         fulfilledByName,
         fulfilledAt,

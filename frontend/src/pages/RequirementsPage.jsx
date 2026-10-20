@@ -72,7 +72,8 @@ export default function RequirementsPage() {
     preferred_vendor_id: '',
     preferred_vendor_name: '',
     notes: '',
-    status: 'Pending'
+    status: 'Pending',
+    requested_by_name: user?.name || 'Staff'
   });
 
   // Custom Packaging/Weights state (persisted in localStorage)
@@ -188,7 +189,8 @@ export default function RequirementsPage() {
       preferred_vendor_id: '',
       preferred_vendor_name: '',
       notes: '',
-      status: 'Pending'
+      status: 'Pending',
+      requested_by_name: user?.name || 'Staff'
     });
     setShowModal(true);
   };
@@ -214,7 +216,8 @@ export default function RequirementsPage() {
       preferred_vendor_id: item.preferred_vendor_id || '',
       preferred_vendor_name: item.preferred_vendor_name || '',
       notes: item.notes || '',
-      status: item.status || 'Pending'
+      status: item.status || 'Pending',
+      requested_by_name: item.requested_by_name || user?.name || 'Staff'
     });
     setShowModal(true);
   };
@@ -535,7 +538,7 @@ export default function RequirementsPage() {
                     <th className="py-3 px-3">Priority</th>
                     <th className="py-3 px-4">Preferred Vendor</th>
                     <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Requested By</th>
+                    <th className="py-3 px-4">{isOwner ? 'Staff Name' : 'Requested By'}</th>
                     <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -1041,6 +1044,23 @@ export default function RequirementsPage() {
                     onChange={(e) => setFormData({ ...formData, item_name: e.target.value })}
                     className="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900 transition"
                   />
+                </div>
+
+                {/* Staff Name / Requester Input */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Staff Name <span className="text-slate-400 font-normal">(Requester)</span>
+                  </label>
+                  <div className="relative">
+                    <User className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      placeholder="e.g. Staff, Akash, Store Member..."
+                      value={formData.requested_by_name || ''}
+                      onChange={(e) => setFormData({ ...formData, requested_by_name: e.target.value })}
+                      className="w-full text-xs pl-8 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-semibold text-slate-900 transition"
+                    />
+                  </div>
                 </div>
 
                 {/* Packaging / Specification (Weight / Volume / Size) */}
