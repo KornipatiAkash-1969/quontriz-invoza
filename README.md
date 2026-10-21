@@ -7,12 +7,10 @@ A production-ready, full-stack **OCR Invoice Management and Item Classification 
 ## 🌟 Key Features
 
 - **Role-Based Access Control (RBAC) with JWT Authentication**:
-  - **Two Logins**:
-    - **Owner Account**: Full access to financial analytics, approving pending invoices by recording payments (UPI, Bank Transfer, Cash, Cheque), vendor management.
-    - **Employee Account**: Can upload invoices (PDF or Images) or manually enter entire invoices directly; submissions are queued for owner approval.
-  - Pre-seeded one-click demo credentials on the login screen:
-    - **Owner**: `owner@supermarket.com` / `owner123`
-    - **Employee**: `employee@supermarket.com` / `emp123`
+  - **Two Portals / Access Levels**:
+    - **Store Owner**: Full administrative access to financial analytics, approving pending invoices by recording payments (UPI, Bank Transfer, Cash, Cheque), user & team management, and vendor directory.
+    - **Store Staff**: Can upload supplier invoices (PDF or Images) or enter inventory requirements; submissions are queued for owner review and sign-off.
+  - Secure credential authentication with encrypted session tokens and role-based route protection.
 - **Multi-Format Invoice Intake**:
   - **PDF (Digital & Scanned)**: Direct text extraction or Tesseract.js WASM OCR.
   - **Images (PNG, JPG, JPEG, WebP)**: Mobile photo and scan OCR directly into line items.
