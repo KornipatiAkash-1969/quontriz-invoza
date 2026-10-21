@@ -14,13 +14,12 @@ class AuthController {
       }
 
       const user = await db.get('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [email.trim()]);
-      if (!user) {
+      if (!user || !user.password_hash) {
         return res.status(401).json({ success: false, error: 'Invalid email or password.' });
       }
-      // Support both hashed password and default passwords (staff123 / owner123)
-      const isMatch = bcrypt.compareSync(password, user.password_hash)
-        || (user.role === 'owner' && (password === 'owner123' || password === 'owner@123' || password === 'developer@123'))
-        || ((user.role === 'staff' || user.role === 'employee') && (password === 'staff123' || password === 'staff@123'));
+
+      // Strictly verify password against salted cryptographic bcrypt hash stored in the database
+      const isMatch = bcrypt.compareSync(password, user.password_hash);
       if (!isMatch) {
         return res.status(401).json({ success: false, error: 'Invalid email or password.' });
       }
@@ -423,7 +422,6 @@ class AuthController {
             label: 'Developer Administrator',
             name: 'Developer',
             email: 'developer@supermarket.com',
-            password: 'owner123',
             description: 'Full administrative access: approve & pay invoices, manage staff & owners, analytics',
           },
           {
@@ -431,7 +429,6 @@ class AuthController {
             label: 'Store Owner',
             name: 'Akanksh',
             email: 'akanksh@supermarket.com',
-            password: 'owner123',
             description: 'Store Owner access: approve & pay invoices, manage staff, analytics',
           },
           {
@@ -439,7 +436,6 @@ class AuthController {
             label: 'Store Owner',
             name: 'Hemanth',
             email: 'hemanth@supermarket.com',
-            password: 'owner123',
             description: 'Store Owner access: approve & pay invoices, manage staff, analytics',
           },
           {
@@ -447,7 +443,6 @@ class AuthController {
             label: 'Store Staff',
             name: 'Staff',
             email: 'staff@supermarket.com',
-            password: 'staff123',
             description: 'Store Staff access: upload supplier invoices, submit inventory requirements',
           },
         ],
