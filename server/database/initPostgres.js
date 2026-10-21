@@ -28,7 +28,7 @@ async function initPostgres() {
   }
 
   // 2. Seed Default Accounts
-  const devHash = bcrypt.hashSync('developer@123', 10);
+  const devHash = bcrypt.hashSync('owner123', 10);
 
   // Seed developer@supermarket.com
   const devUser = await postgresClient.get(
@@ -39,17 +39,17 @@ async function initPostgres() {
       'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
       ['Developer', 'developer@supermarket.com', devHash, 'owner']
     );
-    console.log('[PostgreSQL] ✅ Seeded developer@supermarket.com (owner)');
+    console.log('[PostgreSQL] ✅ Seeded developer@supermarket.com (owner, password: owner123)');
   } else {
     await postgresClient.run(
       "UPDATE users SET name = 'Developer', email = 'developer@supermarket.com', password_hash = $1, role = 'owner' WHERE id = $2",
       [devHash, devUser.id]
     );
-    console.log('[PostgreSQL] ✅ Updated developer@supermarket.com (owner, password: developer@123)');
+    console.log('[PostgreSQL] ✅ Updated developer@supermarket.com (owner, password: owner123)');
   }
 
   // Seed requested Store Owner accounts: akanksh@supermarket.com and hemanth@supermarket.com
-  const ownerHash = bcrypt.hashSync('owner@123', 10);
+  const ownerHash = bcrypt.hashSync('owner123', 10);
   const ownersToSeed = [
     { name: 'Akanksh', email: 'akanksh@supermarket.com' },
     { name: 'Hemanth', email: 'hemanth@supermarket.com' },
@@ -65,18 +65,18 @@ async function initPostgres() {
         'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
         [o.name, o.email, ownerHash, 'owner']
       );
-      console.log(`[PostgreSQL] ✅ Seeded Owner account: ${o.email}`);
+      console.log(`[PostgreSQL] ✅ Seeded Owner account: ${o.email} (password: owner123)`);
     } else {
       await postgresClient.run(
         'UPDATE users SET name = $1, password_hash = $2, role = $3 WHERE id = $4',
         [o.name, ownerHash, 'owner', existing.id]
       );
-      console.log(`[PostgreSQL] ✅ Updated Owner account: ${o.email}`);
+      console.log(`[PostgreSQL] ✅ Updated Owner account: ${o.email} (password: owner123)`);
     }
   }
 
-  // Seed Staff account: staff@supermarket.com (staff@123)
-  const staffHash = bcrypt.hashSync('staff@123', 10);
+  // Seed Staff account: staff@supermarket.com (staff123)
+  const staffHash = bcrypt.hashSync('staff123', 10);
   const staffUser = await postgresClient.get(
     "SELECT id FROM users WHERE LOWER(email) = 'staff@supermarket.com'"
   );
@@ -85,13 +85,13 @@ async function initPostgres() {
       'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)',
       ['Staff', 'staff@supermarket.com', staffHash, 'staff']
     );
-    console.log('[PostgreSQL] ✅ Seeded staff@supermarket.com (staff, password: staff@123)');
+    console.log('[PostgreSQL] ✅ Seeded staff@supermarket.com (staff, password: staff123)');
   } else {
     await postgresClient.run(
       "UPDATE users SET name = 'Staff', email = 'staff@supermarket.com', password_hash = $1, role = 'staff' WHERE id = $2",
       [staffHash, staffUser.id]
     );
-    console.log('[PostgreSQL] ✅ Updated staff@supermarket.com (staff, password: staff@123)');
+    console.log('[PostgreSQL] ✅ Updated staff@supermarket.com (staff, password: staff123)');
   }
 
   // One-time database migration: Permanently remove legacy auto-seeded non-developer accounts

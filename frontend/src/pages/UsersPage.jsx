@@ -45,11 +45,11 @@ export default function UsersPage() {
     message: '',
   });
 
-  // Form state - Default password based on role (staff@123 / owner@123)
+  // Form state - Default password based on role (staff123 / owner123)
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('staff');
-  const [password, setPassword] = useState('staff@123');
+  const [password, setPassword] = useState('staff123');
   const [showModalPassword, setShowModalPassword] = useState(false);
 
   // Password change state (Self only)
@@ -85,8 +85,8 @@ export default function UsersPage() {
     setRole(newRole);
     setFormError(null);
     setShowModalPassword(false);
-    if (password === 'staff@123' || password === 'owner@123' || !password) {
-      setPassword(newRole === 'owner' ? 'owner@123' : 'staff@123');
+    if (password === 'staff123' || password === 'owner123' || password === 'staff@123' || password === 'owner@123' || !password) {
+      setPassword(newRole === 'owner' ? 'owner123' : 'staff123');
     }
   };
 
@@ -94,7 +94,7 @@ export default function UsersPage() {
     setName('');
     setEmail('');
     setRole('staff');
-    setPassword('staff@123');
+    setPassword('staff123');
     setShowModalPassword(false);
     setFormError(null);
     setDuplicatePopup({
@@ -113,7 +113,7 @@ export default function UsersPage() {
 
     const trimmedName = name.trim();
     const trimmedEmail = email.trim();
-    const finalPassword = password.trim() || (role === 'owner' ? 'owner@123' : 'staff@123');
+    const finalPassword = password.trim() || (role === 'owner' ? 'owner123' : 'staff123');
 
     if (!trimmedName || !trimmedEmail) {
       toastError('Please fill in all required fields.');
@@ -161,7 +161,7 @@ export default function UsersPage() {
       setShowCreateModal(false);
       setName('');
       setEmail('');
-      setPassword('staff@123');
+      setPassword('staff123');
       setRole('staff');
       setShowModalPassword(false);
       setFormError(null);
@@ -754,7 +754,7 @@ export default function UsersPage() {
                   <span>
                     Default:{' '}
                     <strong className="font-mono">
-                      {role === 'owner' ? 'owner@123' : 'staff@123'}
+                      {role === 'owner' ? 'owner123' : 'staff123'}
                     </strong>
                   </span>
                 </span>
@@ -768,7 +768,7 @@ export default function UsersPage() {
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={role === 'owner' ? 'owner@123' : 'staff@123'}
+                  placeholder={role === 'owner' ? 'owner123' : 'staff123'}
                   className={`w-full pl-9 pr-10 py-2 text-xs border border-slate-300 rounded-xl outline-none text-slate-900 font-medium font-mono ${
                     role === 'staff'
                       ? 'focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600'
@@ -797,7 +797,7 @@ export default function UsersPage() {
                 />
                 <span>
                   Default password is set automatically to{' '}
-                  <strong className="font-mono">{role === 'owner' ? 'owner@123' : 'staff@123'}</strong>. The team member can change it after logging in.
+                  <strong className="font-mono">{role === 'owner' ? 'owner123' : 'staff123'}</strong>. The team member can change it after logging in.
                 </span>
               </p>
             </div>
@@ -954,7 +954,7 @@ export default function UsersPage() {
                   type="button"
                   onClick={() =>
                     setNewResetPassword(
-                      resetPasswordTarget.role === 'owner' ? 'owner@123' : 'staff@123'
+                      resetPasswordTarget.role === 'owner' ? 'owner123' : 'staff123'
                     )
                   }
                   className={`text-[11px] font-bold transition ${
@@ -964,7 +964,7 @@ export default function UsersPage() {
                   }`}
                   title="Fill with default password"
                 >
-                  Fill Default ({resetPasswordTarget.role === 'owner' ? 'owner@123' : 'staff@123'})
+                  Fill Default ({resetPasswordTarget.role === 'owner' ? 'owner123' : 'staff123'})
                 </button>
               </div>
 
