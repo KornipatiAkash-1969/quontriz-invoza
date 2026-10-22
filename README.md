@@ -1,5 +1,13 @@
 # 🧾 Quontriz Invoza - Intelligent Supermarket Invoice & Inventory System
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://quontriz-invoza.onrender.com/login)
+[![API Health](https://img.shields.io/badge/API%20Health-Passing-brightgreen?style=for-the-badge)](https://quontriz-invoza.onrender.com/api/health)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://quontriz-invoza.onrender.com/)
+
+> 🌐 **Live Cloud Application**: [https://quontriz-invoza.onrender.com/](https://quontriz-invoza.onrender.com/)  
+> 🔐 **Direct Login Portal**: [https://quontriz-invoza.onrender.com/login](https://quontriz-invoza.onrender.com/login)  
+> 🩺 **Live Health Check API**: [https://quontriz-invoza.onrender.com/api/health](https://quontriz-invoza.onrender.com/api/health)
+
 A production-ready, full-stack **OCR Invoice Intake, Automated Item Classification, and Store Inventory Demand Management Platform** designed specifically for retail supermarkets, wholesale distributors, and multi-user store operations. 
 
 Quontriz Invoza streamlines the entire procurement lifecycle: from supplier invoice intake (digital PDF, mobile photo, raster scan, or manual entry) and AI-powered data extraction to cross-portal owner review, payment reconciliation, inventory requirement tracking, and real-time team notifications.
@@ -8,16 +16,32 @@ Quontriz Invoza streamlines the entire procurement lifecycle: from supplier invo
 
 ## 📑 Table of Contents
 
-1. [System Architecture](#-system-architecture)
-2. [Role Permissions & Venn Diagram](#-role-permissions--venn-diagram)
-3. [Core Feature Modules](#-core-feature-modules)
-4. [Invoice Processing & Approval Workflow](#-invoice-processing--approval-workflow)
-5. [Store Inventory Requirements Lifecycle](#-store-inventory-requirements-lifecycle)
-6. [Security & Authentication Architecture](#-security--authentication-architecture)
-7. [Technology Stack](#-technology-stack)
-8. [Directory Structure](#-directory-structure)
-9. [Installation & Setup](#-installation--setup)
-10. [REST API Documentation](#-rest-api-documentation)
+1. [Live Production Deployment](#-live-production-deployment)
+2. [System Architecture](#-system-architecture)
+3. [Role Permissions & Venn Diagram](#-role-permissions--venn-diagram)
+4. [Core Feature Modules](#-core-feature-modules)
+5. [Invoice Processing & Approval Workflow](#-invoice-processing--approval-workflow)
+6. [Store Inventory Requirements Lifecycle](#-store-inventory-requirements-lifecycle)
+7. [Security & Authentication Architecture](#-security--authentication-architecture)
+8. [Technology Stack](#-technology-stack)
+9. [Directory Structure](#-directory-structure)
+10. [Installation & Setup](#-installation--setup)
+11. [REST API Documentation](#-rest-api-documentation)
+
+---
+
+## 🌐 Live Production Deployment
+
+The platform is deployed live on **Render Cloud Infrastructure** with managed PostgreSQL:
+
+- **Web Application URL**: [https://quontriz-invoza.onrender.com/](https://quontriz-invoza.onrender.com/)
+- **Login Portal**: [https://quontriz-invoza.onrender.com/login](https://quontriz-invoza.onrender.com/login)
+- **API Health Endpoint**: [https://quontriz-invoza.onrender.com/api/health](https://quontriz-invoza.onrender.com/api/health)
+
+### Cloud Hosting Specifications:
+- **Web Service**: Node.js runtime running Express.js API & serving the production-built React 19 / Vite client.
+- **Database Service**: Render PostgreSQL (`quontriz-invoza-db`) with connection pooling, SSL, and schema migrations.
+- **Continuous Deployment**: Automated zero-downtime builds triggered on every push to the `main` branch.
 
 ---
 
@@ -335,9 +359,10 @@ Quontriz Invoza/
    ```
 
 4. **Access the application**:
-   - **Frontend App**: [http://localhost:5173](http://localhost:5173)
-   - **Backend API**: [http://localhost:5000](http://localhost:5000)
-   - **API Health Check**: [http://localhost:5000/api/health](http://localhost:5000/api/health)
+   - **Live Cloud Production**: [https://quontriz-invoza.onrender.com/login](https://quontriz-invoza.onrender.com/login)
+   - **Local Frontend App**: [http://localhost:5173](http://localhost:5173)
+   - **Local Backend API**: [http://localhost:5000](http://localhost:5000)
+   - **Local API Health Check**: [http://localhost:5000/api/health](http://localhost:5000/api/health)
 
 ---
 
