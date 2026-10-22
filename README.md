@@ -1,10 +1,10 @@
 # 🧾 Quontriz Invoza - Intelligent Supermarket Invoice & Inventory System
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://quontriz-invoza.onrender.com/login)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://quontriz-invoza.onrender.com)
 [![API Health](https://img.shields.io/badge/API%20Health-Passing-brightgreen?style=for-the-badge)](https://quontriz-invoza.onrender.com/api/health)
-[![Database](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://quontriz-invoza.onrender.com/)
+[![Database](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://quontriz-invoza.onrender.com)
 
-> 🌐 **Live Cloud Application**: [https://quontriz-invoza.onrender.com/](https://quontriz-invoza.onrender.com/)  
+> 🌐 **Live Application URL**: [https://quontriz-invoza.onrender.com](https://quontriz-invoza.onrender.com)  
 > 🔐 **Direct Login Portal**: [https://quontriz-invoza.onrender.com/login](https://quontriz-invoza.onrender.com/login)  
 > 🩺 **Live Health Check API**: [https://quontriz-invoza.onrender.com/api/health](https://quontriz-invoza.onrender.com/api/health)
 
@@ -34,7 +34,7 @@ Quontriz Invoza streamlines the entire procurement lifecycle: from supplier invo
 
 The platform is deployed live on **Render Cloud Infrastructure** with managed PostgreSQL:
 
-- **Web Application URL**: [https://quontriz-invoza.onrender.com/](https://quontriz-invoza.onrender.com/)
+- **Web Application URL**: [https://quontriz-invoza.onrender.com](https://quontriz-invoza.onrender.com)
 - **Login Portal**: [https://quontriz-invoza.onrender.com/login](https://quontriz-invoza.onrender.com/login)
 - **API Health Endpoint**: [https://quontriz-invoza.onrender.com/api/health](https://quontriz-invoza.onrender.com/api/health)
 

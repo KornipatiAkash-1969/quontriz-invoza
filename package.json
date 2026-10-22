@@ -1,6 +1,11 @@
 {
   "name": "quontriz-invoza",
   "version": "1.0.0",
+  "homepage": "https://quontriz-invoza.onrender.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KornipatiAkash-1969/quontriz-invoza.git"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
