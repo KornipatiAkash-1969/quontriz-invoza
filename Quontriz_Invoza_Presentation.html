@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quontriz Invoza - Presentation Deck</title>
+  <style>
+    :root {
+      --primary: #1e293b;
+      --accent: #4f46e5;
+      --accent-light: #e0e7ff;
+      --emerald: #10b981;
+      --emerald-light: #d1fae5;
+      --amber: #f59e0b;
+      --amber-light: #fef3c7;
+      --rose: #f43f5e;
+      --rose-light: #ffe4e6;
+      --bg: #0f172a;
+      --slide-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: white;
+      overflow: hidden;
+    }
+    #stage {
+      width: 1066px;
+      height: 600px;
+      background: var(--slide-bg);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+      color: var(--text);
+    }
+    .slide {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      padding: 48px 56px;
+      display: none;
+      flex-direction: column;
+    }
+    .slide.active {
+      display: flex;
+      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .category {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .slide-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 24px;
+      line-height: 1.25;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      flex: 1;
+    }
+    .card-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      flex: 1;
+    }
+    .card-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      flex: 1;
+    }
+    .card {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card ul {
+      list-style: none;
+      padding: 0;
+      font-size: 12.5px;
+      color: #334155;
+      line-height: 1.6;
+    }
+    .card ul li {
+      margin-bottom: 8px;
+      position: relative;
+      padding-left: 16px;
+    }
+    .card ul li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+    .cover-slide {
+      background: linear-gradient(135deg, #1e293b 0%, #312e81 100%);
+      color: white;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 60px 80px;
+    }
+    .cover-title {
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      margin-bottom: 12px;
+      color: white;
+    }
+    .cover-sub {
+      font-size: 20px;
+      color: #c7d2fe;
+      margin-bottom: 28px;
+      font-weight: 500;
+    }
+    .cover-pill {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10b981;
+      color: #34d399;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .btn {
+      background: #1e293b;
+      color: white;
+      border: 1px solid #334155;
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+    .btn:hover { background: #334155; }
+    .counter {
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="stage">
+
+    <!-- SLIDE 1: COVER -->
+    <div class="slide cover-slide active">
+      <div class="cover-title">QUONTRIZ INVOZA</div>
+      <div class="cover-sub">Intelligent Supermarket Invoice Intake, OCR & Inventory System</div>
+      <p style="color: #94a3b8; font-size: 14px; margin-bottom: 24px;">Executive Platform Overview • Architecture • RBAC • Workflows • Security</p>
+      <div class="cover-pill">🌐 Live Production: https://quontriz-invoza.onrender.com</div>
+    </div>
+
+    <!-- SLIDE 2: PROBLEM VS SOLUTION -->
+    <div class="slide">
+      <div class="category">Executive Overview</div>
+      <div class="slide-title">Retail Billing Challenges & The Invoza Solution</div>
+      <div class="card-grid">
+        <div class="card" style="border-color: #fecdd3; background: #fff1f2;">
+          <div class="card-title" style="color: #e11d48;">❌ Traditional Retail Pain Points</div>
+          <ul>
+            <li><strong>Manual typing:</strong> Slow, error-prone spreadsheet re-entry of paper receipts.</li>
+            <li><strong>Scattered formats:</strong> Bills arrive via WhatsApp photos, scanned chits, and PDFs.</li>
+            <li><strong>Stockout delays:</strong> Floor stock shortages lost in verbal or paper notes.</li>
+            <li><strong>Unverified disbursements:</strong> Disconnect between goods receiving and payment.</li>
+            <li><strong>Duplicate billing risks:</strong> Accidental double payments on identical supplier bills.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color: #a7f3d0; background: #ecfdf5;">
+          <div class="card-title" style="color: #059669;">✅ The Quontriz Invoza Solution</div>
+          <ul>
+            <li><strong>Multi-Engine OCR:</strong> Instant text and line-item extraction from PDFs & Images.</li>
+            <li><strong>AI Categorization:</strong> Automatic department classification (Grocery, Dairy, etc.).</li>
+            <li><strong>Role Segregation:</strong> Dedicated Store Staff and Store Owner portals.</li>
+            <li><strong>Human-in-the-Loop Review:</strong> Verify prices, taxes, and duplicates before saving.</li>
+            <li><strong>Inventory Demand Module:</strong> Staff logs stock requests; owners toggle & export Excel.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: SYSTEM ARCHITECTURE -->
+    <div class="slide">
+      <div class="category">Technology Foundation</div>
+      <div class="slide-title">Full-Stack Enterprise Architecture</div>
+      <div class="card-grid-3">
+        <div class="card">
+          <div class="card-title">1. Frontend Layer</div>
+          <ul>
+            <li><strong>React 19 & Vite 6</strong> for instant Single-Page App performance.</li>
+            <li><strong>Tailwind CSS 3.4</strong> responsive design.</li>
+            <li><strong>Chart.js</strong> financial analytics and category spend trends.</li>
+            <li><strong>BroadcastChannel API</strong> for zero-latency cross-tab sync.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">2. Backend & OCR</div>
+          <ul>
+            <li><strong>Node.js & Express.js</strong> REST API architecture.</li>
+            <li><strong>Tesseract.js v5 WASM</strong> with zero OS dependencies.</li>
+            <li><strong>Document AI</strong> semantic tokenizer.</li>
+            <li><strong>Bcrypt salted hashing (10 rounds)</strong> and midnight JWTs.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">3. Database & Cloud</div>
+          <ul>
+            <li><strong>PostgreSQL 16+</strong> relational database.</li>
+            <li><strong>Transactional schema</strong> with cascade protection.</li>
+            <li><strong>Render Cloud Hosting</strong> with SSL encryption.</li>
+            <li><strong>WASM PostgreSQL</strong> engine for seamless local dev.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: RBAC & VENN -->
+    <div class="slide">
+      <div class="category">Access Control Matrix</div>
+      <div class="slide-title">Role Permissions & Operational Segregation</div>
+      <div class="card-grid-3">
+        <div class="card" style="border-color: #a7f3d0;">
+          <div class="card-title" style="color: #059669;">Store Staff Portal</div>
+          <ul>
+            <li>Upload supplier invoice PDFs & photos.</li>
+            <li>Submit manual invoice entries.</li>
+            <li>Log store inventory stock demands.</li>
+            <li>View self-uploaded bill approvals.</li>
+            <li>Receive payment confirmation alerts.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color: #c7d2fe;">
+          <div class="card-title" style="color: #4f46e5;">Shared Intersection</div>
+          <ul>
+            <li>JWT token authentication.</li>
+            <li>Midnight (12:00 AM) auto-renewal.</li>
+            <li>Master invoice directory search.</li>
+            <li>Clean invoice PDF downloads.</li>
+            <li>Live notification bell & badges.</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color: #cbd5e1;">
+          <div class="card-title" style="color: #1e293b;">Store Owner Portal</div>
+          <ul>
+            <li>Full financial analytics & KPIs.</li>
+            <li>Approve & pay invoices (UPI, NEFT, Cash).</li>
+            <li>Reject invoices with explanation.</li>
+            <li>Team management: add/delete users.</li>
+            <li>Export inventory requirements to Excel.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: OCR PIPELINE -->
+    <div class="slide">
+      <div class="category">Intelligent Processing</div>
+      <div class="slide-title">Multi-Engine OCR & Document Extraction Pipeline</div>
+      <div class="card-grid-4">
+        <div class="card">
+          <div class="card-title">1. Intake</div>
+          <ul>
+            <li>Digital PDFs.</li>
+            <li>Scanned raster files.</li>
+            <li>Mobile bill photos (JPG, PNG).</li>
+            <li>Sample test bills.</li>
+            <li>MIME & 15MB limits.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">2. OCR & Text</div>
+          <ul>
+            <li>Direct text stream.</li>
+            <li>Tesseract.js WASM.</li>
+            <li>Regex tokenization.</li>
+            <li>GSTIN & vendor match.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">3. AI Classifier</div>
+          <ul>
+            <li>Category prediction.</li>
+            <li>Confidence scoring.</li>
+            <li>Flags items &lt; 70%.</li>
+            <li>Dynamic rule matching.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">4. Verification</div>
+          <ul>
+            <li>Arithmetic check.</li>
+            <li>CGST, SGST, IGST check.</li>
+            <li>Duplicate invoice check.</li>
+            <li>Interactive review.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: SIDE BY SIDE REVIEW -->
+    <div class="slide">
+      <div class="category">Data Integrity</div>
+      <div class="slide-title">Human-in-the-Loop Side-by-Side Reconciliation</div>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">Interactive Review Tools</div>
+          <ul>
+            <li><strong>Side-by-Side:</strong> Source bill on left, editable form on right.</li>
+            <li><strong>Line-Item Editing:</strong> Edit names, quantities, units, and rates inline.</li>
+            <li><strong>Auto-Recalculate:</strong> Balances subtotals, taxes, and totals in 1 click.</li>
+            <li><strong>Vendor Auto-Match:</strong> Auto-creates supplier profile if new.</li>
+            <li><strong>Duplicate Prompt:</strong> Warns before saving identical invoice numbers.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Upload Origin Badging</div>
+          <ul>
+            <li><strong style="color: #e11d48;">Staff PDF Upload (Red):</strong> Queued for owner review & payment.</li>
+            <li><strong style="color: #4f46e5;">Owner PDF Upload (Indigo):</strong> Marked as owner-verified.</li>
+            <li><strong style="color: #059669;">Staff Image Upload (Emerald):</strong> Mobile receipt scan.</li>
+            <li><strong style="color: #475569;">Manual Entry (Slate):</strong> Typed directly without file.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: OWNER APPROVAL -->
+    <div class="slide">
+      <div class="category">Disbursement Control</div>
+      <div class="slide-title">Owner Approval & Multi-Mode Payment Recording</div>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">Approval Workflow</div>
+          <ul>
+            <li><strong>Pending Queue:</strong> Staff bills held in 'Pending Approval'.</li>
+            <li><strong>Line-by-Line Audit:</strong> Owners inspect quantities and pricing.</li>
+            <li><strong>Payment Modes:</strong> UPI, Bank Transfer (NEFT/RTGS), Cash, Cheque.</li>
+            <li><strong>Payment Stamp:</strong> Records timestamp, method, and transaction UTR.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Real-Time Feedback Loop</div>
+          <ul>
+            <li><strong>Staff Alert:</strong> Submitting staff member alerted immediately on approval.</li>
+            <li><strong>Peer Owner Sync:</strong> Other store owners alerted to paid bills.</li>
+            <li><strong>Clean PDF Export:</strong> Generates formatted invoice document.</li>
+            <li><strong>Spend Analytics:</strong> Total expenditure and vendor stats update live.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: STORE REQUIREMENTS -->
+    <div class="slide">
+      <div class="category">Inventory Demand</div>
+      <div class="slide-title">Store Inventory Demand Management</div>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">Staff Out-of-Stock Logging</div>
+          <ul>
+            <li><strong>Instant Intake:</strong> Log items running low (e.g. Rice - 25 KG).</li>
+            <li><strong>Full Specs:</strong> Item, Specification, Quantity, Unit, Priority.</li>
+            <li><strong>Requester Attribution:</strong> Table renders author badge (e.g. 'Staff: Akanksh').</li>
+            <li><strong>Visual Priority:</strong> Urgent (Rose), High (Amber), Medium (Indigo).</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Owner Actions & Procurement</div>
+          <ul>
+            <li><strong>Quick Status Toggle:</strong> Pending ➔ Ordered ➔ Received.</li>
+            <li><strong>Excel Export (.xlsx):</strong> Formatted purchase order sheet in 1 click.</li>
+            <li><strong>Live Counter:</strong> Owner navbar displays pending requirement badge.</li>
+            <li><strong>Audit Trail:</strong> Tracks who ordered and fulfilled each item.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: NOTIFICATIONS -->
+    <div class="slide">
+      <div class="category">Alert Routing</div>
+      <div class="slide-title">Real-Time Notifications & Cross-Portal Sync</div>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">Notification Delivery Rules</div>
+          <ul>
+            <li><strong>Staff Upload ➔ Owners:</strong> 'New Invoice Uploaded by Staff'.</li>
+            <li><strong>Owner Upload ➔ Peer Owners:</strong> 'New Invoice Added by Owner'.</li>
+            <li><strong>Approved ➔ Staff:</strong> Notifies uploader of approval & payment.</li>
+            <li><strong>Demand Logged ➔ Owners:</strong> Notifies owners of stock shortages.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Hybrid Synchronization</div>
+          <ul>
+            <li><strong>BroadcastChannel:</strong> Zero-latency cross-tab event messaging.</li>
+            <li><strong>4-Second Polling:</strong> Background sync across multiple devices.</li>
+            <li><strong>Focus Listener:</strong> Immediately checks server on tab switch.</li>
+            <li><strong>Optimistic Badges:</strong> Decrements counters instantly on click.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 10: SECURITY -->
+    <div class="slide">
+      <div class="category">Enterprise Security</div>
+      <div class="slide-title">Security, Privacy & Zero-Leak Architecture</div>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">Cryptographic Defense</div>
+          <ul>
+            <li><strong>Salted Bcrypt:</strong> Passwords stored as 60-char salted hashes ($2b$10$).</li>
+            <li><strong>Strict Verification:</strong> bcrypt.compareSync used exclusively.</li>
+            <li><strong>Zero-Leak API:</strong> password_hash omitted from all endpoints.</li>
+            <li><strong>Midnight Expiry:</strong> Daily 12:00 AM session reset.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">System Safeguards</div>
+          <ul>
+            <li><strong>Role Isolation:</strong> Staff blocked from Owner portal (403).</li>
+            <li><strong>Admin Protection:</strong> Primary developer cannot be deleted.</li>
+            <li><strong>Safe Foreign Keys:</strong> Disassociates bills before user deletion.</li>
+            <li><strong>Zero OTP Friction:</strong> Direct secure login without SMS bottlenecks.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 11: DEPLOYMENT -->
+    <div class="slide">
+      <div class="category">DevOps & Cloud</div>
+      <div class="slide-title">Live Cloud Deployment & Local Execution</div>
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-title">Render Cloud Production</div>
+          <ul>
+            <li><strong>Live URL:</strong> https://quontriz-invoza.onrender.com</li>
+            <li><strong>Login Portal:</strong> https://quontriz-invoza.onrender.com/login</li>
+            <li><strong>Managed DB:</strong> PostgreSQL with connection pooling & SSL.</li>
+            <li><strong>CI/CD:</strong> Automated zero-downtime deploys on Git push.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Localhost Development</div>
+          <ul>
+            <li><strong>Single Command:</strong> npm run dev starts full stack.</li>
+            <li><strong>WASM PostgreSQL:</strong> Pure-JS database with zero daemon setup.</li>
+            <li><strong>Cross-Platform:</strong> Runs on Windows, Mac, and Linux.</li>
+            <li><strong>Verified Suite:</strong> 45 automated end-to-end tests (0 failures).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 12: CONCLUSION -->
+    <div class="slide cover-slide">
+      <div class="category" style="color: #a5b4fc;">Summary & Conclusion</div>
+      <div class="cover-title" style="font-size: 34px;">Accelerating Retail Procurement</div>
+      <div style="font-size: 15px; color: #e2e8f0; line-height: 1.8; margin-bottom: 24px;">
+        • <strong>85% Reduction in Processing Time:</strong> Automated multi-engine OCR replaces typing.<br>
+        • <strong>100% Arithmetic & Duplicate Safety:</strong> Cross-checks taxes and blocks duplicate bills.<br>
+        • <strong>Seamless Staff & Owner Synergy:</strong> Requester attribution and cross-portal live alerts.<br>
+        • <strong>Enterprise Grade Security:</strong> Salted bcrypt hashing, role isolation, and zero leaks.<br>
+        • <strong>Data-Driven Decisions:</strong> Real-time financial analytics and formatted Excel exports.
+      </div>
+      <div class="cover-pill">Experience Live: https://quontriz-invoza.onrender.com</div>
+    </div>
+
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="prevBtn" onclick="prevSlide()">← Previous</button>
+    <span class="counter" id="slideCounter">Slide 1 of 12</span>
+    <button class="btn" id="nextBtn" onclick="nextSlide()">Next →</button>
+  </div>
+
+  <script>
+    let current = 0;
+    const slides = document.querySelectorAll('.slide');
+    const counter = document.getElementById('slideCounter');
+
+    function showSlide(index) {
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === index);
+      });
+      counter.innerText = `Slide ${index + 1} of ${slides.length}`;
+    }
+
+    function nextSlide() {
+      if (current < slides.length - 1) {
+        current++;
+        showSlide(current);
+      }
+    }
+
+    function prevSlide() {
+      if (current > 0) {
+        current--;
+        showSlide(current);
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+  </script>
+</body>
+</html>

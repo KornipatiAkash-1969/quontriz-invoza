@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quontriz Invoza - Complete Platform Documentation</title>
+  <style>
+    :root {
+      --primary: #1e293b;
+      --accent: #4f46e5;
+      --accent-light: #eef2ff;
+      --emerald: #10b981;
+      --emerald-light: #ecfdf5;
+      --amber: #f59e0b;
+      --amber-light: #fffbeb;
+      --rose: #f43f5e;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --card-bg: #ffffff;
+      --bg: #f8fafc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text-main);
+      background-color: var(--bg);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 60px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      border: 1px solid var(--border);
+    }
+    header {
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 40px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: var(--accent-light);
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 32px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+    h2 { font-size: 22px; font-weight: 700; color: var(--primary); margin-top: 40px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    h3 { font-size: 16px; font-weight: 700; color: var(--accent); margin-top: 24px; margin-bottom: 8px; }
+    p, li { font-size: 14.5px; color: #334155; margin-bottom: 12px; }
+    ul, ol { padding-left: 24px; margin-bottom: 16px; }
+    li { margin-bottom: 6px; }
+    .live-banner {
+      background: linear-gradient(135deg, #1e293b, #312e81);
+      color: white;
+      padding: 20px 24px;
+      border-radius: 12px;
+      margin-bottom: 32px;
+    }
+    .live-banner a { color: #818cf8; font-weight: bold; text-decoration: none; }
+    .live-banner a:hover { text-decoration: underline; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13.5px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    tr:nth-child(even) { background: #fafafa; }
+    pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 16px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      background: #ffffff;
+    }
+    .card-title { font-weight: 700; font-size: 15px; margin-bottom: 8px; color: var(--accent); }
+    @media print {
+      body { background: white; padding: 0; }
+      .container { border: none; box-shadow: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">Official Technical Documentation</div>
+      <h1>🧾 Quontriz Invoza Platform</h1>
+      <p style="color: var(--text-muted); font-size: 15px;">Intelligent Supermarket Invoice Intake, Multi-Engine OCR & Store Inventory Management System</p>
+    </header>
+
+    <div class="live-banner">
+      <h3 style="color: white; margin-top: 0;">🌐 Live Cloud Production Deployment</h3>
+      <p style="color: #cbd5e1; font-size: 14px; margin-bottom: 8px;">Hosted on Render Cloud Infrastructure with Managed PostgreSQL:</p>
+      <p style="margin-bottom: 0;">
+        • <strong>Live App:</strong> <a href="https://quontriz-invoza.onrender.com" target="_blank">https://quontriz-invoza.onrender.com</a><br>
+        • <strong>Login Portal:</strong> <a href="https://quontriz-invoza.onrender.com/login" target="_blank">https://quontriz-invoza.onrender.com/login</a><br>
+        • <strong>API Health Endpoint:</strong> <a href="https://quontriz-invoza.onrender.com/api/health" target="_blank">https://quontriz-invoza.onrender.com/api/health</a>
+      </p>
+    </div>
+
+    <h2>1. Executive Summary</h2>
+    <p><strong>Quontriz Invoza</strong> is a production-grade enterprise platform engineered to automate supermarket and retail procurement workflows. It replaces error-prone paper workflows with automated OCR extraction, category classification, human-in-the-loop side-by-side reconciliation, owner payment recording, and real-time inventory demand fulfillment.</p>
+
+    <h2>2. System Architecture</h2>
+    <pre>
+┌─────────────────────────────────────────────────────────────┐
+│                 FRONTEND (React 19 + Vite 6)                │
+│    • Store Owner Portal (Analytics, Approvals, Team)        │
+│    • Store Staff Portal (Intake, Drafts, Store Demands)     │
+│    • Real-Time Updates (BroadcastChannel + 4s Polling)      │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ REST API / JWT
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│             BACKEND SERVER (Node.js + Express.js)           │
+│    • Authentication: Salted Bcrypt (10 rounds)              │
+│    • Document OCR: Digital parser + Tesseract.js WASM       │
+│    • AI Classifier: Auto-predicts categories & confidence   │
+│    • Reconciliation: Tax cross-check & duplicate defense    │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ Parameterized SQL
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│               DATABASE LAYER (PostgreSQL 16+)               │
+│    • Tables: users, invoices, invoice_items, vendors,       │
+│              store_requirements, notifications              │
+└─────────────────────────────────────────────────────────────┘
+    </pre>
+
+    <h2>3. Role Permissions & Operational Matrix</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Capability / Module</th>
+          <th>Store Staff</th>
+          <th>Store Owner</th>
+          <th>Security Rule</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Staff Portal Access</strong></td>
+          <td>✅ Allowed</td>
+          <td>❌ Denied (403)</td>
+          <td>Role isolation enforced at login & routing</td>
+        </tr>
+        <tr>
+          <td><strong>Owner Portal Access</strong></td>
+          <td>❌ Denied (403)</td>
+          <td>✅ Allowed</td>
+          <td>Role isolation enforced at login & routing</td>
+        </tr>
+        <tr>
+          <td><strong>Invoice Upload (PDF/Image)</strong></td>
+          <td>✅ Allowed</td>
+          <td>✅ Allowed</td>
+          <td>Tagged as 'Staff PDF Upload' or 'Owner PDF Upload'</td>
+        </tr>
+        <tr>
+          <td><strong>Interactive Side-by-Side Review</strong></td>
+          <td>✅ Allowed</td>
+          <td>✅ Allowed</td>
+          <td>Live edit, tax recalculate & duplicate check</td>
+        </tr>
+        <tr>
+          <td><strong>Approve & Pay Invoice</strong></td>
+          <td>❌ Denied</td>
+          <td>✅ Allowed</td>
+          <td>Records UPI, Bank, Cash, Cheque & stamps Paid</td>
+        </tr>
+        <tr>
+          <td><strong>Reject Invoice</strong></td>
+          <td>❌ Denied</td>
+          <td>✅ Allowed</td>
+          <td>Marks Rejected with mandatory explanation</td>
+        </tr>
+        <tr>
+          <td><strong>Financial Analytics & KPIs</strong></td>
+          <td>❌ Denied</td>
+          <td>✅ Allowed</td>
+          <td>Live charts: spend, top vendors, monthly trends</td>
+        </tr>
+        <tr>
+          <td><strong>Store Inventory Demand Intake</strong></td>
+          <td>✅ Allowed</td>
+          <td>✅ Allowed</td>
+          <td>Automatically stamps author requester name</td>
+        </tr>
+        <tr>
+          <td><strong>Toggle Demand Status</strong></td>
+          <td>❌ Denied</td>
+          <td>✅ Allowed</td>
+          <td>Quick status toggle: Pending ➔ Ordered ➔ Received</td>
+        </tr>
+        <tr>
+          <td><strong>Export Demands to Excel (.xlsx)</strong></td>
+          <td>❌ Denied</td>
+          <td>✅ Allowed</td>
+          <td>Generates formatted Excel purchase order sheet</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>4. Enterprise Security & Zero-Leak Architecture</h2>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title">🔒 Salted Bcrypt Hashing</div>
+        <p>All passwords stored in the database are hashed with 10 salt rounds ($2b$10$). Login strictly verifies hashes using bcrypt.compareSync with zero plaintext bypasses.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🛡️ Zero-Leak API Policy</div>
+        <p>Database queries across /users, /me, and /login explicitly omit password_hash and token secrets. The /demo-users endpoint discloses zero passwords.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">⏰ Midnight Session Expiry</div>
+        <p>All JWT authentication tokens automatically expire at 12:00:00 AM midnight, enforcing fresh authentication for daily supermarket shifts.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">🚫 Zero OTP Dependency</div>
+        <p>The fragile OTP system has been completely eliminated. Users authenticate directly via email and password without third-party gateway failures.</p>
+      </div>
+    </div>
+
+    <h2>5. Deployment & Execution</h2>
+    <h3>Cloud Production (Render)</h3>
+    <p>Live at <a href="https://quontriz-invoza.onrender.com" target="_blank">https://quontriz-invoza.onrender.com</a> with auto-deploy on Git push.</p>
+
+    <h3>Local Development</h3>
+    <pre>
+# Install all dependencies
+npm run install:all
+
+# Launch both Backend (5000) and Frontend (5173)
+npm run dev
+    </pre>
+  </div>
+</body>
+</html>
