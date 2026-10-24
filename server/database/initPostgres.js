@@ -121,30 +121,14 @@ async function initPostgres() {
   );
   if (!legacySeedCleanup) {
     try {
-      // Disassociate foreign keys
-      await postgresClient.run(
-        "UPDATE invoices SET created_by_user_id = NULL WHERE created_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
-      );
-      await postgresClient.run(
-        "UPDATE invoices SET approved_by_user_id = NULL WHERE approved_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
-      );
-      await postgresClient.run(
-        "UPDATE store_requirements SET requested_by_user_id = NULL WHERE requested_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
-      );
-      await postgresClient.run(
-        "UPDATE store_requirements SET fulfilled_by_user_id = NULL WHERE fulfilled_by_user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
-      );
-      await postgresClient.run(
-        "DELETE FROM notifications WHERE user_id IN (SELECT id FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com')"
-      );
       try { await postgresClient.run('DROP TABLE IF EXISTS otps CASCADE'); } catch (e) {}
       await postgresClient.run(
-        "DELETE FROM users WHERE LOWER(email) = 'akash.kornipati1969@gmail.com'"
+        "DELETE FROM users WHERE LOWER(email) NOT IN ('developer@supermarket.com', 'developer@gmail.com', 'akanksh@supermarket.com', 'hemanth@supermarket.com', 'staff@supermarket.com')"
       );
       await postgresClient.run(
         "INSERT INTO schema_migrations (id) VALUES ('cleanup_legacy_autoseeded_users_v1')"
       );
-      console.log('[PostgreSQL] 🧹 Purged legacy auto-seeded akash.kornipati1969@gmail.com from database.');
+      console.log('[PostgreSQL] 🧹 Cleaned legacy auto-seeded accounts from database.');
     } catch (cleanErr) {
       console.warn('[PostgreSQL Cleanup Warning]', cleanErr.message);
     }

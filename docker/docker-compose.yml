@@ -16,9 +16,9 @@ services:
       - SMTP_HOST=smtp.gmail.com
       - SMTP_PORT=465
       - SMTP_SECURE=true
-      - SMTP_USER=akash.kornipati1969@gmail.com
-      - SMTP_PASS=oogztajfdfphxzwq
-      - SMTP_FROM="Quontriz Invoza" <akash.kornipati1969@gmail.com>
+      - SMTP_USER=
+      - SMTP_PASS=
+      - SMTP_FROM="Quontriz Invoza" <notifications@supermarket.com>
     volumes:
       - invoza-data:/app/server/database
       - invoza-uploads:/app/server/uploads

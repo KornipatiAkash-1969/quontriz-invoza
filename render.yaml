@@ -27,18 +27,18 @@ services:
       - key: PG_MAX_POOL
         value: "10"
       - key: JWT_SECRET
-        value: quontriz_invoza_jwt_secret_key_2026_secure
+        generateValue: true
       - key: OPENAI_MODEL
         value: gpt-4o
       - key: SMTP_HOST
         value: smtp.gmail.com
       - key: SMTP_PORT
-        value: 465
+        value: "465"
       - key: SMTP_SECURE
         value: "true"
       - key: SMTP_USER
-        value: akash.kornipati1969@gmail.com
+        value: ""
       - key: SMTP_PASS
-        value: oogztajfdfphxzwq
+        value: ""
       - key: SMTP_FROM
-        value: '"Quontriz Invoza" <akash.kornipati1969@gmail.com>'
+        value: '"Quontriz Invoza" <notifications@supermarket.com>'
