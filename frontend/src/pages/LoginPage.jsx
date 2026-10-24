@@ -270,7 +270,7 @@ export default function LoginPage() {
             </div>
             <div>
               <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">
-                Quantriz{' '}
+                Quontriz{' '}
                 <span
                   className={`transition-colors duration-300 ${
                     isOwner ? 'text-indigo-600' : 'text-emerald-600'

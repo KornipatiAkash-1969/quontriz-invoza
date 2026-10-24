@@ -141,7 +141,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
             </div>
             <div className="min-w-0">
               <h1 className="font-bold text-slate-900 text-base leading-tight tracking-tight truncate">
-                Quantriz{' '}
+                Quontriz{' '}
                 <span className={isOwner ? 'text-indigo-600' : 'text-emerald-600'}>
                   Invoza
                 </span>
