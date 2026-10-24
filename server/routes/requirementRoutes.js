@@ -14,17 +14,17 @@ router.get('/', optionalToken, (req, res) => {
 });
 
 // 3. Add a new required item (e.g. Rice - 25 KG - 10 bags)
-router.post('/', optionalToken, (req, res) => {
+router.post('/', verifyToken, (req, res) => {
   requirementController.createRequirement(req, res);
 });
 
 // 4. Update requirement status or details
-router.put('/:id', optionalToken, (req, res) => {
+router.put('/:id', verifyToken, (req, res) => {
   requirementController.updateRequirement(req, res);
 });
 
-// 5. Delete a requirement
-router.delete('/:id', optionalToken, (req, res) => {
+// 5. Delete a requirement (Authenticated user)
+router.delete('/:id', verifyToken, (req, res) => {
   requirementController.deleteRequirement(req, res);
 });
 

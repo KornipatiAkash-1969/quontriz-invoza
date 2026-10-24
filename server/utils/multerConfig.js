@@ -19,24 +19,22 @@ const storage = multer.diskStorage({
   }
 });
 
+const validMimeForExt = {
+  '.pdf': ['application/pdf'],
+  '.png': ['image/png'],
+  '.jpg': ['image/jpeg', 'image/jpg'],
+  '.jpeg': ['image/jpeg', 'image/jpg'],
+  '.webp': ['image/webp']
+};
+
 const fileFilter = (req, file, cb) => {
-  const allowedMimes = [
-    'application/pdf',
-    'image/png',
-    'image/jpeg',
-    'image/jpg',
-    'image/webp'
-  ];
-  const allowedExts = ['.pdf', '.png', '.jpg', '.jpeg', '.webp'];
   const ext = path.extname(file.originalname).toLowerCase();
+  const allowedMimes = validMimeForExt[ext];
 
-  const isAllowedMime = allowedMimes.includes(file.mimetype);
-  const isAllowedExt = allowedExts.includes(ext);
-
-  if (isAllowedMime || isAllowedExt) {
+  if (allowedMimes && allowedMimes.includes(file.mimetype.toLowerCase())) {
     cb(null, true);
   } else {
-    cb(new Error('Only PDF and Image files (PNG, JPG, WEBP) are allowed!'), false);
+    cb(new Error('Invalid file type. Only authentic PDF and Image files (PNG, JPG, WEBP) are allowed.'), false);
   }
 };
 

@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'supermarket-ocr-jwt-secret-key-2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'quontriz-invoza-jwt-fallback-key-2026';
+
+if (process.env.NODE_ENV === 'production' && (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'quontriz-invoza-jwt-fallback-key-2026')) {
+  console.warn('[SECURITY ALERT] Running in production with default/missing JWT_SECRET! Configure JWT_SECRET in environment variables immediately.');
+}
 
 /**
  * Calculates the next upcoming 12:00 AM (midnight) timestamp.

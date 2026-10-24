@@ -103,13 +103,19 @@ router.post('/process-test-file', async (req, res) => {
       return res.status(400).json({ success: false, error: 'relativePath is required.' });
     }
 
-    // Security check to prevent directory traversal
-    const safePath = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, '');
-    const fullPath = path.join(TESTING_FILES_ROOT, safePath);
+    // Robust security check to strictly prevent directory traversal
+    const resolvedRoot = path.resolve(TESTING_FILES_ROOT);
+    const resolvedPath = path.resolve(TESTING_FILES_ROOT, relativePath);
 
-    if (!fs.existsSync(fullPath) || !fullPath.startsWith(TESTING_FILES_ROOT)) {
+    if (!resolvedPath.startsWith(resolvedRoot + path.sep)) {
+      return res.status(403).json({ success: false, error: 'Access denied: Directory traversal detected.' });
+    }
+
+    if (!fs.existsSync(resolvedPath)) {
       return res.status(404).json({ success: false, error: `Test file not found: ${relativePath}` });
     }
+
+    const fullPath = resolvedPath;
 
     const ext = path.extname(fullPath).toLowerCase();
     let mime = 'application/pdf';

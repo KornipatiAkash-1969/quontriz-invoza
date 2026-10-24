@@ -6,6 +6,7 @@ const openAiService = require('../services/OpenAiInvoiceService');
 const geminiService = require('../services/GeminiInvoiceService');
 const systemSettingsService = require('../services/SystemSettingsService');
 const db = require('../database/db');
+const { verifyToken, requireRole } = require('../utils/authMiddleware');
 
 /**
  * Settings Routes for Multimodal Document AI Engines (OpenAI & Google Gemini)
@@ -57,7 +58,7 @@ function maskKey(key) {
 }
 
 // 1. Get current AI provider configuration & system status (Universal for all devices)
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
     const isAiConfigured = openAiService.isConfigured() || geminiService.isConfigured();
     const activeProvider = process.env.AI_PROVIDER || (geminiService.isConfigured() && !openAiService.isConfigured() ? 'gemini' : 'openai');
@@ -110,7 +111,7 @@ router.get('/', async (req, res) => {
 });
 
 // 2. Update AI Provider & API Passkeys (OpenAI & Google Gemini)
-router.post('/', async (req, res) => {
+router.post('/', verifyToken, requireRole('owner'), async (req, res) => {
   try {
     const isLocked = await systemSettingsService.isLocked();
 
@@ -201,7 +202,7 @@ router.post('/', async (req, res) => {
 });
 
 // 2b. Toggle Lock State (Owner action to protect or unlock deployed keys)
-router.post('/toggle-lock', async (req, res) => {
+router.post('/toggle-lock', verifyToken, requireRole('owner'), async (req, res) => {
   try {
     const { locked } = req.body;
     const isLocked = Boolean(locked);
@@ -221,7 +222,7 @@ router.post('/toggle-lock', async (req, res) => {
 });
 
 // 3. Test OpenAI API connection (Verifies live credits & quota)
-router.post('/test-openai', async (req, res) => {
+router.post('/test-openai', verifyToken, requireRole('owner'), async (req, res) => {
   try {
     const { apiKey, model } = req.body;
     if (apiKey && apiKey.trim() && !apiKey.includes('••••')) {
@@ -248,7 +249,7 @@ router.post('/test-openai', async (req, res) => {
 });
 
 // 4. Test Google Gemini API connection
-router.post('/test-gemini', async (req, res) => {
+router.post('/test-gemini', verifyToken, requireRole('owner'), async (req, res) => {
   try {
     const { apiKey, model } = req.body;
     if (apiKey && apiKey.trim() && !apiKey.includes('••••')) {

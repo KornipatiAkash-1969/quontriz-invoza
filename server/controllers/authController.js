@@ -2,6 +2,21 @@ const bcrypt = require('bcryptjs');
 const db = require('../database/db');
 const { generateToken, getNextMidnight } = require('../utils/authMiddleware');
 
+// In-memory brute-force protection for login attempts
+const failedAttemptsMap = new Map();
+const MAX_FAILED_ATTEMPTS = 10;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15 minutes lockout
+
+function cleanOldAttempts() {
+  const now = Date.now();
+  for (const [key, data] of failedAttemptsMap.entries()) {
+    if (now - data.firstAttempt > LOCKOUT_MS) {
+      failedAttemptsMap.delete(key);
+    }
+  }
+}
+setInterval(cleanOldAttempts, 5 * 60 * 1000).unref();
+
 class AuthController {
   /**
    * Direct Email + Password Login
@@ -13,16 +28,45 @@ class AuthController {
         return res.status(400).json({ success: false, error: 'Email and password are required.' });
       }
 
+      const clientIp = req.ip || req.connection?.remoteAddress || 'unknown';
+      const clientKey = `${clientIp}_${email.trim().toLowerCase()}`;
+      const now = Date.now();
+      const record = failedAttemptsMap.get(clientKey);
+
+      // Throttling / Lockout check
+      if (record && record.count >= MAX_FAILED_ATTEMPTS) {
+        if (now - record.lastAttempt < LOCKOUT_MS) {
+          const remainingMin = Math.ceil((LOCKOUT_MS - (now - record.lastAttempt)) / 60000);
+          return res.status(429).json({
+            success: false,
+            error: `Too many failed login attempts. Account temporarily locked for security. Please try again in ${remainingMin} minute(s).`
+          });
+        } else {
+          failedAttemptsMap.delete(clientKey);
+        }
+      }
+
       const user = await db.get('SELECT * FROM users WHERE LOWER(email) = LOWER(?)', [email.trim()]);
       if (!user || !user.password_hash) {
+        const prev = failedAttemptsMap.get(clientKey) || { count: 0, firstAttempt: now, lastAttempt: now };
+        prev.count += 1;
+        prev.lastAttempt = now;
+        failedAttemptsMap.set(clientKey, prev);
         return res.status(401).json({ success: false, error: 'Invalid email or password.' });
       }
 
       // Strictly verify password against salted cryptographic bcrypt hash stored in the database
       const isMatch = bcrypt.compareSync(password, user.password_hash);
       if (!isMatch) {
+        const prev = failedAttemptsMap.get(clientKey) || { count: 0, firstAttempt: now, lastAttempt: now };
+        prev.count += 1;
+        prev.lastAttempt = now;
+        failedAttemptsMap.set(clientKey, prev);
         return res.status(401).json({ success: false, error: 'Invalid email or password.' });
       }
+
+      // Successful login: reset failed attempts counter
+      failedAttemptsMap.delete(clientKey);
 
       const requestedRole = (portalRole || expectedRole || '').toLowerCase().trim();
       const normalizedRole = user.role === 'employee' ? 'staff' : user.role;
@@ -61,13 +105,13 @@ class AuthController {
       await db.run('UPDATE users SET last_login_at = ? WHERE id = ?', [loginTimestamp, user.id]);
 
       // Set JWT in HTTP cookie with midnight expiration
-      const isProduction = process.env.NODE_ENV === 'production' && req.secure;
+      const isProduction = process.env.NODE_ENV === 'production';
       res.cookie('token', token, {
         httpOnly: true,
         expires: nextMidnight,
         sameSite: 'lax',
         path: '/',
-        secure: isProduction,
+        secure: isProduction || Boolean(req.secure),
       });
 
       return res.json({
@@ -335,8 +379,8 @@ class AuthController {
       if (!currentPassword) {
         return res.status(400).json({ success: false, error: 'Current password is required.' });
       }
-      if (!newPassword || newPassword.length < 4) {
-        return res.status(400).json({ success: false, error: 'New password must be at least 4 characters.' });
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ success: false, error: 'New password must be at least 6 characters.' });
       }
       if (confirmPassword && newPassword !== confirmPassword) {
         return res.status(400).json({ success: false, error: 'New password and confirm password do not match.' });
@@ -389,8 +433,8 @@ class AuthController {
       if (!targetId) {
         return res.status(400).json({ success: false, error: 'Valid user ID is required.' });
       }
-      if (!newPassword || newPassword.length < 4) {
-        return res.status(400).json({ success: false, error: 'New password must be at least 4 characters.' });
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ success: false, error: 'New password must be at least 6 characters.' });
       }
 
       const user = await db.get('SELECT id, name, email, role FROM users WHERE id = ?', [targetId]);

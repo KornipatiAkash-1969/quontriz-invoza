@@ -19,6 +19,10 @@ const classificationService = require('./services/classifier/classificationServi
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust cloud reverse proxies (e.g. Render, Nginx, Cloudflare) for HTTPS detection and real client IP
+app.set('trust proxy', 1);
+app.disable('x-powered-by');
+
 // Initialize PostgreSQL Database
 initDb().catch(err => {
   console.error('[App Fatal] PostgreSQL database initialization error:', err.message);
@@ -26,6 +30,18 @@ initDb().catch(err => {
 
 // Generate Sample PDFs asynchronously
 ensureSamplePdfs().catch(err => console.warn('[App] Sample PDF generation note:', err.message));
+
+// OWASP Recommended HTTP Security Headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  next();
+});
 
 // Middlewares
 app.use(cors({

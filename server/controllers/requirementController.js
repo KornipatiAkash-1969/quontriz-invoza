@@ -347,7 +347,10 @@ class RequirementController {
   async deleteRequirement(req, res) {
     try {
       const { id } = req.params;
-      const isOwner = !req.user || req.user.role === 'owner' || req.user.id === 1;
+      if (!req.user) {
+        return res.status(401).json({ success: false, error: 'Authentication required. Please sign in.' });
+      }
+      const isOwner = req.user.role === 'owner' || req.user.id === 1;
 
       const existing = await db.get('SELECT * FROM store_requirements WHERE id = ?', [id]);
       if (!existing) {
@@ -355,7 +358,7 @@ class RequirementController {
       }
 
       // If not owner, verify staff can delete (creator of requirement or any pending item)
-      if (!isOwner && req.user) {
+      if (!isOwner) {
         const isCreator = existing.requested_by_user_id === req.user.id;
         const isPending = existing.status === 'Pending';
         if (!isCreator && !isPending && req.user.role !== 'staff') {
